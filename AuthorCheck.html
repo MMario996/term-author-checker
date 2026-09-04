@@ -188,10 +188,30 @@ button, select, input, textarea{ font-family:inherit; }
 .rule-group.expanded .rule-group-chevron { transform: rotate(180deg); }
 .rule-group-body { display: none; padding: 10px 12px; border-top: 1px solid var(--gray-150); }
 .rule-group.expanded .rule-group-body { display: block; }
+.rule-subgroup { margin-bottom: 8px; border: 1px solid var(--gray-150); background: var(--white); }
+.rule-subgroup-header { display: flex; justify-content: space-between; align-items: center; background: var(--gray-100); padding: 7px 10px; cursor: pointer; user-select: none; }
+.rule-subgroup-header h4 { font-family:var(--ff-head); font-size:11px; color:var(--gray-600); text-transform:uppercase; margin:0; }
+.rule-subgroup-chevron { color: var(--gray-400); transition: transform 0.2s var(--ease); display: flex; align-items: center; }
+.rule-subgroup.expanded .rule-subgroup-chevron { transform: rotate(180deg); }
+.rule-subgroup-body { display: none; padding: 8px; }
+.rule-subgroup.expanded .rule-subgroup-body { display: block; }
+body.popup-mode .rule-subgroup-header h4 { font-size: 14px; }
 .rule-item { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; padding:6px; background:var(--gray-50); border:1px solid var(--gray-150); }
 .rule-item label { font-size:11px; color:var(--gray-600); display:flex; align-items:center; gap:8px; cursor:pointer; flex:1; }
 .rule-item input[type="checkbox"] { cursor:pointer; }
 .rule-item select { font-size:11px; padding:2px 4px; border:1px solid var(--gray-300); background:var(--white); margin-left:10px;}
+.btn-move { background:none; border:none; cursor:pointer; color:var(--gray-400); padding:3px; margin-left:6px; flex-shrink:0; display:flex; }
+.btn-move:hover { color:var(--ink); }
+body.popup-mode .btn-move svg { width:15px; height:15px; }
+.move-dialog-overlay { display:none; position:absolute; inset:0; background:rgba(58,58,58,.55); z-index:260; align-items:center; justify-content:center; padding:20px; }
+.move-dialog-overlay.open { display:flex; }
+.move-dialog-box { background:var(--white); max-width:420px; width:100%; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,.2); }
+.move-dialog-box h3 { font-family:var(--ff-head); font-size:14px; text-transform:uppercase; margin-bottom:14px; }
+.move-dialog-box label { display:block; font-size:10.5px; font-weight:bold; color:var(--gray-500); text-transform:uppercase; margin-bottom:4px; }
+.move-dialog-box select, .move-dialog-box input { width:100%; padding:8px; font-size:13px; border:1px solid var(--gray-300); margin-bottom:12px; }
+.move-dialog-box .move-dialog-actions { display:flex; gap:8px; justify-content:flex-end; }
+body.popup-mode .move-dialog-box label { font-size:13px; }
+body.popup-mode .move-dialog-box select, body.popup-mode .move-dialog-box input { font-size:15px; padding:10px; }
 
 .spinner {
   display:inline-block; width:14px; height:14px; border:2px solid var(--gray-300);
@@ -216,7 +236,18 @@ body.popup-mode .rule-group-header h3 { font-size: 16px; }
 body.popup-mode .rule-item label { font-size: 15px; }
 body.popup-mode .rule-item select { font-size: 15px; }
 body.popup-mode .btn-mini { font-size: 16px; }
-body.popup-mode #newRulePrompt { font-size: 15px !important; }
+body.popup-mode #newRuleGroupSelect,
+body.popup-mode #newRuleCustomGroup,
+body.popup-mode #newRuleKind,
+body.popup-mode #newRuleName,
+body.popup-mode #newRuleDesc {
+  font-size: 15px !important;
+  padding: 10px !important;
+}
+body.popup-mode #newRulePrompt {
+  font-size: 15px !important;
+  height: 110px !important;
+}
 .modal-foot .btn-mini { white-space: nowrap; flex: 0 0 auto; padding: 8px 14px; }
 body.popup-mode .modal-foot .btn-mini { font-size: 16px; padding: 10px 18px; }
 </style>
@@ -300,10 +331,10 @@ body.popup-mode .modal-foot .btn-mini { font-size: 16px; padding: 10px 18px; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
       Check Document
     </button>
-    <p style="font-size:12px; color:var(--gray-500); text-align:center; margin:-8px 0 16px;">
+       <p style="font-size:12px; color:var(--gray-500); text-align:center; margin:-8px 0 16px;">
       Which rules and prompts apply here can be viewed and changed under
-      <a href="#" onclick="openRulesSettings(); return false;" style="color:var(--ink); font-weight:600;">Rules</a>.
-    </p>
+      <a href="#" target="_self" onclick="openRulesSettings(); return false;" style="color:var(--ink); font-weight:600;">Rules</a>.
+      </p>
     <div id="resultsWrap" aria-live="polite"></div>
   </div>
 </div>
@@ -336,12 +367,17 @@ body.popup-mode .modal-foot .btn-mini { font-size: 16px; padding: 10px 18px; }
           <option value="en">English</option>
         </select>
       </div>
+      <div class="control-row" style="margin-bottom:8px;">
+        <input type="text" id="rulesSearchInput" placeholder="Regeln durchsuchen..." oninput="filterRulesList()" style="flex:1; padding:8px 10px; font-size:13px; border:1.5px solid var(--gray-300);">
+      </div>
       <div id="rulesListContainer">
         <div class="loading-state"><div class="loading-text">Loading rules...</div></div>
       </div>
     </div>
     <div class="modal-foot">
       <div style="display:flex; gap:6px;">
+        <button class="btn-mini ghost" style="padding:6px 10px;" onclick="exportRulesOverview()" title="Show all rules as a filterable Google Sheet">Overview (Sheet)</button>
+        <button class="btn-mini ghost" id="exportAllToLogBtn" style="padding:6px 10px; display:none;" onclick="exportAllRulesToLogSheet()" title="One-time: export all currently loaded rules (default + your custom) to the central log sheet">Export All to Log</button>
         <button class="btn-mini ghost" style="padding:6px 10px;" onclick="exportRulesToDrive()" title="Export active rules to Google Drive JSON">JSON Export</button>
         <label class="btn-mini ghost" style="padding:6px 10px; cursor:pointer;" title="Upload JSON rule file">
           JSON Import
@@ -351,6 +387,21 @@ body.popup-mode .modal-foot .btn-mini { font-size: 16px; padding: 10px 18px; }
       <button class="btn-check" style="margin:0; padding:8px 16px; width:auto;" onclick="saveRulesSettings()">Save Settings</button>
     </div>
 
+    <div class="move-dialog-overlay" id="moveRuleOverlay">
+      <div class="move-dialog-box">
+        <h3>Regel verschieben</h3>
+        <label>Section</label>
+        <select id="moveRuleSectionSelect" onchange="onMoveSectionChange()"></select>
+        <input type="text" id="moveRuleSectionCustom" placeholder="Neuer Section-Name" style="display:none;">
+        <label>Unterthema</label>
+        <select id="moveRuleSubsectionSelect" onchange="onMoveSubsectionChange()"></select>
+        <input type="text" id="moveRuleSubsectionCustom" placeholder="Neues Unterthema" style="display:none;">
+        <div class="move-dialog-actions">
+          <button class="btn-mini ghost" onclick="closeMoveRuleDialog()">Abbrechen</button>
+          <button class="btn-mini primary" onclick="confirmMoveRule()">Verschieben</button>
+        </div>
+      </div>
+    </div>
     <div class="help-overlay" id="rulesHelpOverlay">
       <div class="help-box" style="max-width:640px; max-height:80vh; overflow-y:auto;">
         <h3>How Rules & Custom Prompts works</h3>
@@ -395,11 +446,14 @@ var STATUS_MSGS = [
 var _loadingInterval = null;
 var _currentIssues = [];
 var _currentRulesData = [];
+var _pendingNewCustomRules = [];
 
 document.addEventListener('DOMContentLoaded', function(){
   google.script.run.withSuccessHandler(function(ctx){
     document.getElementById('aiUnavailable').style.display = ctx.aiEnabled ? 'none' : 'block';
     document.getElementById('mainWrap').style.display = ctx.aiEnabled ? 'block' : 'none';
+    var exportAllBtn = document.getElementById('exportAllToLogBtn');
+    if (exportAllBtn) exportAllBtn.style.display = ctx.isAdmin ? '' : 'none';
     
     // Wenn als reine Rules-Ansicht aufgerufen, verstecke den Check-Bereich und ?ffne direkt das Rules-UI
       if (ctx.isRulesOnly) {
@@ -733,6 +787,7 @@ function renderRulesUI(rules) {
     return '<option value="' + esc(t) + '">' + esc(t) + '</option>';
   }).join('');
   var topAddHeader = '<div style="margin-bottom:12px; padding:10px; background:var(--gray-50); border:1px solid var(--gray-200);">' +
+    '<a href="https://gemini.google.com/gem/1U9keOE3XPTPG3QEq63ZCYZ-5EOTruqgC?usp=sharing" target="_blank" class="btn-mini ghost" style="width:100%; margin-bottom:8px; text-decoration:none; display:flex; align-items:center; justify-content:center;">? Regel mit Gemini vorbereiten</a>' +
     '<button class="btn-mini primary" style="width:100%; font-weight:bold;" onclick="toggleAddCustomRuleForm()">+ Create New Rule / AI Prompt</button>' +
     '<div id="addCustomRuleForm" style="display:none; margin-top:10px; border-top:1px solid var(--gray-200); padding-top:10px;">' +
       '<label style="font-size:10px; font-weight:bold; color:var(--gray-500);">CATEGORY / DROPDOWN</label>' +
@@ -750,18 +805,21 @@ function renderRulesUI(rules) {
       '<input type="text" id="newRuleName" placeholder="Title (e.g., Greenwashing Check)" style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
       '<input type="text" id="newRuleDesc" placeholder="Short description for AI" style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
       '<textarea id="newRulePrompt" placeholder="Detailed AI Prompt instruction..." style="width:100%; height:55px; margin-bottom:6px; padding:5px; font-size:11px; font-family:inherit;"></textarea>' +
+      '<input type="text" id="newRuleRefUrl" placeholder="Link zur Norm/Vorgabe (optional)" style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
       '<button class="btn-mini primary" style="width:100%;" onclick="addNewCustomRule()">Add Rule</button>' +
     '</div>' +
   '</div>';
-  var groups = {};
+    var sections = {};
   rules.forEach(function(r) {
     var section = r.Section || r.Type || 'Other';
-    if (!groups[section]) groups[section] = [];
-    groups[section].push(r);
+    var subsection = r.Subsection || 'General';
+    if (!sections[section]) sections[section] = {};
+    if (!sections[section][subsection]) sections[section][subsection] = [];
+    sections[section][subsection].push(r);
   });
 
   var html = '';
-  Object.keys(groups).sort().forEach(function(section) {
+  Object.keys(sections).sort().forEach(function(section) {
     html += '<div class="rule-group">';
     html +=   '<div class="rule-group-header" onclick="this.parentElement.classList.toggle(\'expanded\')">';
     html +=     '<label style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="event.stopPropagation();">';
@@ -771,30 +829,63 @@ function renderRulesUI(rules) {
     html +=     '<span class="rule-group-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></span>';
     html +=   '</div>';
     html +=   '<div class="rule-group-body">';
-    groups[section].forEach(function(r) {
-      var checked = r.IsEnabled ? 'checked' : '';
-      var inputHtml = '';
-      if (r.IsConfigurable && r.AllowedParameterValues && r.AllowedParameterValues.length) {
-        var options = r.AllowedParameterValues.map(function(v) {
-          var sel = (String(v) === String(r.Parameter)) ? 'selected' : '';
-          return '<option value="'+esc(v)+'" '+sel+'>'+esc(v)+'</option>';
-        }).join('');
-        inputHtml = '<select data-name="'+r.Name+'">' + options + '</select>';
-      }
-      html += '<div class="rule-item">' +
-              '<label><input type="checkbox" class="rule-checkbox" data-name="'+r.Name+'" data-group="'+esc(section)+'" onchange="updateGroupSelectAllState(\''+esc(section).replace(/'/g,"\\'")+'\')" '+checked+'> ' + esc(r.Description) + '</label>' +
-              inputHtml +
-              '</div>';
+    Object.keys(sections[section]).sort().forEach(function(sub) {
+      var subId = section + '__' + sub;
+      html += '<div class="rule-subgroup">';
+      html +=   '<div class="rule-subgroup-header" onclick="this.parentElement.classList.toggle(\'expanded\')">';
+      html +=     '<label style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="event.stopPropagation();">';
+      html +=       '<input type="checkbox" class="select-all-checkbox-sub" data-subgroup="'+esc(subId)+'" onclick="toggleSubgroupAll(\''+esc(subId).replace(/'/g,"\\'")+'\', this.checked)">';
+      html +=       '<h4 style="margin:0;">' + esc(sub) + '</h4>';
+      html +=     '</label>';
+      html +=     '<span class="rule-subgroup-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M6 9l6 6 6-6"/></svg></span>';
+      html +=   '</div>';
+      html +=   '<div class="rule-subgroup-body">';
+      sections[section][sub].forEach(function(r) {
+        var checked = r.IsEnabled ? 'checked' : '';
+        var inputHtml = '';
+        if (r.IsConfigurable && r.AllowedParameterValues && r.AllowedParameterValues.length) {
+          var options = r.AllowedParameterValues.map(function(v) {
+            var sel = (String(v) === String(r.Parameter)) ? 'selected' : '';
+            return '<option value="'+esc(v)+'" '+sel+'>'+esc(v)+'</option>';
+          }).join('');
+          inputHtml = '<select data-name="'+r.Name+'">' + options + '</select>';
+        }
+        var refLinkHtml = r.ReferenceUrl ? (
+          '<a href="'+esc(r.ReferenceUrl)+'" target="_blank" class="btn-move" title="Norm/Vorgabe ?ffnen" onclick="event.stopPropagation();">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>' +
+          '</a>'
+        ) : '';
+        html += '<div class="rule-item">' +
+                '<label><input type="checkbox" class="rule-checkbox" data-name="'+r.Name+'" data-group="'+esc(section)+'" data-subgroup="'+esc(subId)+'" onchange="updateGroupSelectAllState(\''+esc(section).replace(/'/g,"\\'")+'\'); updateSubgroupSelectAllState(\''+esc(subId).replace(/'/g,"\\'")+'\')" '+checked+'> ' + esc(r.Description) + '</label>' +
+                inputHtml +
+                refLinkHtml +
+                '<button class="btn-move" title="In andere Section/Unterthema verschieben" onclick="openMoveRuleDialog(\''+r.Name+'\')">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 6h18M3 12h18M3 18h18"/></svg>' +
+                '</button>' +
+                '</div>';
+      });
+      html += '</div></div>';
     });
     html += '</div></div>';
   });
+
   container.innerHTML = topAddHeader + html;
-  Object.keys(groups).forEach(function(section) { updateGroupSelectAllState(section); });
+  Object.keys(sections).forEach(function(section) {
+    updateGroupSelectAllState(section);
+    Object.keys(sections[section]).forEach(function(sub) {
+      updateSubgroupSelectAllState(section + '__' + sub);
+    });
+  });
 }
 function toggleGroupAll(section, checked) {
   var container = document.getElementById('rulesListContainer');
   var boxes = container.querySelectorAll('.rule-checkbox[data-group="'+cssEscapeAC(section)+'"]');
   boxes.forEach(function(cb) { cb.checked = checked; });
+  container.querySelectorAll('.select-all-checkbox-sub').forEach(function(sa) {
+    if (sa.dataset.subgroup.indexOf(section + '__') === 0) {
+      updateSubgroupSelectAllState(sa.dataset.subgroup);
+    }
+  });
 }
 function updateGroupSelectAllState(section) {
   var container = document.getElementById('rulesListContainer');
@@ -806,8 +897,134 @@ function updateGroupSelectAllState(section) {
   selectAll.checked = checkedCount === boxes.length;
   selectAll.indeterminate = checkedCount > 0 && checkedCount < boxes.length;
 }
+function toggleSubgroupAll(subId, checked) {
+  var container = document.getElementById('rulesListContainer');
+  var boxes = container.querySelectorAll('.rule-checkbox[data-subgroup="'+cssEscapeAC(subId)+'"]');
+  boxes.forEach(function(cb) { cb.checked = checked; });
+  var section = subId.split('__')[0];
+  updateGroupSelectAllState(section);
+}
+function updateSubgroupSelectAllState(subId) {
+  var container = document.getElementById('rulesListContainer');
+  var boxes = container.querySelectorAll('.rule-checkbox[data-subgroup="'+cssEscapeAC(subId)+'"]');
+  var selectAll = container.querySelector('.select-all-checkbox-sub[data-subgroup="'+cssEscapeAC(subId)+'"]');
+  if (!selectAll || !boxes.length) return;
+  var checkedCount = 0;
+  boxes.forEach(function(cb) { if (cb.checked) checkedCount++; });
+  selectAll.checked = checkedCount === boxes.length;
+  selectAll.indeterminate = checkedCount > 0 && checkedCount < boxes.length;
+}
 function cssEscapeAC(str) {
   return String(str).replace(/["\\]/g, '\\$&');
+}
+
+function filterRulesList() {
+  var query = document.getElementById('rulesSearchInput').value.trim().toLowerCase();
+  var container = document.getElementById('rulesListContainer');
+  if (!container) return;
+
+  container.querySelectorAll('.rule-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    item.style.display = (!query || text.indexOf(query) !== -1) ? '' : 'none';
+  });
+
+  container.querySelectorAll('.rule-subgroup').forEach(function(sub) {
+    var visibleItems = sub.querySelectorAll('.rule-item:not([style*="display: none"])');
+    var hasMatch = visibleItems.length > 0;
+    sub.style.display = hasMatch ? '' : 'none';
+    if (query && hasMatch) sub.classList.add('expanded');
+    else if (!query) sub.classList.remove('expanded');
+  });
+
+  container.querySelectorAll('.rule-group').forEach(function(grp) {
+    var visibleSubs = grp.querySelectorAll('.rule-subgroup:not([style*="display: none"])');
+    var hasMatch = visibleSubs.length > 0;
+    grp.style.display = hasMatch ? '' : 'none';
+    if (query && hasMatch) grp.classList.add('expanded');
+    else if (!query) grp.classList.remove('expanded');
+  });
+}
+
+var _moveRuleTargetName = null;
+
+function openMoveRuleDialog(ruleName) {
+  _moveRuleTargetName = ruleName;
+  var rule = _currentRulesData.find(function(r) { return r.Name === ruleName; });
+  if (!rule) return;
+
+  var existingSections = {};
+  _currentRulesData.forEach(function(r) { if (r.Section) existingSections[r.Section] = true; });
+  var sectionSelect = document.getElementById('moveRuleSectionSelect');
+  sectionSelect.innerHTML = Object.keys(existingSections).sort().map(function(s) {
+    var sel = (s === rule.Section) ? 'selected' : '';
+    return '<option value="'+esc(s)+'" '+sel+'>'+esc(s)+'</option>';
+  }).join('') + '<option value="__NEW__">+ Neue Section...</option>';
+  document.getElementById('moveRuleSectionCustom').style.display = 'none';
+  document.getElementById('moveRuleSectionCustom').value = '';
+
+  populateSubsectionSelect(rule.Section, rule.Subsection);
+
+  document.getElementById('moveRuleOverlay').classList.add('open');
+}
+
+function populateSubsectionSelect(section, currentSub) {
+  var existingSubs = {};
+  _currentRulesData.forEach(function(r) { if (r.Section === section && r.Subsection) existingSubs[r.Subsection] = true; });
+  var subSelect = document.getElementById('moveRuleSubsectionSelect');
+  subSelect.innerHTML = Object.keys(existingSubs).sort().map(function(s) {
+    var sel = (s === currentSub) ? 'selected' : '';
+    return '<option value="'+esc(s)+'" '+sel+'>'+esc(s)+'</option>';
+  }).join('') + '<option value="__NEW__">+ Neues Unterthema...</option>';
+  document.getElementById('moveRuleSubsectionCustom').style.display = 'none';
+  document.getElementById('moveRuleSubsectionCustom').value = '';
+}
+
+function onMoveSectionChange() {
+  var val = document.getElementById('moveRuleSectionSelect').value;
+  var customInput = document.getElementById('moveRuleSectionCustom');
+  if (val === '__NEW__') {
+    customInput.style.display = 'block';
+    customInput.focus();
+    populateSubsectionSelect('__NEW__', null);
+  } else {
+    customInput.style.display = 'none';
+    populateSubsectionSelect(val, null);
+  }
+}
+
+function onMoveSubsectionChange() {
+  var val = document.getElementById('moveRuleSubsectionSelect').value;
+  var customInput = document.getElementById('moveRuleSubsectionCustom');
+  customInput.style.display = (val === '__NEW__') ? 'block' : 'none';
+  if (val === '__NEW__') customInput.focus();
+}
+
+function closeMoveRuleDialog() {
+  document.getElementById('moveRuleOverlay').classList.remove('open');
+  _moveRuleTargetName = null;
+}
+
+function confirmMoveRule() {
+  if (!_moveRuleTargetName) return;
+  var sectionVal = document.getElementById('moveRuleSectionSelect').value;
+  var section = (sectionVal === '__NEW__') ? document.getElementById('moveRuleSectionCustom').value.trim() : sectionVal;
+  var subVal = document.getElementById('moveRuleSubsectionSelect').value;
+  var sub = (subVal === '__NEW__') ? document.getElementById('moveRuleSubsectionCustom').value.trim() : subVal;
+
+  if (!section || !sub) {
+    showToast('Bitte Section und Unterthema angeben!');
+    return;
+  }
+
+  var rule = _currentRulesData.find(function(r) { return r.Name === _moveRuleTargetName; });
+  if (rule) {
+    rule.Section = section;
+    rule.Subsection = sub;
+  }
+
+  closeMoveRuleDialog();
+  renderRulesUI(_currentRulesData);
+  showToast('Regel verschoben. Klicke "Save Settings" zum Speichern.');
 }
 
 function toggleAddCustomRuleForm() {
@@ -832,6 +1049,7 @@ function addNewCustomRule() {
   var name = document.getElementById('newRuleName').value.trim();
   var desc = document.getElementById('newRuleDesc').value.trim();
   var prompt = document.getElementById('newRulePrompt').value.trim();
+  var refUrl = document.getElementById('newRuleRefUrl').value.trim();
   
   var finalGroup = (groupSelect === '__NEW__') ? customGroup : groupSelect;
   if (!finalGroup) {
@@ -849,12 +1067,14 @@ function addNewCustomRule() {
     "Type": finalGroup,
     "RuleKind": kind,
     "CustomPrompt": prompt || desc,
+    "ReferenceUrl": refUrl || null,
     "IsEnabled": true,
     "IsConfigurable": false,
     "Parameter": "-1"
   };
 
   _currentRulesData.push(newRule);
+  _pendingNewCustomRules.push(newRule);
   renderRulesUI(_currentRulesData);
   showToast('New rule added! Click "Save Settings".');
 }
@@ -877,6 +1097,10 @@ function saveRulesSettings() {
       btn.disabled = false;
       closeRulesSettings();
       showToast('Settings & Drive JSON saved.');
+      if (_pendingNewCustomRules.length) {
+        google.script.run.apiLogNewCustomRules(_pendingNewCustomRules, _currentRulesLang);
+        _pendingNewCustomRules = [];
+      }
     })
     .withFailureHandler(function(err) {
       btn.innerText = 'Save Settings';
@@ -885,6 +1109,32 @@ function saveRulesSettings() {
     })
     .apiSaveRulesConfig(updatedRules, _currentRulesLang);
 }
+function exportAllRulesToLogSheet() {
+  if (!confirm('Alle ' + _currentRulesData.length + ' aktuell geladenen Regeln (Standard + deine eigenen Custom-Regeln) einmalig in das zentrale Log-Sheet schreiben?')) return;
+  showToast('Exportiere alle Regeln ins Log-Sheet...');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      showToast(res.exported + ' Regeln ins Log-Sheet geschrieben.');
+    })
+    .withFailureHandler(function(err) {
+      showToast('Fehler: ' + (err.message || err));
+    })
+    .apiExportAllRulesToLogSheet(_currentRulesData, _currentRulesLang);
+}
+
+function exportRulesOverview() {
+  showToast('Building overview...');
+  google.script.run
+    .withSuccessHandler(function(url) {
+      showToast('Overview ready, opening...');
+      window.open(url, '_blank');
+    })
+    .withFailureHandler(function(err) {
+      showToast('Error: ' + (err.message || err));
+    })
+    .apiExportRulesOverview(_currentRulesData);
+}
+
 function exportRulesToDrive() {
   showToast('Exporting to Google Drive...');
   google.script.run
@@ -912,6 +1162,7 @@ function importRulesFile(event) {
           _currentRulesData[idx] = imp;
         } else {
           _currentRulesData.push(imp);
+          if (imp.Name && imp.Name.indexOf('CUSTOM_') === 0) _pendingNewCustomRules.push(imp);
         }
       });
       renderRulesUI(_currentRulesData);
