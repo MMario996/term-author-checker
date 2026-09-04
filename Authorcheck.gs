@@ -236,8 +236,11 @@ function apiApplyAuthorCheckFix(original, suggestion) {
       var el = found.getElement().asText();
       var start = found.getStartOffset();
       var end = found.getEndOffsetInclusive();
+      var attrs = el.getAttributes(start);
       el.deleteText(start, end);
       el.insertText(start, suggestion);
+      var newEnd = start + suggestion.length - 1;
+      if (newEnd >= start) el.setAttributes(start, newEnd, attrs);
       count++;
       found = body.findText(_escapeRegexAC_(original));
     }
@@ -390,6 +393,63 @@ function apiCommentIssue(originalText, suggestion, explanation) {
 
 function apiBackToHomepage() {
   return true;
+}
+
+/**
+ * Exportiert die komplette Regel-?bersicht (aktuelle Sprache) als Google Sheet,
+ * sortiert und filterbar nach Section/Unterthema.
+ */
+function apiExportRulesOverview(rules) {
+  if (!rules || !rules.length) throw new Error("No rules to export.");
+
+  var title = "AuthorCheck_Rules_Overview_" + new Date().toISOString().slice(0, 10);
+  var ss = SpreadsheetApp.create(title);
+  var sheet = ss.getActiveSheet();
+  sheet.setName("Rules Overview");
+
+  var headers = ["Section", "Subsection", "Type", "Name", "Enabled", "Configurable", "Parameter", "Rule Kind", "Description", "Reference URL"];
+  var rows = [headers];
+
+  rules
+    .slice()
+    .sort(function(a, b) {
+      var sa = (a.Section || "") + "|" + (a.Subsection || "");
+      var sb = (b.Section || "") + "|" + (b.Subsection || "");
+      return sa.localeCompare(sb);
+    })
+    .forEach(function(r) {
+      rows.push([
+        r.Section || "",
+        r.Subsection || "",
+        r.Type || "",
+        r.Name || "",
+        r.IsEnabled ? "Yes" : "No",
+        r.IsConfigurable ? "Yes" : "No",
+        r.Parameter != null ? String(r.Parameter) : "",
+        r.RuleKind || "",
+        r.Description || "",
+        r.ReferenceUrl || ""
+      ]);
+    });
+
+  var numRows = rows.length;
+  var numCols = headers.length;
+  var range = sheet.getRange(1, 1, numRows, numCols);
+  range.setValues(rows);
+
+  sheet.getRange(1, 1, 1, numCols)
+    .setFontWeight("bold")
+    .setBackground("#FFED00")
+    .setFontColor("#3A3A3A");
+  sheet.setFrozenRows(1);
+  range.setVerticalAlignment("top")
+    .setBorder(true, true, true, true, true, true, "#DDDDDD", SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(1, 1, numRows, numCols).createFilter();
+  sheet.autoResizeColumns(1, numCols - 1);
+  sheet.setColumnWidth(numCols - 1, 350);
+  sheet.setColumnWidth(numCols, 250);
+
+  return ss.getUrl();
 }
 
 /**
