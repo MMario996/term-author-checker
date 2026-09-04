@@ -570,6 +570,7 @@ button, input, select, textarea{ font-family:inherit; }
         <div class="form-row"><label>Phrase API Token</label><input type="password" id="set-token" placeholder="Leave unchanged if already set"></div>
         <div class="form-row"><label>Admin Emails</label><input type="text" id="set-admins" placeholder="a@karcher.com, b@karcher.com"></div>
         <div class="form-row"><label>Allowed Termbase UIDs (comma-separated, optional)</label><input type="text" id="set-allowed-tb"></div>
+        <div class="form-row"><label>Custom Rules Log Sheet ID (optional)</label><input type="text" id="set-custom-rules-log-sheet" placeholder="Sheet-ID aus der URL"><div class="hint">Zentrales Google Sheet, in das neu angelegte Author-Check-Regeln aller Nutzer geloggt werden. Muss vorher mit Bearbeiten-Zugriff f?r alle betroffenen Nutzer geteilt sein.</div></div>
         <div class="form-row"><label>Gemini API Key (Apigee)</label><input type="password" id="set-gemini-key" placeholder="Leave unchanged if already set"></div>
         <div class="form-row"><label>Gemini Apigee Proxy URL</label><input type="text" id="set-gemini-url"><div class="hint">Apigee proxy URL (z.B. https://34-111-99-134.nip.io/gemini/v1beta/models/) ? auth via x-api-key header.</div></div>
         <div class="form-row-2">
@@ -1397,6 +1398,7 @@ function openAdmin(){
     document.getElementById('set-token').placeholder = s.PHRASE_API_TOKEN || 'Set token';
     document.getElementById('set-admins').value = s.ADMIN_EMAILS || '';
     document.getElementById('set-allowed-tb').value = s.ALLOWED_TB_UIDS || '';
+    document.getElementById('set-custom-rules-log-sheet').value = s.CUSTOM_RULES_LOG_SHEET_ID || '';
     document.getElementById('set-gemini-key').value = '';
     document.getElementById('set-gemini-key').placeholder = s.GEMINI_API_KEY || 'Set Gemini key';
     document.getElementById('set-gemini-url').value = s.GEMINI_API_URL || '';
@@ -1444,6 +1446,7 @@ function saveAdminSettings(){
     PHRASE_API_TOKEN: document.getElementById('set-token').value,
     ADMIN_EMAILS: document.getElementById('set-admins').value,
     ALLOWED_TB_UIDS: document.getElementById('set-allowed-tb').value,
+    CUSTOM_RULES_LOG_SHEET_ID: document.getElementById('set-custom-rules-log-sheet').value,
     GEMINI_API_KEY: document.getElementById('set-gemini-key').value,
     GEMINI_API_URL: document.getElementById('set-gemini-url').value,
     AI_MODEL: document.getElementById('set-ai-model').value,
