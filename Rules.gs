@@ -6010,13 +6010,206 @@ function _getOrCreateRulesFolder_() {
   }
 }
 
-function apiGetRulesConfig() {
+// ============================================================================
+// SECTION MAPPING (folgt deiner Allgemein/Technisch/Marketing-Sortierung oben)
+// ============================================================================
+// Nur Style-Regeln werden weiter unterteilt. Terminology, Grammar, Spelling
+// und Abbreviation bleiben jeweils eine eigene Section, unabh?ngig davon,
+// in welchem Block sie oben stehen.
+var STYLE_SECTION_GENERAL = ["110de", "111de", "113de", "114de", "121de", "140de", "141de", "142de", "143de", "150de", "1601de", "161de", "162de", "163de", "165de", "1661de", "1662de", "166de", "167de", "168de", "1691de", "169de", "170de", "171de", "172de", "173de", "180de", "181de", "182de", "190de", "191de", "192de", "193de", "210de", "220de", "221de", "230de", "240de", "310de", "311de", "312de", "313de", "314de", "315de", "316de", "317de", "321de", "322de", "330de", "331de", "332de", "334de", "335de", "336de", "337de", "339de", "340de", "341de", "342de", "343de", "344de", "345de", "346de", "349de", "350de", "353de", "360de", "361de", "362de", "363de", "364de", "365de", "366de", "367de", "368de", "3441de", "3442de", "3443de", "3444de", "3691de", "372de", "380de", "410de", "411de", "420de", "430de", "431de", "440de", "441de", "442de", "510de", "511de", "512de", "514de", "520de", "521de", "530de", "5301de", "531de", "532de", "533de", "534de", "540de", "541de", "542de", "543de", "550de", "560de", "561de", "562de", "563de", "610de", "611de", "620de", "621de", "622de", "623de", "624de", "630de", "710de", "711de", "720de", "722de", "723de", "7221de", "724de", "730de", "733de", "734de", "740de", "741de", "750de", "751de", "752de", "753de", "760de", "761de", "7611de", "762de", "763de", "764de", "770de", "771de", "772de", "780de", "781de", "930de", "3912de", "3921de", "3922de", "950001de", "950002de", "950003de", "950004de", "951000de", "951102de", "951103de", "951111de", "951112de", "951113de", "951114de", "951115de", "951116de", "951202de", "951302de", "951402de", "952101de", "952102de", "952103de", "952302de", "952303de", "952401de", "952503de", "952601de", "952602de", "952701de", "952801de", "952802de", "952803de", "953101de", "953102de", "953202de", "953203de", "954102de", "954103de", "954301de", "954302de", "954303de", "954401de", "954402de", "954502de", "955101de", "955102de", "955103de", "955201de", "955202de", "955203de", "955301de", "955302de", "955303de", "955402de", "955502de", "955503de", "956101de", "956201de", "957101de", "957102de", "957202de", "957303de", "958101de", "958102de", "958201de", "958202de", "958203de", "958301de", "958302de", "958303de", "958403de", "79003de", "def101de", "def102de", "def103de", "def104de", "def106de", "def107de", "def108de", "def110de", "def210de", "def220de", "gc1de", "gc2de", "gc3de", "gc4de", "gc6de", "gc7de", "gc8de"];
+var STYLE_SECTION_TECHNICAL = ["112de", "1221de", "122de", "1301de", "1302de", "1303de", "130de", "1311de", "131de", "1321de", "133de", "134de", "135de", "136de", "1371de", "1372de", "137de", "1381de", "1382de", "138de", "139de", "163de", "170de", "1311de", "321de", "322de", "371de", "372de", "563de", "621de", "623de", "624de", "760de", "761de", "7611de", "762de", "763de", "764de", "721de", "def110de", "gk0001de", "gk0002de", "gk1001de", "gk1002de", "gk1003de", "gk1004de", "gk1005de", "gk1006de", "gk2001de", "gk3001de", "gk3002de", "gk3003de", "gk3004de", "gk3005de", "gk4001de", "gk5001de", "gk5002de", "gk6001de"];
+var STYLE_SECTION_MARKETING = ["333de", "338de", "351de", "352de", "3692de", "369de", "3911de", "3921de", "3922de", "3930de", "625de", "731de", "732de", "735de", "737de", "781de", "79001de", "79002de", "950002de", "950003de", "950004de", "951103de", "736de"];
+
+function _getSubsectionForRule_(rule) {
+  if (rule.Type === "Terminology") {
+    if (["ADM","DEFTERM","DEPR","POSNEG","VARPOSADM","VARPOSNEG","VARDEPR","PARTDEPR"].indexOf(rule.Name) !== -1) return "Term Status";
+    if (["VARPREF","VARCAP","NIETERM"].indexOf(rule.Name) !== -1) return "Spelling Variants";
+    return "Grammar Agreement";
+  }
+  if (rule.Type === "Spelling") {
+    if (["43","44","44EWfrag","45"].indexOf(rule.Name) !== -1) return "Capitalization";
+    if (["unknown","unknownpers","unknowntopo","unknownstreet","uh","nhaequ","fabk","funit","space","space_bl","letter"].indexOf(rule.Name) !== -1) return "Unknown & Misspelled Words";
+    return "Other Spelling";
+  }
+  if (rule.Type === "Grammar") {
+    if (/^5\d{3,4}de$/.test(rule.Name) || rule.Name === "73de" || rule.Name === "4412de" || rule.Name === "44115de") return "Punctuation & Commas";
+    if (/^24\d+de$/.test(rule.Name) || ["2413de","2422de","2417de"].indexOf(rule.Name) !== -1) return "Capitalization";
+    if (/^31\d+(de|pro)$/.test(rule.Name) || ["252de","2515de"].indexOf(rule.Name) !== -1) return "Word Spacing (Compound Words)";
+    if (/^316\d*de$/.test(rule.Name) || ["168de","169de","1691de","214de","213de","211de","212de","215de"].indexOf(rule.Name) !== -1) return "Hyphenation & Word Formation";
+    if (/^6\d+de$/.test(rule.Name) || ["24213de","24212de"].indexOf(rule.Name) !== -1) return "Numbers, Units & Symbols";
+    return "Other Grammar";
+  }
+  if (rule.Type === "Style") {
+    if (/^9\d{5}de$/.test(rule.Name)) return "Non-Discriminatory Language";
+    if (typeof STYLE_SECTION_TECHNICAL !== "undefined" && STYLE_SECTION_TECHNICAL.indexOf(rule.Name) !== -1) {
+      if (/^gk/.test(rule.Name)) return "Constituent Recognition (GK)";
+      if (/^(112de|1221de|122de|130de|1301de|1302de|1303de|1311de|131de|1321de|133de|134de|135de|136de|137de|1371de|1372de|138de|1381de|1382de|139de)$/.test(rule.Name)) return "Numbers & Units";
+      return "Definitions & Structure";
+    }
+    if (typeof STYLE_SECTION_MARKETING !== "undefined" && STYLE_SECTION_MARKETING.indexOf(rule.Name) !== -1) {
+      if (["3921de","3922de","3930de"].indexOf(rule.Name) !== -1) return "Superlatives & Overselling";
+      return "Tone & Address";
+    }
+    if (/^(510de|511de|512de|514de|530de|5301de|531de|532de|533de|534de|540de|541de|542de|543de|550de|560de|561de|562de|563de|610de|611de|620de|621de|622de|623de|624de|630de|710de|711de|720de|722de|723de|7221de|724de|730de|733de|734de|740de|741de|750de|751de|752de|753de)$/.test(rule.Name)) return "Sentence Structure";
+    if (/^(310de|311de|312de|313de|314de|315de|316de|317de|321de|322de|330de|331de|332de|334de|335de|336de|337de|339de|340de|341de|342de|343de|344de|345de|346de|349de|350de|353de|360de|361de|362de|363de|364de|365de|366de|367de|368de|3441de|3442de|3443de|3444de|3691de|372de|380de|410de|780de|781de)$/.test(rule.Name)) return "Word Choice";
+    return "Punctuation, Brackets & Compounds";
+  }
+  return "General";
+}
+
+function _getSectionForRule_(rule) {
+  if (rule.Type === "Terminology") return "Terminology";
+  if (rule.Type === "Grammar") return "Grammar";
+  if (rule.Type === "Spelling") return "Spelling";
+  if (rule.Type === "Abbreviation") return "Spelling";
+
+  if (rule.Type === "Style") {
+    if (STYLE_SECTION_MARKETING.indexOf(rule.Name) !== -1) return "Style (Marketing)";
+    if (STYLE_SECTION_TECHNICAL.indexOf(rule.Name) !== -1) return "Style (Technical Documentation)";
+    if (STYLE_SECTION_GENERAL.indexOf(rule.Name) !== -1) return "Style (General)";
+    return "Style (General)";
+  }
+
+  return rule.Type || "Other";
+}
+
+// ============================================================================
+// LANGUAGE CONFIGURATION
+// ============================================================================
+var DEFAULT_RULES_CONFIG_EN = [
+  { "Description": "Display of admitted term status", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "ADM", "Type": "Terminology", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Default term notification", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "DEFTERM", "Type": "Terminology", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Deprecated term, suggests a positive alternative", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "DEPR", "Type": "Terminology", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Don't forget the plural form", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NUMBER", "Type": "Terminology", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Deprecated/preferred term, suggests a replacement for a deprecated term", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "POSNEG", "Type": "Terminology", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Variant of a preferred term and an admitted term", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "VARPOSADM", "Type": "Terminology", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Variant of POSNEG", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "VARPOSNEG", "Type": "Terminology", "Parameter": "-1", "IsEnabled": true },
+
+  { "Description": "Avoid exclamation marks at the end of a sentence", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "190de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid semicolons", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "191de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid ambiguous possessive constructions", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "220de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid ambiguous location references", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "230de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid stacking too many attributes in front of a noun", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "510de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid too many prepositional phrases in one sentence", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "5", "AllowedParameterValues": ["2","3","4","5","6","7","8","9","10"], "Name": "511de", "Type": "Style", "Parameter": "5", "IsEnabled": true },
+  { "Description": "Avoid too many units of meaning in one sentence", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "8", "AllowedParameterValues": ["5","6","7","8","9","10"], "Name": "512de", "Type": "Style", "Parameter": "8", "IsEnabled": true },
+  { "Description": "Avoid complex attributes", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "7", "AllowedParameterValues": ["5","6","7","8","9","10"], "Name": "514de", "Type": "Style", "Parameter": "7", "IsEnabled": true },
+  { "Description": "Keep sentences short", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "26", "AllowedParameterValues": ["15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40"], "Name": "530de", "Type": "Style", "Parameter": "26", "IsEnabled": true },
+  { "Description": "Avoid coordinating too many main clauses", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "532de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid long parenthetical insertions", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "6", "AllowedParameterValues": ["3","4","5","6","7","8","9","10"], "Name": "534de", "Type": "Style", "Parameter": "6", "IsEnabled": true },
+  { "Description": "Avoid two or more parenthetical insertions in one sentence", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "560de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Mention plural forms in brackets, avoid where possible", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "561de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Follow chronological order in instructions", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "620de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Put the subject before the object in case of ambiguity", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "630de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid passive voice with an explicit agent (\"by...\")", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "710de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid passive voice", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "711de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid too many nominalizations", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "6", "AllowedParameterValues": ["3","4","5","6","7","8"], "Name": "720de", "Type": "Style", "Parameter": "6", "IsEnabled": true },
+  { "Description": "Avoid modal verbs in passive voice", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "734de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid double negation", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "740de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid strong negation", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "741de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid too many adjectives", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "3", "AllowedParameterValues": ["2","3","4","5","6","7","8","9","10"], "Name": "780de", "Type": "Style", "Parameter": "3", "IsEnabled": true },
+  { "Description": "Avoid superlatives", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "781de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid internet slang", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "79001de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid emoticons and emojis", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "79002de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid placeholder/lorem-ipsum text", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "79003de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+
+  { "Description": "Avoid discriminatory language in general", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "950001de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid relativizing phrases", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "950002de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid generalizations", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "950003de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid unfriendly and derogatory expressions", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "950004de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Use inclusive language", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "951000de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory terms for people based on origin", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952101de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid racist terms for people", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952102de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check terms that discriminate based on origin", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952103de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory geographic terms", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952302de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check geographic terms", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952303de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Words containing discriminatory terms for people", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952401de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check geopolitically questionable terms", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952503de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory or euphemistic terms", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952601de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory terms related to origin", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952602de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory verbs related to a person's origin", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952701de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory adjectives related to a person's origin", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952801de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory adjectives related to a person's origin", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952802de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check discriminatory adjectives related to a person's origin", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "952803de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory terms based on sexual orientation", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "953101de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory terms based on sexual orientation", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "953102de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory terms referring to a person's sexual orientation", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "953202de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check discriminatory terms referring to a person's sexual orientation", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "953203de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory terms based on age", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "954102de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check terms referring to a specific age", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "954103de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly age-discriminatory terms", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "954301de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid age-discriminatory terms", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "954302de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check age-discriminatory terms", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "954303de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly age-discriminatory adjectives", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "954401de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid age-discriminatory adjectives", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "954402de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid age-discriminatory verbs", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "954502de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory terms for people with disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955101de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory terms for people with disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955102de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check discriminatory terms for people with disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955103de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory adjectives related to disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955201de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory adjectives related to disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955202de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check discriminatory adjectives related to disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955203de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory terms related to disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955301de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory terms related to disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955302de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check discriminatory terms related to disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955303de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory verbs related to disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955402de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory phrases related to disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955502de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check discriminatory phrases related to disabilities", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "955503de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory terms based on religious affiliation", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "956101de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Discriminatory terms related to religion and belief", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "956201de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory terms related to gender identity", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "957101de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory terms related to gender identity", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "957102de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory terms related to gender identity", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "957202de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check discriminatory phrases related to gender identity", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "957303de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory terms based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958101de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory terms based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958102de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory terms based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958201de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid terms discriminating based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958202de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check terms discriminating based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958203de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Strongly discriminatory adjectives based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958301de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid discriminatory adjectives based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958302de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check discriminatory adjectives based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958303de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check discriminatory verbs based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958403de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+
+  { "Description": "Avoid excessive politeness fillers like \"please\"", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "333de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid first person (\"I\"/\"we\")", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "732de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid directly addressing the reader", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "736de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
+  { "Description": "Avoid empty phrases and clich?s", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "338de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid exception phrasing", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "351de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid hedging and softening words", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "352de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid colloquial words", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "369de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid negatively connotated expressions", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "3911de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid comparative or superlative forms of already intensified adjectives", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "3921de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Check the comparison form of the adjective", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "3922de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid arrogant, overselling phrases", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "3930de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "State the benefit before the feature", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "625de", "Type": "Style", "Parameter": null, "IsEnabled": false }
+];
+
+function _getDefaultRulesForLanguage_(language) {
+  return language === "en" ? DEFAULT_RULES_CONFIG_EN : DEFAULT_RULES_CONFIG;
+}
+function _getOverridesPropertyKey_(language) {
+  return language === "en" ? "AUTHORCHECK_RULES_EN" : "AUTHORCHECK_RULES_DE";
+}
+function _getActiveRulesFileName_(language) {
+  return language === "en" ? "active_rules_en.json" : "active_rules_de.json";
+}
+
+// ============================================================================
+// RULE CONFIGURATION (language aware, with Section)
+// ============================================================================
+function apiGetRulesConfig(language) {
+  language = language || "de";
+  var defaults = _getDefaultRulesForLanguage_(language);
+
   var props = PropertiesService.getUserProperties();
-  var overridesStr = props.getProperty('AUTHORCHECK_RULES');
+  var overridesStr = props.getProperty(_getOverridesPropertyKey_(language));
   var overrides = overridesStr ? JSON.parse(overridesStr) : {};
 
-  var config = DEFAULT_RULES_CONFIG.map(function(rule) {
+  var config = defaults.map(function(rule) {
     var r = Object.assign({}, rule);
+    r.Language = language;
+    r.Section = (overrides[r.Name] && overrides[r.Name].Section) || _getSectionForRule_(r);
+    r.Subsection = (overrides[r.Name] && overrides[r.Name].Subsection) || _getSubsectionForRule_(r);
     if (overrides[r.Name]) {
       r.IsEnabled = overrides[r.Name].IsEnabled;
       if (r.IsConfigurable && overrides[r.Name].Parameter) {
@@ -6026,53 +6219,57 @@ function apiGetRulesConfig() {
     return r;
   });
 
-  // Zus?tzlich benutzerdefinierte Regeln aus der Drive-JSON laden
   try {
     var folder = _getOrCreateRulesFolder_();
-    var files = folder.getFilesByName("active_rules.json");
+    var files = folder.getFilesByName(_getActiveRulesFileName_(language));
     if (files.hasNext()) {
       var file = files.next();
       var driveRules = JSON.parse(file.getBlob().getDataAsString());
       if (Array.isArray(driveRules)) {
         driveRules.forEach(function(dr) {
           if (dr.Name && dr.Name.indexOf("CUSTOM_") === 0) {
+            dr.Language = language;
+            dr.Section = dr.Section || _getSectionForRule_(dr);
+            dr.Subsection = dr.Subsection || _getSubsectionForRule_(dr);
             config.push(dr);
           }
         });
       }
     }
   } catch(e) {
-    console.warn("Konnte Drive-Regeln nicht auslesen: " + e.message);
+    console.warn("Could not read Drive rules: " + e.message);
   }
 
   return config;
 }
 
-function apiSaveRulesConfig(updatedRules) {
+function apiSaveRulesConfig(updatedRules, language) {
+  language = language || "de";
   var props = PropertiesService.getUserProperties();
   var overrides = {};
-  
+
   updatedRules.forEach(function(rule) {
     overrides[rule.Name] = {
       IsEnabled: rule.IsEnabled,
-      Parameter: rule.Parameter
+      Parameter: rule.Parameter,
+      Section: rule.Section,
+      Subsection: rule.Subsection
     };
   });
-  
-  props.setProperty('AUTHORCHECK_RULES', JSON.stringify(overrides));
 
-  // Gleichzeitig in Drive den Ordner sicherstellen und active_rules.json ?berschreiben
-  apiExportRulesToDrive(updatedRules);
+  props.setProperty(_getOverridesPropertyKey_(language), JSON.stringify(overrides));
+  apiExportRulesToDrive(updatedRules, language);
   return { success: true };
 }
 
 /**
- * Speichert die Regeln als JSON in den Drive-Ordner "TermCheck Rules".
- * Existiert die Datei bereits, wird sie ?berschrieben.
+ * Saves the rules as JSON in the "TermCheck Rules" Drive folder.
+ * One file per language, overwritten if it already exists.
  */
-function apiExportRulesToDrive(rules) {
+function apiExportRulesToDrive(rules, language) {
+  language = language || "de";
   var folder = _getOrCreateRulesFolder_();
-  var fileName = "active_rules.json";
+  var fileName = _getActiveRulesFileName_(language);
   var jsonContent = JSON.stringify(rules, null, 2);
 
   var existingFiles = folder.getFilesByName(fileName);
@@ -6084,4 +6281,130 @@ function apiExportRulesToDrive(rules) {
   }
 
   return { success: true };
+}
+
+var CUSTOM_RULES_LOG_HEADERS = ["Timestamp", "Creator", "Language", "Origin", "Section", "Subsection", "Type", "Name", "Description", "Prompt", "Reference URL"];
+
+/**
+ * Holt das Tabellenblatt mit dem gegebenen Namen oder legt es an, falls es noch nicht existiert.
+ */
+function _getOrCreateNamedSheet_(ss, name) {
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) sheet = ss.insertSheet(name);
+  return sheet;
+}
+
+/**
+ * Stellt sicher, dass das Log-Sheet eine Kopfzeile hat, bevor Zeilen angeh?ngt werden.
+ */
+function _ensureLogSheetHeaders_(sheet) {
+  var firstCell = sheet.getRange(1, 1).getValue();
+  if (!firstCell) {
+    sheet.getRange(1, 1, 1, CUSTOM_RULES_LOG_HEADERS.length).setValues([CUSTOM_RULES_LOG_HEADERS]);
+    sheet.getRange(1, 1, 1, CUSTOM_RULES_LOG_HEADERS.length)
+      .setFontWeight("bold")
+      .setBackground("#FFED00")
+      .setFontColor("#3A3A3A");
+    sheet.setFrozenRows(1);
+  }
+}
+
+/**
+ * Loggt neu angelegte oder importierte Custom-Regeln zentral im Tabellenblatt "Custom"
+ * (nur anh?ngen, nie l?schen) + Mail an Admins, damit Admins mitbekommen, wenn
+ * irgendwer im Team eine neue Regel anlegt.
+ */
+function apiLogNewCustomRules(newRules, language) {
+  if (!newRules || !newRules.length) return { success: true, logged: 0 };
+  language = language || "de";
+
+  var props = PropertiesService.getScriptProperties();
+  var sheetId = (props.getProperty('CUSTOM_RULES_LOG_SHEET_ID') || '').trim();
+  var caller = getUserEmail_();
+  var timestamp = new Date();
+
+  if (sheetId) {
+    try {
+      var ss = SpreadsheetApp.openById(sheetId);
+      var sheet = _getOrCreateNamedSheet_(ss, 'Custom');
+      _ensureLogSheetHeaders_(sheet);
+      newRules.forEach(function(r) {
+        sheet.appendRow([
+          timestamp, caller, language, "Custom", r.Section || '', r.Subsection || '',
+          r.Type || '', r.Name || '', r.Description || '', r.CustomPrompt || '', r.ReferenceUrl || ''
+        ]);
+      });
+    } catch(e) {
+      console.warn("Konnte zentrales Regel-Log nicht schreiben: " + e.message);
+    }
+  }
+
+  try {
+    var admins = String(props.getProperty('ADMIN_EMAILS') || '').split(',').map(function(s){return s.trim();}).filter(Boolean);
+    if (admins.length) {
+      var lines = newRules.map(function(r) {
+        return '- [' + (r.Section || r.Type) + ' / ' + (r.Subsection || '-') + '] ' + r.Description;
+      }).join('\n');
+      MailApp.sendEmail({
+        to: admins.join(','),
+        subject: 'Neue Author-Check-Regel(n) von ' + caller,
+        body: caller + ' hat ' + newRules.length + ' neue Regel(n) angelegt (Sprache: ' + language + '):\n\n' + lines
+      });
+    }
+  } catch(e) {
+    console.warn("Konnte Admin-Benachrichtigung nicht senden: " + e.message);
+  }
+
+  return { success: true, logged: newRules.length };
+}
+
+/**
+ * Einmaliger Bulk-Export: schreibt NUR die Standardregeln (keine Custom-Regeln, die
+ * liegen bereits fortlaufend im Tabellenblatt "Custom") in das Tabellenblatt "Standard",
+ * das dabei jedes Mal komplett geleert und neu bef?llt wird, damit es immer den
+ * aktuellen Ist-Stand zeigt statt sich mit jedem Lauf zu duplizieren.
+ */
+function apiExportAllRulesToLogSheet(rules, language) {
+  var caller = getUserEmail_();
+  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: Nur Admins k?nnen den Bulk-Export ins Log-Sheet ausf?hren.");
+
+  if (!rules || !rules.length) throw new Error("No rules to export.");
+  language = language || "de";
+
+  var props = PropertiesService.getScriptProperties();
+  var sheetId = (props.getProperty('CUSTOM_RULES_LOG_SHEET_ID') || '').trim();
+  if (!sheetId) throw new Error("Kein Custom Rules Log Sheet hinterlegt (Admin-Einstellungen).");
+
+  var timestamp = new Date();
+  var ss = SpreadsheetApp.openById(sheetId);
+  var sheet = _getOrCreateNamedSheet_(ss, 'Standard');
+
+  var standardRules = rules.filter(function(r) {
+    return !(r.Name && r.Name.indexOf('CUSTOM_') === 0);
+  });
+
+  // Komplett leeren, damit "Standard" immer den aktuellen Gesamtstand der
+  // Standardregeln abbildet, statt sich mit jedem Lauf zu duplizieren.
+  sheet.clear();
+  _ensureLogSheetHeaders_(sheet);
+
+  var rows = standardRules.map(function(r) {
+    return [
+      timestamp,
+      'System',
+      language,
+      'Default',
+      r.Section || '',
+      r.Subsection || '',
+      r.Type || '',
+      r.Name || '',
+      r.Description || '',
+      r.CustomPrompt || '',
+      r.ReferenceUrl || ''
+    ];
+  });
+
+  sheet.getRange(2, 1, rows.length, CUSTOM_RULES_LOG_HEADERS.length).setValues(rows);
+
+  return { success: true, exported: rows.length };
 }
