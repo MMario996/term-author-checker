@@ -53,7 +53,8 @@ function apiGetSettings() {
     ADMIN_EMAILS: props.getProperty('ADMIN_EMAILS') || '',
     TEMPLATE_LLM: props.getProperty('TEMPLATE_LLM') || 'pNoERiZ1YTileyUe4Za1j6',
     TEMPLATE_ALG: props.getProperty('TEMPLATE_ALG') || 'arpmvYCEAqGl0OmKV9f3s3',
-    ALLOWED_TB_UIDS: props.getProperty('ALLOWED_TB_UIDS') || '',
+     ALLOWED_TB_UIDS: props.getProperty('ALLOWED_TB_UIDS') || '',
+    CUSTOM_RULES_LOG_SHEET_ID: props.getProperty('CUSTOM_RULES_LOG_SHEET_ID') || '',
     GEMINI_API_KEY: geminiKey ? '????????????????????????????' : '',
     GEMINI_API_URL: cleanUrl,
     AI_MODEL: props.getProperty('AI_MODEL') || 'gemini-3.6-flash',
@@ -83,6 +84,7 @@ function apiSaveSettings(data) {
   props.setProperty('TEMPLATE_LLM', (data.TEMPLATE_LLM || '').trim());
   props.setProperty('TEMPLATE_ALG', (data.TEMPLATE_ALG || '').trim());
   props.setProperty('ALLOWED_TB_UIDS', (data.ALLOWED_TB_UIDS || '').trim());
+  props.setProperty('CUSTOM_RULES_LOG_SHEET_ID', (data.CUSTOM_RULES_LOG_SHEET_ID || '').trim());
   props.setProperty('AI_MODEL', (data.AI_MODEL || '').trim());
   props.setProperty('AI_TEMPERATURE', (data.AI_TEMPERATURE || '').trim());
   
