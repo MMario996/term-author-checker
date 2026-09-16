@@ -83,26 +83,15 @@ function apiCheckDrivePdf(e) {
     }
     var base64 = Utilities.base64Encode(blob.getBytes());
 
-    var glossary = _buildTerminologyGlossary_(language);
-    var termListStr = glossary.length
-      ? glossary.map(function (p) { return '- ' + p.wrong + ' ? ' + p.correct; }).join('\n')
-      : '(keine spezifischen Eintr?ge f?r diese Sprache gefunden)';
-
-    var allRules = apiGetRulesConfig(language);
-    var activeRules = allRules.filter(function(r) { return r.IsEnabled; });
-    var standardRulesStr = activeRules
-      .filter(function(r) { return r.RuleKind !== 'PROMPT' && !r.CustomPrompt; })
-      .map(function(r) {
-        var param = (r.IsConfigurable && r.Parameter !== "-1" && r.Parameter !== null) ? " (Wert: " + r.Parameter + ")" : "";
-        return "- [" + r.Type + "] " + r.Description + param;
-      }).join('\n');
-    var customPromptsStr = activeRules
-      .filter(function(r) { return r.RuleKind === 'PROMPT' || (r.CustomPrompt && r.CustomPrompt.trim().length > 0); })
-      .map(function(r) {
-        return "- SPEZIFISCHE PR?FUNG [" + (r.Type || "Custom") + " -> " + r.Description + "]: " + r.CustomPrompt;
-      }).join('\n');
-    var rulesStr = (standardRulesStr || '(Keine Standardregeln)') +
-      (customPromptsStr ? '\n\nZUS?TZLICHE SPEZIFISCHE PR?FUNGEN:\n' + customPromptsStr : '');
+    var promptParts = _buildAuthorCheckPromptParts_(language, {
+      noGlossary: '(keine spezifischen Eintr?ge f?r diese Sprache gefunden)',
+      valueLabel: 'Wert',
+      specificCheckPrefix: 'SPEZIFISCHE PR?FUNG',
+      noStandardRules: '(Keine Standardregeln)',
+      additionalChecksHeader: 'ZUS?TZLICHE SPEZIFISCHE PR?FUNGEN'
+    });
+    var termListStr = promptParts.termListStr;
+    var rulesStr = promptParts.rulesStr;
 
     var languageNames = { de: 'German', en: 'English' };
     var targetLanguageName = languageNames[language] || language;
@@ -143,24 +132,11 @@ function apiCheckDrivePdf(e) {
       generationConfig: { temperature: temperature }
     });
 
-    var res = UrlFetchApp.fetch(call.url, {
+    var res = _fetchGeminiWithRetry_(call.url, {
       method: 'post', contentType: 'application/json',
       headers: call.headers, payload: JSON.stringify(call.body), muteHttpExceptions: true
     });
-    if (res.getResponseCode() !== 200) throw new Error('AI request failed (' + res.getResponseCode() + ').');
-
-    var data = JSON.parse(res.getContentText());
-    var respText;
-    try { respText = data.candidates[0].content.parts[0].text; }
-    catch (err) { throw new Error('Unexpected AI response structure.'); }
-
-    var clean = String(respText).replace(/```json/gi, '').replace(/```/g, '').trim();
-    var parsed;
-    try { parsed = JSON.parse(clean); }
-    catch (err) { throw new Error('AI response was not valid JSON.'); }
-
-    var issues = Array.isArray(parsed.issues) ? parsed.issues : [];
-    issues = issues.filter(function (i) { return i && i.original && i.suggestion; });
+    var issues = _parseGeminiIssuesResponse_(res, 'AI request failed');
 
     logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_CHECK_RUN', fileName + ' ? ' + issues.length + ' issue(s)');
 

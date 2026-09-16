@@ -17,6 +17,7 @@ const AUTHORCHECK_DEFAULT_PROMPT =
 'Regeln:\n' +
 '- "type" ist entweder "grammar", "terminology" oder "style".\n' +
 '- "original" muss ein EXAKTES, zusammenh?ngendes Zitat aus dem Originaltext sein.\n' +
+'- Ignoriere Passagen, die nicht in der Sprache {sourceLang} verfasst sind (z. B. fremdsprachige Abschnitte in einem mehrsprachigen Dokument); melde dort keine Fehler.\n' +
 '- Gib nur echte Fehler zur?ck, basierend auf den Vorgaben. Wenn keine Fehler gefunden werden, gib {"issues":[]} zur?ck.';
 
 // ??? ANSICHTEN: CHECKS IN DER SEITENLEISTE / RULES IM POPUP ???????????????
@@ -143,6 +144,60 @@ function _buildTerminologyGlossary_(sourceLang) {
   return unique;
 }
 
+// ??? GLOSSAR + REGELTEXT F?R DEN PROMPT (geteilt zwischen Docs/Sheets/Slides
+// und dem Drive-PDF-Check, damit eine Anpassung nicht an zwei Stellen gepflegt
+// werden muss) ?????????????????????????????????????????????????????????????
+// "labels" laesst jeden Aufrufer seine bisherige Formulierung (EN/DE) behalten,
+// damit dieses Refactoring den tatsaechlich an die KI gesendeten Text nicht
+// veraendert.
+function _buildAuthorCheckPromptParts_(lang, labels) {
+  var glossary = _buildTerminologyGlossary_(lang);
+  var termListStr = glossary.length
+    ? glossary.map(function (p) { return '- ' + p.wrong + ' ? ' + p.correct; }).join('\n')
+    : labels.noGlossary;
+
+  var allRules = apiGetRulesConfig(lang);
+  var activeRules = allRules.filter(function(r) { return r.IsEnabled; });
+
+  var standardRulesStr = activeRules
+    .filter(function(r) { return r.RuleKind !== 'PROMPT' && !r.CustomPrompt; })
+    .map(function(r) {
+      var param = (r.IsConfigurable && r.Parameter !== "-1" && r.Parameter !== null) ? " (" + labels.valueLabel + ": " + r.Parameter + ")" : "";
+      return "- [" + r.Type + "] " + r.Description + param;
+    }).join('\n');
+
+  var customPromptsStr = activeRules
+    .filter(function(r) { return r.RuleKind === 'PROMPT' || (r.CustomPrompt && r.CustomPrompt.trim().length > 0); })
+    .map(function(r) {
+      return "- " + labels.specificCheckPrefix + " [" + (r.Type || "Custom") + " -> " + r.Description + "]: " + r.CustomPrompt;
+    }).join('\n');
+
+  var rulesStr = (standardRulesStr || labels.noStandardRules) +
+    (customPromptsStr ? '\n\n' + labels.additionalChecksHeader + ':\n' + customPromptsStr : '');
+
+  return { glossary: glossary, termListStr: termListStr, rulesStr: rulesStr };
+}
+
+// Parst die Gemini-Antwort im {"issues":[...]} Format, gemeinsam genutzt von
+// apiRunAuthorCheck (Docs/Sheets/Slides) und apiCheckDrivePdf (Drive-Add-on).
+function _parseGeminiIssuesResponse_(res, requestFailedMessage) {
+  var code = res.getResponseCode();
+  if (code !== 200) throw new Error(requestFailedMessage + ' (' + code + ').');
+
+  var data = JSON.parse(res.getContentText());
+  var respText;
+  try { respText = data.candidates[0].content.parts[0].text; }
+  catch (e) { throw new Error('Unexpected AI response structure.'); }
+
+  var clean = String(respText).replace(/```json/gi, '').replace(/```/g, '').trim();
+  var parsed;
+  try { parsed = JSON.parse(clean); }
+  catch (e) { throw new Error('AI response was not valid JSON.'); }
+
+  var issues = Array.isArray(parsed.issues) ? parsed.issues : [];
+  return issues.filter(function (i) { return i && i.original && i.suggestion; });
+}
+
 // ??? HAUPTPR?FUNG ????????????????????????????????????????????????????????
 function apiRunAuthorCheck(sourceLang, checkScope) {
   var props = PropertiesService.getScriptProperties();
@@ -156,29 +211,16 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
   }
 
   var lang = sourceLang || 'de';
-  var glossary = _buildTerminologyGlossary_(lang);
-  var termListStr = glossary.length
-    ? glossary.map(function (p) { return '- ' + p.wrong + ' ? ' + p.correct; }).join('\n')
-    : '(no specific entries found for this language)';
-
-  var allRules = apiGetRulesConfig(lang);
-  var activeRules = allRules.filter(function(r) { return r.IsEnabled; });
-  
-  var standardRulesStr = activeRules
-    .filter(function(r) { return r.RuleKind !== 'PROMPT' && !r.CustomPrompt; })
-    .map(function(r) { 
-      var param = (r.IsConfigurable && r.Parameter !== "-1" && r.Parameter !== null) ? " (Value: " + r.Parameter + ")" : "";
-      return "- [" + r.Type + "] " + r.Description + param; 
-    }).join('\n');
-
-  var customPromptsStr = activeRules
-    .filter(function(r) { return r.RuleKind === 'PROMPT' || (r.CustomPrompt && r.CustomPrompt.trim().length > 0); })
-    .map(function(r) { 
-      return "- SPECIFIC CHECK [" + (r.Type || "Custom") + " -> " + r.Description + "]: " + r.CustomPrompt; 
-    }).join('\n');
-
-  var rulesStr = (standardRulesStr || '(No standard rules)') + 
-    (customPromptsStr ? '\n\nADDITIONAL SPECIFIC PROMPTS/CHECKS:\n' + customPromptsStr : '');
+  var promptParts = _buildAuthorCheckPromptParts_(lang, {
+    noGlossary: '(no specific entries found for this language)',
+    valueLabel: 'Value',
+    specificCheckPrefix: 'SPECIFIC CHECK',
+    noStandardRules: '(No standard rules)',
+    additionalChecksHeader: 'ADDITIONAL SPECIFIC PROMPTS/CHECKS'
+  });
+  var glossary = promptParts.glossary;
+  var termListStr = promptParts.termListStr;
+  var rulesStr = promptParts.rulesStr;
 
   var rawUrl = props.getProperty('GEMINI_API_URL') || 'https://34-111-99-134.nip.io/gemini/v1beta/models/';
   var apiUrl = rawUrl.split(']')[0].replace('[', '').trim();
@@ -197,25 +239,12 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
     generationConfig: { temperature: temperature }
   });
 
-  var res = UrlFetchApp.fetch(call.url, {
+  var res = _fetchGeminiWithRetry_(call.url, {
     method: 'post', contentType: 'application/json',
     headers: call.headers, payload: JSON.stringify(call.body), muteHttpExceptions: true
   });
-  var code = res.getResponseCode();
-  if (code !== 200) throw new Error('AI request failed (' + code + ').');
 
-  var data = JSON.parse(res.getContentText());
-  var respText;
-  try { respText = data.candidates[0].content.parts[0].text; }
-  catch (e) { throw new Error('Unexpected AI response structure.'); }
-
-  var clean = String(respText).replace(/```json/gi, '').replace(/```/g, '').trim();
-  var parsed;
-  try { parsed = JSON.parse(clean); }
-  catch (e) { throw new Error('AI response was not valid JSON.'); }
-
-  var issues = Array.isArray(parsed.issues) ? parsed.issues : [];
-  issues = issues.filter(function (i) { return i && i.original && i.suggestion; });
+  var issues = _parseGeminiIssuesResponse_(res, 'AI request failed');
   issues.forEach(function (issue, i) {
     issue.id = 'ac_' + i;
     if (issue.type !== 'terminology' && issue.type !== 'style') issue.type = 'grammar';

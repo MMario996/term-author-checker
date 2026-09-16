@@ -482,6 +482,22 @@ function _buildGeminiRequest_(apiUrl, model, apiKey, requestBody) {
   return { url: url, headers: headers, body: requestBody };
 }
 
+// Retry mit kurzem Backoff fuer transiente Gemini/Apigee-Fehler (Rate-Limit,
+// kurzzeitige Ueberlastung). Ohne das scheitert eine KI-Anfrage komplett an
+// einem einzelnen 429/503, obwohl ein zweiter Versuch oft sofort klappt.
+var GEMINI_RETRYABLE_CODES = [429, 500, 502, 503, 504];
+function _fetchGeminiWithRetry_(url, options, maxAttempts) {
+  maxAttempts = maxAttempts || 3;
+  var res;
+  for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+    res = UrlFetchApp.fetch(url, options);
+    var code = res.getResponseCode();
+    if (code < 400 || GEMINI_RETRYABLE_CODES.indexOf(code) === -1) return res;
+    if (attempt < maxAttempts) Utilities.sleep(500 * attempt);
+  }
+  return res;
+}
+
 function apiAiAssistedSearch(freeText, history, imageData) {
   freeText = String(freeText || '').trim();
   history = Array.isArray(history) ? history : [];
@@ -525,7 +541,7 @@ function apiAiAssistedSearch(freeText, history, imageData) {
     contents: contents,
     generationConfig: { temperature: temperature }
   });
-  var res = UrlFetchApp.fetch(call.url, {
+  var res = _fetchGeminiWithRetry_(call.url, {
     method: 'post', contentType: 'application/json',
     headers: call.headers,
     payload: JSON.stringify(call.body), muteHttpExceptions: true
