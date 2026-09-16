@@ -6016,8 +6016,8 @@ function _getOrCreateRulesFolder_() {
 // Nur Style-Regeln werden weiter unterteilt. Terminology, Grammar, Spelling
 // und Abbreviation bleiben jeweils eine eigene Section, unabh?ngig davon,
 // in welchem Block sie oben stehen.
-var STYLE_SECTION_GENERAL = ["110de", "111de", "113de", "114de", "121de", "140de", "141de", "142de", "143de", "150de", "1601de", "161de", "162de", "163de", "165de", "1661de", "1662de", "166de", "167de", "168de", "1691de", "169de", "170de", "171de", "172de", "173de", "180de", "181de", "182de", "190de", "191de", "192de", "193de", "210de", "220de", "221de", "230de", "240de", "310de", "311de", "312de", "313de", "314de", "315de", "316de", "317de", "321de", "322de", "330de", "331de", "332de", "334de", "335de", "336de", "337de", "339de", "340de", "341de", "342de", "343de", "344de", "345de", "346de", "349de", "350de", "353de", "360de", "361de", "362de", "363de", "364de", "365de", "366de", "367de", "368de", "3441de", "3442de", "3443de", "3444de", "3691de", "372de", "380de", "410de", "411de", "420de", "430de", "431de", "440de", "441de", "442de", "510de", "511de", "512de", "514de", "520de", "521de", "530de", "5301de", "531de", "532de", "533de", "534de", "540de", "541de", "542de", "543de", "550de", "560de", "561de", "562de", "563de", "610de", "611de", "620de", "621de", "622de", "623de", "624de", "630de", "710de", "711de", "720de", "722de", "723de", "7221de", "724de", "730de", "733de", "734de", "740de", "741de", "750de", "751de", "752de", "753de", "760de", "761de", "7611de", "762de", "763de", "764de", "770de", "771de", "772de", "780de", "781de", "930de", "3912de", "3921de", "3922de", "950001de", "950002de", "950003de", "950004de", "951000de", "951102de", "951103de", "951111de", "951112de", "951113de", "951114de", "951115de", "951116de", "951202de", "951302de", "951402de", "952101de", "952102de", "952103de", "952302de", "952303de", "952401de", "952503de", "952601de", "952602de", "952701de", "952801de", "952802de", "952803de", "953101de", "953102de", "953202de", "953203de", "954102de", "954103de", "954301de", "954302de", "954303de", "954401de", "954402de", "954502de", "955101de", "955102de", "955103de", "955201de", "955202de", "955203de", "955301de", "955302de", "955303de", "955402de", "955502de", "955503de", "956101de", "956201de", "957101de", "957102de", "957202de", "957303de", "958101de", "958102de", "958201de", "958202de", "958203de", "958301de", "958302de", "958303de", "958403de", "79003de", "def101de", "def102de", "def103de", "def104de", "def106de", "def107de", "def108de", "def110de", "def210de", "def220de", "gc1de", "gc2de", "gc3de", "gc4de", "gc6de", "gc7de", "gc8de"];
-var STYLE_SECTION_TECHNICAL = ["112de", "1221de", "122de", "1301de", "1302de", "1303de", "130de", "1311de", "131de", "1321de", "133de", "134de", "135de", "136de", "1371de", "1372de", "137de", "1381de", "1382de", "138de", "139de", "163de", "170de", "1311de", "321de", "322de", "371de", "372de", "563de", "621de", "623de", "624de", "760de", "761de", "7611de", "762de", "763de", "764de", "721de", "def110de", "gk0001de", "gk0002de", "gk1001de", "gk1002de", "gk1003de", "gk1004de", "gk1005de", "gk1006de", "gk2001de", "gk3001de", "gk3002de", "gk3003de", "gk3004de", "gk3005de", "gk4001de", "gk5001de", "gk5002de", "gk6001de"];
+var STYLE_SECTION_GENERAL = ["110de", "111de", "113de", "114de", "121de", "140de", "141de", "142de", "143de", "150de", "1601de", "161de", "162de", "165de", "1661de", "1662de", "166de", "167de", "168de", "1691de", "169de", "171de", "172de", "173de", "180de", "181de", "182de", "190de", "191de", "192de", "193de", "210de", "220de", "221de", "230de", "240de", "310de", "311de", "312de", "313de", "314de", "315de", "316de", "317de", "330de", "331de", "332de", "334de", "335de", "336de", "337de", "339de", "340de", "341de", "342de", "343de", "344de", "345de", "346de", "349de", "350de", "353de", "360de", "361de", "362de", "363de", "364de", "365de", "366de", "367de", "368de", "3441de", "3442de", "3443de", "3444de", "3691de", "380de", "410de", "411de", "420de", "430de", "431de", "440de", "441de", "442de", "510de", "511de", "512de", "514de", "520de", "521de", "530de", "5301de", "531de", "532de", "533de", "534de", "540de", "541de", "542de", "543de", "550de", "560de", "561de", "562de", "610de", "611de", "620de", "622de", "630de", "710de", "711de", "720de", "722de", "723de", "7221de", "724de", "730de", "733de", "734de", "740de", "741de", "750de", "751de", "752de", "753de", "770de", "771de", "772de", "780de", "930de", "3912de", "950001de", "951000de", "951102de", "951111de", "951112de", "951113de", "951114de", "951115de", "951116de", "951202de", "951302de", "951402de", "952101de", "952102de", "952103de", "952302de", "952303de", "952401de", "952503de", "952601de", "952602de", "952701de", "952801de", "952802de", "952803de", "953101de", "953102de", "953202de", "953203de", "954102de", "954103de", "954301de", "954302de", "954303de", "954401de", "954402de", "954502de", "955101de", "955102de", "955103de", "955201de", "955202de", "955203de", "955301de", "955302de", "955303de", "955402de", "955502de", "955503de", "956101de", "956201de", "957101de", "957102de", "957202de", "957303de", "958101de", "958102de", "958201de", "958202de", "958203de", "958301de", "958302de", "958303de", "958403de", "79003de", "def101de", "def102de", "def103de", "def104de", "def106de", "def107de", "def108de", "def210de", "def220de", "gc1de", "gc2de", "gc3de", "gc4de", "gc6de", "gc7de", "gc8de"];
+var STYLE_SECTION_TECHNICAL = ["112de", "1221de", "122de", "1301de", "1302de", "1303de", "130de", "1311de", "131de", "1321de", "133de", "134de", "135de", "136de", "1371de", "1372de", "137de", "1381de", "1382de", "138de", "139de", "163de", "170de", "321de", "322de", "371de", "372de", "563de", "621de", "623de", "624de", "760de", "761de", "7611de", "762de", "763de", "764de", "721de", "def110de", "gk0001de", "gk0002de", "gk1001de", "gk1002de", "gk1003de", "gk1004de", "gk1005de", "gk1006de", "gk2001de", "gk3001de", "gk3002de", "gk3003de", "gk3004de", "gk3005de", "gk4001de", "gk5001de", "gk5002de", "gk6001de"];
 var STYLE_SECTION_MARKETING = ["333de", "338de", "351de", "352de", "3692de", "369de", "3911de", "3921de", "3922de", "3930de", "625de", "731de", "732de", "735de", "737de", "781de", "79001de", "79002de", "950002de", "950003de", "950004de", "951103de", "736de"];
 
 function _getSubsectionForRule_(rule) {
@@ -6197,8 +6197,24 @@ function _getActiveRulesFileName_(language) {
 // ============================================================================
 // RULE CONFIGURATION (language aware, with Section)
 // ============================================================================
+// Wird bei jedem Author-Check-Lauf aufgerufen und macht sonst bei jedem Aufruf
+// einen vollen Drive-Roundtrip (Ordner suchen, Datei lesen, JSON parsen).
+// Ergebnis daher pro Nutzer cachen (UserCache, da Overrides userspezifisch sind).
+var AUTHORCHECK_RULES_CACHE_TTL = 3600;
+function _rulesConfigCacheKey_(language) {
+  return 'AUTHORCHECK_RULES_CONFIG_' + language;
+}
+
 function apiGetRulesConfig(language) {
   language = language || "de";
+
+  var cache = CacheService.getUserCache();
+  var cacheKey = _rulesConfigCacheKey_(language);
+  try {
+    var cached = cache.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+
   var defaults = _getDefaultRulesForLanguage_(language);
 
   var props = PropertiesService.getUserProperties();
@@ -6240,6 +6256,7 @@ function apiGetRulesConfig(language) {
     console.warn("Could not read Drive rules: " + e.message);
   }
 
+  try { cache.put(cacheKey, JSON.stringify(config), AUTHORCHECK_RULES_CACHE_TTL); } catch (e) {}
   return config;
 }
 
@@ -6259,6 +6276,7 @@ function apiSaveRulesConfig(updatedRules, language) {
 
   props.setProperty(_getOverridesPropertyKey_(language), JSON.stringify(overrides));
   apiExportRulesToDrive(updatedRules, language);
+  try { CacheService.getUserCache().remove(_rulesConfigCacheKey_(language)); } catch (e) {}
   return { success: true };
 }
 
