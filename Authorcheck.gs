@@ -339,7 +339,7 @@ function apiJumpToIssue(searchText) {
   } else if (SlidesApp.getActivePresentation()) {
     var pres = SlidesApp.getActivePresentation();
     var slides = pres.getSlides();
-    var cleanSearch = String(searchText).replace(/&nbsp;/g, ' ').replace(/ /g, ' ');
+    var cleanSearch = String(searchText).replace(/&nbsp;/g, ' ').replace(/?/g, ' ');
     for (var i = 0; i < slides.length; i++) {
       var shapes = slides[i].getShapes();
       for (var j = 0; j < shapes.length; j++) {
