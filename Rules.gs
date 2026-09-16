@@ -10,7 +10,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "CASE",
-      "Type": "Terminology",
+      "Type": "Grammar",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -22,7 +22,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "NUMBER",
-      "Type": "Terminology",
+      "Type": "Grammar",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -34,7 +34,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "ANA",
-      "Type": "Terminology",
+      "Type": "Grammar",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -46,7 +46,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "GENUS",
-      "Type": "Terminology",
+      "Type": "Grammar",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -96,7 +96,7 @@
       "Name": "VARPOSADM",
       "Type": "Terminology",
       "Parameter": "-1",
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Description": "Variante von POSNEG",
@@ -108,7 +108,7 @@
       "Name": "VARPOSNEG",
       "Type": "Terminology",
       "Parameter": "-1",
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Description": "Schreibvarianten von Negativtermen",
@@ -168,7 +168,7 @@
       "Name": "ADM",
       "Type": "Terminology",
       "Parameter": "-1",
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Description": "Schreibvarianten von Termen aus dem Benutzerw?rterbuch",
@@ -538,7 +538,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "gc8de",
-      "Type": "Style",
+      "Type": "Grammar",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -550,7 +550,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "gc6de",
-      "Type": "Style",
+      "Type": "Grammar",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -670,7 +670,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "gc7de",
-      "Type": "Style",
+      "Type": "Grammar",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -682,7 +682,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "gc3de",
-      "Type": "Style",
+      "Type": "Grammar",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -718,7 +718,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "gc2de",
-      "Type": "Style",
+      "Type": "Grammar",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -730,7 +730,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "gc1de",
-      "Type": "Style",
+      "Type": "Grammar",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -994,7 +994,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "764de",
-      "Type": "Style",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -1020,7 +1020,7 @@
       "Name": "122de",
       "Type": "Style",
       "Parameter": "-1",
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Description": "L?scht bestimmte Regelcodes im Zusammenhang mit Auslassungspunkten am Satzende",
@@ -1666,7 +1666,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "gc4de",
-      "Type": "Style",
+      "Type": "Grammar",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -1952,17 +1952,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "3",
-      "AllowedParameterValues": [
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
+      "AllowedParameterValues": ["2", "3", "4", "5", "6", "7", "8", "9", "10"],
       "Name": "780de",
       "Type": "Style",
       "Parameter": "3",
@@ -2062,7 +2052,7 @@
       "Name": "191de",
       "Type": "Style",
       "Parameter": "-1",
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Description": "Schweifklammern vermeiden",
@@ -2086,7 +2076,7 @@
       "Name": "190de",
       "Type": "Style",
       "Parameter": "-1",
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Description": "Schreibung von Tausenderzahlen ?berpr?fen (Punkt verwenden)",
@@ -2156,7 +2146,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "431de",
-      "Type": "Style",
+      "Type": "Grammar",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -2223,12 +2213,7 @@
     {
       "Description": "Direkte Anredeform vermeiden",
       "Information": "Kann nicht zusammen mit 735de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "735de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "735de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -2269,19 +2254,14 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "724de",
-      "Type": "Style",
+      "Type": "Grammar",
       "Parameter": null,
       "IsEnabled": false
     },
     {
       "Description": "Endungen im Genitiv Singular kontrollieren: es-Form verwenden",
       "Information": "Kann nicht zusammen mit 722de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "722de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "722de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -2305,19 +2285,14 @@
     {
       "Description": "Endungen im Genitiv Singular kontrollieren: s-Form verwenden",
       "Information": "Kann nicht zusammen mit 723de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "723de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "723de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "722de",
       "Type": "Style",
       "Parameter": "-1",
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Description": "Ungebr?uchliche Adjektive vermeiden",
@@ -2339,7 +2314,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "332de",
-      "Type": "Style",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -2442,12 +2417,7 @@
     {
       "Description": "Schreibweise von Ordinalzahlen kontrollieren",
       "Information": "Kann nicht zusammen mit 130de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "130de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "130de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -2459,12 +2429,7 @@
     {
       "Description": "Schreibweise von Kardinalzahlen kontrollieren",
       "Information": "Kann nicht zusammen mit 130de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "130de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "130de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -2512,16 +2477,7 @@
     {
       "Description": "Kardinalzahlen von 0-12 ausschreiben",
       "Information": "Kann nicht zusammen mit 131de oder 132de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "131de",
-          "Type": "Style"
-        },
-        {
-          "Name": "132de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "131de", "Type": "Style"}, {"Name": "132de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -2550,7 +2506,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "763de",
-      "Type": "Style",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -2562,7 +2518,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "762de",
-      "Type": "Style",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -2574,7 +2530,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "7611de",
-      "Type": "Style",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -2586,7 +2542,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "761de",
-      "Type": "Style",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -2598,7 +2554,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "760de",
-      "Type": "Style",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -2644,14 +2600,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "7",
-      "AllowedParameterValues": [
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
+      "AllowedParameterValues": ["5", "6", "7", "8", "9", "10"],
       "Name": "514de",
       "Type": "Style",
       "Parameter": "7",
@@ -2665,40 +2614,6 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "625de",
-      "Type": "Style",
-      "Parameter": null,
-      "IsEnabled": false
-    },
-    {
-      "Description": "T?tigkeit vor der Bedingung nennen",
-      "Information": "Kann nicht zusammen mit 621de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "621de",
-          "Type": "Style"
-        }
-      ],
-      "IsConfigurable": false,
-      "DefaultParameter": "-1",
-      "AllowedParameterValues": [],
-      "Name": "624de",
-      "Type": "Style",
-      "Parameter": null,
-      "IsEnabled": false
-    },
-    {
-      "Description": "Bedingung vor der T?tigkeit nennen",
-      "Information": "Kann nicht zusammen mit 624de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "624de",
-          "Type": "Style"
-        }
-      ],
-      "IsConfigurable": false,
-      "DefaultParameter": "-1",
-      "AllowedParameterValues": [],
-      "Name": "621de",
       "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
@@ -2723,7 +2638,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "533de",
-      "Type": "Style",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -3057,16 +2972,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "6",
-      "AllowedParameterValues": [
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
+      "AllowedParameterValues": ["3", "4", "5", "6", "7", "8", "9", "10"],
       "Name": "534de",
       "Type": "Style",
       "Parameter": "6",
@@ -3135,12 +3041,7 @@
     {
       "Description": "Infinitiv als Anredeform vermeiden",
       "Information": "Kann nicht zusammen mit 736de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "736de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "736de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -3167,17 +3068,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "5",
-      "AllowedParameterValues": [
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
+      "AllowedParameterValues": ["2", "3", "4", "5", "6", "7", "8", "9", "10"],
       "Name": "511de",
       "Type": "Style",
       "Parameter": "5",
@@ -3193,7 +3084,7 @@
       "Name": "711de",
       "Type": "Style",
       "Parameter": "-1",
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Description": "Zu viele Nominalisierungen vermeiden",
@@ -3201,14 +3092,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "6",
-      "AllowedParameterValues": [
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8"
-      ],
+      "AllowedParameterValues": ["3", "4", "5", "6", "7", "8"],
       "Name": "720de",
       "Type": "Style",
       "Parameter": "6",
@@ -3270,7 +3154,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "420de",
-      "Type": "Style",
+      "Type": "Grammar",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -3316,14 +3200,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "8",
-      "AllowedParameterValues": [
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
+      "AllowedParameterValues": ["5", "6", "7", "8", "9", "10"],
       "Name": "512de",
       "Type": "Style",
       "Parameter": "8",
@@ -3347,24 +3224,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "16",
-      "AllowedParameterValues": [
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16",
-        "17",
-        "18",
-        "19",
-        "20"
-      ],
+      "AllowedParameterValues": ["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"],
       "Name": "531de",
       "Type": "Style",
       "Parameter": "16",
@@ -3376,19 +3236,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "14",
-      "AllowedParameterValues": [
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16",
-        "17",
-        "18",
-        "19",
-        "20"
-      ],
+      "AllowedParameterValues": ["10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"],
       "Name": "610de",
       "Type": "Style",
       "Parameter": "14",
@@ -3421,12 +3269,7 @@
     {
       "Description": "Drei und mehr Klammereinsch?be vermeiden",
       "Information": "Kann nicht zusammen mit 560de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "560de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "560de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -3438,12 +3281,7 @@
     {
       "Description": "Zwei und mehr Klammereinsch?be vermeiden",
       "Information": "Kann nicht zusammen mit 562de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "562de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "562de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -3494,22 +3332,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "7",
-      "AllowedParameterValues": [
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15"
-      ],
+      "AllowedParameterValues": ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"],
       "Name": "182de",
       "Type": "Style",
       "Parameter": "7",
@@ -3559,7 +3382,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "141de",
-      "Type": "Style",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -3593,16 +3416,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "4",
-      "AllowedParameterValues": [
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
+      "AllowedParameterValues": ["3", "4", "5", "6", "7", "8", "9", "10"],
       "Name": "110de",
       "Type": "Style",
       "Parameter": "4",
@@ -3616,19 +3430,14 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "371de",
-      "Type": "Style",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
     {
       "Description": "Zwei und mehr Bedingungen innerhalb eines Satzes vermeiden",
       "Information": "Kann nicht zusammen mit 520de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "520de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "520de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -3640,12 +3449,7 @@
     {
       "Description": "Mehrere Bedingungen als Liste darstellen",
       "Information": "Kann nicht zusammen mit 521de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "521de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "521de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -3744,31 +3548,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "15",
-      "AllowedParameterValues": [
-        "8",
-        "9",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16",
-        "17",
-        "18",
-        "19",
-        "20",
-        "21",
-        "22",
-        "23",
-        "24",
-        "25",
-        "26",
-        "27",
-        "28",
-        "29",
-        "30"
-      ],
+      "AllowedParameterValues": ["8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"],
       "Name": "5301de",
       "Type": "Style",
       "Parameter": "15",
@@ -3780,34 +3560,7 @@
       "ConflictsWith": [],
       "IsConfigurable": true,
       "DefaultParameter": "26",
-      "AllowedParameterValues": [
-        "15",
-        "16",
-        "17",
-        "18",
-        "19",
-        "20",
-        "21",
-        "22",
-        "23",
-        "24",
-        "25",
-        "26",
-        "27",
-        "28",
-        "29",
-        "30",
-        "31",
-        "32",
-        "33",
-        "34",
-        "35",
-        "36",
-        "37",
-        "38",
-        "39",
-        "40"
-      ],
+      "AllowedParameterValues": ["15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40"],
       "Name": "530de",
       "Type": "Style",
       "Parameter": "26",
@@ -3900,12 +3653,7 @@
     {
       "Description": "Komposita mit Zahlw?rtern bilden",
       "Information": "Kann nicht zusammen mit 163de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "163de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "163de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -3917,12 +3665,7 @@
     {
       "Description": "Komposita mit Ziffern bilden",
       "Information": "Kann nicht zusammen mit 164de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "164de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "164de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -3934,16 +3677,7 @@
     {
       "Description": "Zu langes Kompositum aufgliedern (=3)",
       "Information": "Kann nicht zusammen mit 160de oder 161de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "161de",
-          "Type": "Style"
-        },
-        {
-          "Name": "160de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "161de", "Type": "Style"}, {"Name": "160de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -3955,16 +3689,7 @@
     {
       "Description": "Zu langes Kompositum aufgliedern (>4)",
       "Information": "Kann nicht zusammen mit 160de oder 162de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "162de",
-          "Type": "Style"
-        },
-        {
-          "Name": "160de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "162de", "Type": "Style"}, {"Name": "160de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -3976,16 +3701,7 @@
     {
       "Description": "Zu langes Kompositum aufgliedern (>3)",
       "Information": "Kann nicht zusammen mit 161de oder 162de aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "161de",
-          "Type": "Style"
-        },
-        {
-          "Name": "162de",
-          "Type": "Style"
-        }
-      ],
+      "ConflictsWith": [{"Name": "161de", "Type": "Style"}, {"Name": "162de", "Type": "Style"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
@@ -4170,7 +3886,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "funit",
-      "Type": "Spelling",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4194,7 +3910,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "space_bl",
-      "Type": "Spelling",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4206,7 +3922,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "space",
-      "Type": "Spelling",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4218,7 +3934,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "fabk",
-      "Type": "Spelling",
+      "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4230,7 +3946,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "apo",
-      "Type": "Spelling",
+      "Type": "Style",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4244,7 +3960,7 @@
       "Name": "kon",
       "Type": "Spelling",
       "Parameter": "-1",
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Description": "Erkennung ?berfl?ssiger W?rter",
@@ -4314,7 +4030,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "2633de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4410,7 +4126,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "2417de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4422,7 +4138,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "215de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4434,7 +4150,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "212de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4446,7 +4162,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "211de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4470,7 +4186,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "72de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4482,7 +4198,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "71de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4494,7 +4210,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "6131de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4506,7 +4222,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "612de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4518,7 +4234,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "611de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4530,7 +4246,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "6281de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4542,7 +4258,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "628de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4554,7 +4270,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "6270de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4566,7 +4282,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "6271de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4578,7 +4294,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "627de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4590,7 +4306,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "6261de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4602,7 +4318,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "626de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4614,7 +4330,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "6251de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4626,41 +4342,31 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "625de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
     {
       "Description": "Schreibung der Gradangabe ?berpr?fen (Leerzeichen zwischen Zahl und Gradzeichen verwenden)",
       "Information": "Kann nicht zusammen mit 624de (Grammatik) aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "624de",
-          "Type": "Grammar"
-        }
-      ],
+      "ConflictsWith": [{"Name": "624de", "Type": "Grammar"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "6241de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
     {
       "Description": "Schreibung der Gradangabe ?berpr?fen (&nbsp; zwischen Zahl und Gradzeichen verwenden)",
       "Information": "Kann nicht zusammen mit 6241de (Grammatik) aktiv sein.",
-      "ConflictsWith": [
-        {
-          "Name": "6241de",
-          "Type": "Grammar"
-        }
-      ],
+      "ConflictsWith": [{"Name": "6241de", "Type": "Grammar"}],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "624de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4672,7 +4378,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "6231de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4684,7 +4390,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "623de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4696,7 +4402,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "621de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4708,7 +4414,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "6211de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4720,7 +4426,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "741de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4744,7 +4450,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "5225de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4759,30 +4465,6 @@
       "Type": "Grammar",
       "Parameter": "-1",
       "IsEnabled": true
-    },
-    {
-      "Description": "Verb-Subjekt-Kongruenz ?berpr?fen",
-      "Information": null,
-      "ConflictsWith": [],
-      "IsConfigurable": false,
-      "DefaultParameter": "-1",
-      "AllowedParameterValues": [],
-      "Name": "4122de",
-      "Type": "Grammar",
-      "Parameter": null,
-      "IsEnabled": false
-    },
-    {
-      "Description": "Verb-Subjekt-Kongruenz ?berpr?fen",
-      "Information": null,
-      "ConflictsWith": [],
-      "IsConfigurable": false,
-      "DefaultParameter": "-1",
-      "AllowedParameterValues": [],
-      "Name": "4121de",
-      "Type": "Grammar",
-      "Parameter": null,
-      "IsEnabled": false
     },
     {
       "Description": "Fehlendes Komma vor \"und zwar\"",
@@ -4876,7 +4558,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "3143de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4888,7 +4570,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "3131de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4900,7 +4582,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "313129de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4912,7 +4594,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "313121de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4924,7 +4606,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "313119de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4936,7 +4618,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "313118de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4948,7 +4630,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31311pro",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4960,7 +4642,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "24214de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -4972,7 +4654,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "24213de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4984,7 +4666,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "24212de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -4996,7 +4678,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "24211de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5008,7 +4690,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31132de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5020,7 +4702,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31131de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5032,7 +4714,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "311519pro",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5044,7 +4726,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "311511pro",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5056,7 +4738,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "311319de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5068,7 +4750,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "311319pro",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5080,7 +4762,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "311311pro",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5092,45 +4774,9 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "6230de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
-    },
-    {
-      "Description": "Kommasetzung beim Nebensatz ?berpr?fen",
-      "Information": null,
-      "ConflictsWith": [],
-      "IsConfigurable": false,
-      "DefaultParameter": "-1",
-      "AllowedParameterValues": [],
-      "Name": "52112de",
-      "Type": "Grammar",
-      "Parameter": "-1",
-      "IsEnabled": true
-    },
-    {
-      "Description": "Kommasetzung beim Nebensatz ?berpr?fen",
-      "Information": null,
-      "ConflictsWith": [],
-      "IsConfigurable": false,
-      "DefaultParameter": "-1",
-      "AllowedParameterValues": [],
-      "Name": "52111de",
-      "Type": "Grammar",
-      "Parameter": "-1",
-      "IsEnabled": true
-    },
-    {
-      "Description": "Kommasetzung beim Nebensatz ?berpr?fen",
-      "Information": null,
-      "ConflictsWith": [],
-      "IsConfigurable": false,
-      "DefaultParameter": "-1",
-      "AllowedParameterValues": [],
-      "Name": "52113de",
-      "Type": "Grammar",
-      "Parameter": "-1",
-      "IsEnabled": true
     },
     {
       "Description": "Getrenntschreibung von Substantiv und Adjektiv ?berpr?fen",
@@ -5140,7 +4786,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "3132de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5152,7 +4798,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "313220de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5164,7 +4810,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "2515de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5176,7 +4822,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "252de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5188,7 +4834,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "24141de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5200,7 +4846,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "241412pro",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5212,7 +4858,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "241411pro",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5344,7 +4990,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "349de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -5356,7 +5002,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "341de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -5368,7 +5014,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "34de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -5404,7 +5050,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31621de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -5416,7 +5062,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "3162de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5428,7 +5074,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31622de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -5440,7 +5086,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "3161de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5452,7 +5098,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31611de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5464,7 +5110,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31603de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5476,7 +5122,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31602de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -5488,7 +5134,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31601de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5500,7 +5146,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31121de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5512,7 +5158,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "315de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5524,7 +5170,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "24162de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5536,7 +5182,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "24161de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5548,7 +5194,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "24151de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5560,7 +5206,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "24146de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5572,7 +5218,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "241454de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5584,7 +5230,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "241453de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5596,7 +5242,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "241452de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5608,7 +5254,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "241451de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5620,7 +5266,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "241442de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5632,7 +5278,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "241441de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5644,7 +5290,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "24143de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5656,7 +5302,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "24142de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5668,7 +5314,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "42232de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5680,7 +5326,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "42231de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5692,7 +5338,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "317de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5704,7 +5350,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "3142de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5716,7 +5362,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "3141de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5787,30 +5433,6 @@
       "IsConfigurable": false,
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
-      "Name": "52122de",
-      "Type": "Grammar",
-      "Parameter": "-1",
-      "IsEnabled": true
-    },
-    {
-      "Description": "Kommasetzung beim Relativsatz ?berpr?fen",
-      "Information": null,
-      "ConflictsWith": [],
-      "IsConfigurable": false,
-      "DefaultParameter": "-1",
-      "AllowedParameterValues": [],
-      "Name": "52121de",
-      "Type": "Grammar",
-      "Parameter": "-1",
-      "IsEnabled": true
-    },
-    {
-      "Description": "Kommasetzung beim Relativsatz ?berpr?fen",
-      "Information": null,
-      "ConflictsWith": [],
-      "IsConfigurable": false,
-      "DefaultParameter": "-1",
-      "AllowedParameterValues": [],
       "Name": "52123de",
       "Type": "Grammar",
       "Parameter": "-1",
@@ -5824,7 +5446,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "2413de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5836,7 +5458,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "2422de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5848,7 +5470,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31112de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5860,7 +5482,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31111de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5872,7 +5494,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "311119de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5884,7 +5506,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "311111pro",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5896,7 +5518,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31142de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5908,7 +5530,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "31141de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5920,7 +5542,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "312de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5932,7 +5554,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "614de",
-      "Type": "Grammar",
+      "Type": "Style",
       "Parameter": "-1",
       "IsEnabled": true
     },
@@ -5944,7 +5566,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "214de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -5956,7 +5578,7 @@
       "DefaultParameter": "-1",
       "AllowedParameterValues": [],
       "Name": "213de",
-      "Type": "Grammar",
+      "Type": "Spelling",
       "Parameter": null,
       "IsEnabled": false
     },
@@ -5995,6 +5617,150 @@
       "Type": "Abbreviation",
       "Parameter": null,
       "IsEnabled": false
+    },
+    {
+      "Description": "Erfordert nach dem Markennamen „Kärcher“ zwingend ein normales Leerzeichen und verbietet die Kopplung mit Bindestrichen (z. B. „Kärcher-Reinigungsmittel“ wird zu „Kärcher Reinigungsmittel“).",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU01",
+      "Type": "Style",
+      "Parameter": null,
+      "IsEnabled": true
+    },
+    {
+      "Description": "Prüft in Fließtexten und Langbeschreibungen, ob gängige Maßeinheiten und gekoppelte Begriffe fälschlicherweise abgekürzt wurden, und fordert das Ausschreiben des Wortes (z. B. „100-l-Tank“ zu „100-Liter-Tank“).",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU02",
+      "Type": "Style",
+      "Parameter": null,
+      "IsEnabled": true
+    },
+    {
+      "Description": "Kontrolliert, ob Bezeichnungen der Produktklasse (wie „-Reihe“, „-Modell“, „-Gerät“, „-Maschine“) korrekt mit einem Bindestrich an den eigentlichen Produktnamen angeschlossen sind (z. B. „FC 5-Modell“)",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU03",
+      "Type": "Style",
+      "Parameter": null,
+      "IsEnabled": true
+    },
+    {
+      "Description": "Weist darauf hin, dass zusammengesetzte Adjektive mit dem Markennamen (wie „kärcherexklusiv“ oder „Kärcher’sche“) vermieden und stattdessen durch substantivische Umschreibungen (z. B. „exklusiv bei Kärcher“) ersetzt werden sollten. Eine Ausnahme bildet lediglich „kärchereigen“.",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU04",
+      "Type": "Style",
+      "Parameter": null,
+      "IsEnabled": true
+    },
+    {
+      "Description": "Prüft, ob in Fließtexten und Langbeschreibungen gängige Abkürzungen verwendet werden, und fordert das vollständige Ausschreiben (z. B. „z. B.“ zu „zum Beispiel“, „d. h.“ zu „das heißt“). Nicht ausformulierte Texte (z. B. Kurzbeschreibungen, technische Daten, Tabellen, Features / Benefits) Abkürzungen werden verwendet mit geschütztem Leerzeichen dazwischen. Beispiel: (z. B. Milch, Teige, Soßen, Säfte)",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU05",
+      "Type": "Abbreviation",
+      "Parameter": null,
+      "IsEnabled": true
+    },
+    {
+      "Description": "Kontrolliert die kontextabhängige Schreibung von „bis“. Fordert im Fließtext das ausgeschriebene Wort „bis“ (z. B. „2 bis 3 Liter“), in Tabellen und technischen Daten hingegen den Gedankenstrich mit geschütztem Leerzeichen (z. B. „220 – 240 V“).",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU06",
+      "Type": "Style",
+      "Parameter": null,
+      "IsEnabled": true
+    },
+    {
+      "Description": "Stellt sicher, dass in Tabellen, Klammerwerten und Features/Benefits die standardisierten Einheiten-Kürzel verwendet werden (z. B. „55 cm“, „100-l-Tank“), statt die Wörter in nicht ausformulierten Texten auszuschreiben.",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU07",
+      "Type": "Style",
+      "Parameter": null,
+      "IsEnabled": true
+    },
+    {
+      "Description": "Erfordert im Fließtext die ausgeschriebene Form „Prozent“ (z. B. „10 Prozent“), in Tabellen und Kurzbeschreibungen hingegen das Symbol mit geschütztem Leerzeichen (z. B. „5 %“). Ausnahme: Ab zwei Nachkommastellen gilt immer das Symbol (z. B. „99,99 %“).",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU08",
+      "Type": "Style",
+      "Parameter": null,
+      "IsEnabled": true
+    },
+    {
+      "Description": "Stellt sicher, dass Aufzählungspunkte, die explizit werbliche Vorteile (Benefits) beschreiben, am Ende immer mit einem Schlusspunkt versehen werden – auch wenn es sich um syntaktisch unvollständige Sätze handelt (z. B. „- 50 Prozent Zeitersparnis beim Bügeln.“).",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU09",
+      "Type": "Style",
+      "Parameter": null,
+      "IsEnabled": true
+    },
+    {
+      "Description": "Schließt die Verwendung von Tausender-Trennpunkten für Zahlenwerte innerhalb von Tabellenstrukturen explizit aus, um die Datenlesbarkeit zu wahren (z. B. „10000“ statt „10.000“).",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU10",
+      "Type": "Style",
+      "Parameter": null,
+      "IsEnabled": true
+    },
+    {
+      "Description": "Erfordert, dass die Marken-URL www.karcher.com im Fließtext konsequent kleingeschrieben wird – dies gilt ausdrücklich auch dann, wenn sie direkt auf einen Schlusspunkt des vorhergehenden Satzes folgt.",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU11",
+      "Type": "Style",
+      "Parameter": null,
+      "IsEnabled": true
+    },
+    {
+      "Description": "Kontrolliert, ob Fußnoten regelkonform formatiert sind. Der Text muss mit einem Großbuchstaben beginnen und mit einem Schlusspunkt enden. Einzige Ausnahme ist das alleinstehende Kennzeichnungswort „NEU“.",
+      "Information": null,
+      "ConflictsWith": [],
+      "IsConfigurable": false,
+      "DefaultParameter": "-1",
+      "AllowedParameterValues": [],
+      "Name": "NEU12",
+      "Type": "Style",
+      "Parameter": null,
+      "IsEnabled": true
     }
   ];
 
@@ -6064,6 +5830,9 @@ function _getSectionForRule_(rule) {
   if (rule.Type === "Abbreviation") return "Spelling";
 
   if (rule.Type === "Style") {
+    // Diskriminierungs-/Genderregeln (9xxxxxde) als eigene, klar benannte
+    // Sektion statt generisch unter "Style" - auf Wunsch von Alex.
+    if (/^9\d{5}de$/.test(rule.Name)) return "Inclusive Language / Corporate Policy";
     if (STYLE_SECTION_MARKETING.indexOf(rule.Name) !== -1) return "Style (Marketing)";
     if (STYLE_SECTION_TECHNICAL.indexOf(rule.Name) !== -1) return "Style (Technical Documentation)";
     if (STYLE_SECTION_GENERAL.indexOf(rule.Name) !== -1) return "Style (General)";
@@ -6084,34 +5853,32 @@ var DEFAULT_RULES_CONFIG_EN = [
   { "Description": "Deprecated/preferred term, suggests a replacement for a deprecated term", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "POSNEG", "Type": "Terminology", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Variant of a preferred term and an admitted term", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "VARPOSADM", "Type": "Terminology", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Variant of POSNEG", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "VARPOSNEG", "Type": "Terminology", "Parameter": "-1", "IsEnabled": true },
-
   { "Description": "Avoid exclamation marks at the end of a sentence", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "190de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Avoid semicolons", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "191de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Avoid ambiguous possessive constructions", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "220de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Avoid ambiguous location references", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "230de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Avoid stacking too many attributes in front of a noun", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "510de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
-  { "Description": "Avoid too many prepositional phrases in one sentence", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "5", "AllowedParameterValues": ["2","3","4","5","6","7","8","9","10"], "Name": "511de", "Type": "Style", "Parameter": "5", "IsEnabled": true },
-  { "Description": "Avoid too many units of meaning in one sentence", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "8", "AllowedParameterValues": ["5","6","7","8","9","10"], "Name": "512de", "Type": "Style", "Parameter": "8", "IsEnabled": true },
-  { "Description": "Avoid complex attributes", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "7", "AllowedParameterValues": ["5","6","7","8","9","10"], "Name": "514de", "Type": "Style", "Parameter": "7", "IsEnabled": true },
-  { "Description": "Keep sentences short", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "26", "AllowedParameterValues": ["15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40"], "Name": "530de", "Type": "Style", "Parameter": "26", "IsEnabled": true },
+  { "Description": "Avoid too many prepositional phrases in one sentence", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "5", "AllowedParameterValues": ["2", "3", "4", "5", "6", "7", "8", "9", "10"], "Name": "511de", "Type": "Style", "Parameter": "5", "IsEnabled": true },
+  { "Description": "Avoid too many units of meaning in one sentence", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "8", "AllowedParameterValues": ["5", "6", "7", "8", "9", "10"], "Name": "512de", "Type": "Style", "Parameter": "8", "IsEnabled": true },
+  { "Description": "Avoid complex attributes", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "7", "AllowedParameterValues": ["5", "6", "7", "8", "9", "10"], "Name": "514de", "Type": "Style", "Parameter": "7", "IsEnabled": true },
+  { "Description": "Keep sentences short", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "26", "AllowedParameterValues": ["15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40"], "Name": "530de", "Type": "Style", "Parameter": "26", "IsEnabled": true },
   { "Description": "Avoid coordinating too many main clauses", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "532de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
-  { "Description": "Avoid long parenthetical insertions", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "6", "AllowedParameterValues": ["3","4","5","6","7","8","9","10"], "Name": "534de", "Type": "Style", "Parameter": "6", "IsEnabled": true },
+  { "Description": "Avoid long parenthetical insertions", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "6", "AllowedParameterValues": ["3", "4", "5", "6", "7", "8", "9", "10"], "Name": "534de", "Type": "Style", "Parameter": "6", "IsEnabled": true },
   { "Description": "Avoid two or more parenthetical insertions in one sentence", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "560de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Mention plural forms in brackets, avoid where possible", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "561de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Follow chronological order in instructions", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "620de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Put the subject before the object in case of ambiguity", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "630de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Avoid passive voice with an explicit agent (\"by...\")", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "710de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Avoid passive voice", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "711de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
-  { "Description": "Avoid too many nominalizations", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "6", "AllowedParameterValues": ["3","4","5","6","7","8"], "Name": "720de", "Type": "Style", "Parameter": "6", "IsEnabled": true },
+  { "Description": "Avoid too many nominalizations", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "6", "AllowedParameterValues": ["3", "4", "5", "6", "7", "8"], "Name": "720de", "Type": "Style", "Parameter": "6", "IsEnabled": true },
   { "Description": "Avoid modal verbs in passive voice", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "734de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Avoid double negation", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "740de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
   { "Description": "Avoid strong negation", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "741de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
-  { "Description": "Avoid too many adjectives", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "3", "AllowedParameterValues": ["2","3","4","5","6","7","8","9","10"], "Name": "780de", "Type": "Style", "Parameter": "3", "IsEnabled": true },
+  { "Description": "Avoid too many adjectives", "Information": null, "ConflictsWith": [], "IsConfigurable": true, "DefaultParameter": "3", "AllowedParameterValues": ["2", "3", "4", "5", "6", "7", "8", "9", "10"], "Name": "780de", "Type": "Style", "Parameter": "3", "IsEnabled": true },
   { "Description": "Avoid superlatives", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "781de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid internet slang", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "79001de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid emoticons and emojis", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "79002de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid placeholder/lorem-ipsum text", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "79003de", "Type": "Style", "Parameter": null, "IsEnabled": false },
-
   { "Description": "Avoid discriminatory language in general", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "950001de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid relativizing phrases", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "950002de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid generalizations", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "950003de", "Type": "Style", "Parameter": null, "IsEnabled": false },
@@ -6169,7 +5936,6 @@ var DEFAULT_RULES_CONFIG_EN = [
   { "Description": "Avoid discriminatory adjectives based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958302de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Check discriminatory adjectives based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958303de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Check discriminatory verbs based on social background", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "958403de", "Type": "Style", "Parameter": null, "IsEnabled": false },
-
   { "Description": "Avoid excessive politeness fillers like \"please\"", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "333de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid first person (\"I\"/\"we\")", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "732de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid directly addressing the reader", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "736de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
@@ -6181,7 +5947,19 @@ var DEFAULT_RULES_CONFIG_EN = [
   { "Description": "Avoid comparative or superlative forms of already intensified adjectives", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "3921de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Check the comparison form of the adjective", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "3922de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid arrogant, overselling phrases", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "3930de", "Type": "Style", "Parameter": null, "IsEnabled": false },
-  { "Description": "State the benefit before the feature", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "625de", "Type": "Style", "Parameter": null, "IsEnabled": false }
+  { "Description": "State the benefit before the feature", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "625de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Stellt sicher, dass Aufzählungspunkte, die explizit werbliche Vorteile (Benefits) beschreiben, am Ende immer mit einem Schlusspunkt versehen werden – auch wenn es sich um syntaktisch unvollständige Sätze handelt (z. B. „- 50 Prozent Zeitersparnis beim Bügeln.“).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU09", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Erfordert, dass die Marken-URL www.karcher.com im Fließtext konsequent kleingeschrieben wird – dies gilt ausdrücklich auch dann, wenn sie direkt auf einen Schlusspunkt des vorhergehenden Satzes folgt.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU11", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Kontrolliert, ob Fußnoten regelkonform formatiert sind. Der Text muss mit einem Großbuchstaben beginnen und mit einem Schlusspunkt enden. Einzige Ausnahme ist das alleinstehende Kennzeichnungswort „NEU“.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU12", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Trennt Tausenderstellen ab 4 Ziffern zwingend mit einem Komma statt einem Punkt (z. B. 1,000 oder 193,000).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU13", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Erfordert, dass das Prozentzeichen (%) in Kurztexten und Tabellen ohne Leerzeichen direkt an die Ziffer anschließt (z. B. 5%).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU14", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Prüft, ob Abkürzungen von Monaten (z. B. Oct, Jun) und Wochentagen (z. B. Mon, Wed) in Kurztexten ohne abschließenden Punkt geschrieben sind.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU15", "Type": "Abbreviation", "Parameter": null, "IsEnabled": true },
+  { "Description": "Identifiziert und entfernt das Komma vor dem letzten Element in Aufzählungen (Oxford Comma), außer es ist zur Vermeidung von Mehrdeutigkeiten zwingend nötig.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU16", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Meldet Sätze, die mit einer Zahl als Ziffer beginnen, und fordert eine Umformulierung oder das Ausschreiben als Wort.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU17", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Kontrolliert, ob der Text nach einem Doppelpunkt mit einem Kleinbuchstaben fortgesetzt wird, sofern kein Eigenname folgt.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU18", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Erfordert in Fließtexten die Verwendung des Wortes \"to\" anstelle eines Bis-Strichs und verhindert die doppelte Nennung der Maßeinheit (z. B. 5 to 8 mg).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU19", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Erkennt geschlechtsspezifische Endungen bei Personenbezeichnungen (z. B. chairman, policeman) und fordert neutrale Alternativen (z. B. chair, police officer).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU20", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Erkennt und entfernt Leerzeichen vor oder nach einem Schrägstrich bei Wortverbindungen (z. B. erlaubt ist nur: plug/unplug).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU21", "Type": "Style", "Parameter": null, "IsEnabled": true }
 ];
 
 function _getDefaultRulesForLanguage_(language) {
