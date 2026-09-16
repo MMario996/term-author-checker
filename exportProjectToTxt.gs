@@ -7,7 +7,7 @@ function exportProjectToTxt() {
   const folderId = "1am6gR_8i_mEg3zv176lfflhGPEYrBPf2"; // Deine Ordner-ID
   const scriptId = ScriptApp.getScriptId(); 
   
-  // 2. Zielordner direkt ?ber die ID ansteuern
+  // 2. Zielordner direkt über die ID ansteuern
   const folder = DriveApp.getFolderById(folderId);
 
   // 3. Apps Script API aufrufen

@@ -44,7 +44,7 @@ button, select, input, textarea{ font-family:inherit; }
 .header-btn:hover { background:var(--gray-100); border-color:var(--ink); color:var(--ink); }
 .header-btn svg { width:14px; height:14px; flex-shrink:0; }
 
-/* Spezielle Anpassungen f?r die schmale Seitenleiste (Sidebar) */
+/* Spezielle Anpassungen für die schmale Seitenleiste (Sidebar) */
 @media (max-width: 450px) {
   html, body { font-size: 15px; } /* Schriftart um 2 Punkte kleiner */
   .header h1 { font-size: 18px; }
@@ -229,7 +229,7 @@ body.popup-mode .move-dialog-box select, body.popup-mode .move-dialog-box input 
 .help-list li { font-size:14px; line-height:1.5; margin-bottom:6px; color:var(--gray-600); }
 .help-checkbox { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--gray-600); cursor:pointer; }
 
-/* Popup (Rules & Custom Prompts): Schrift insgesamt gr??er als in der Seitenleiste */
+/* Popup (Rules & Custom Prompts): Schrift insgesamt größer als in der Seitenleiste */
 body.popup-mode { font-size: 21px; }
 body.popup-mode .modal-head h2 { font-size: 18px; }
 body.popup-mode .rule-group-header h3 { font-size: 16px; }
@@ -455,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function(){
     var exportAllBtn = document.getElementById('exportAllToLogBtn');
     if (exportAllBtn) exportAllBtn.style.display = ctx.isAdmin ? '' : 'none';
     
-    // Wenn als reine Rules-Ansicht aufgerufen, verstecke den Check-Bereich und ?ffne direkt das Rules-UI
+    // Wenn als reine Rules-Ansicht aufgerufen, verstecke den Check-Bereich und öffne direkt das Rules-UI
       if (ctx.isRulesOnly) {
       document.getElementById('app').style.display = 'none';
       document.body.classList.add('popup-mode');
@@ -500,7 +500,7 @@ function exportAuditReport(){
     .withSuccessHandler(function(url){
       showToast('Opening Audit Report...');
       
-      // Automatisches ?ffnen im neuen Tab
+      // Automatisches öffnen im neuen Tab
       var a = document.createElement('a');
       a.href = url;
       a.target = '_blank';
@@ -737,7 +737,7 @@ function openRulesSettings() {
   };
   var timeoutId = setTimeout(resetBtn, 5000);
 
-  // Ruft das gro?e Popup im Backend auf, falls wir uns in der Seitenleiste befinden
+  // Ruft das große Popup im Backend auf, falls wir uns in der Seitenleiste befinden
   google.script.run
     .withSuccessHandler(function(){ clearTimeout(timeoutId); resetBtn(); })
     .withFailureHandler(function(err){ clearTimeout(timeoutId); resetBtn(); showToast('Error: ' + err.message); })
@@ -747,7 +747,7 @@ function openRulesSettings() {
 function closeRulesSettings() {
   var modalEl = document.getElementById('rulesModal');
   if (modalEl) modalEl.classList.remove('open');
-  // Schlie?t den Modal-Dialog in Google Docs/Sheets/Slides
+  // Schließt den Modal-Dialog in Google Docs/Sheets/Slides
   google.script.host.close();
 }
 
@@ -851,7 +851,7 @@ function renderRulesUI(rules) {
           inputHtml = '<select data-name="'+r.Name+'">' + options + '</select>';
         }
         var refLinkHtml = r.ReferenceUrl ? (
-          '<a href="'+esc(r.ReferenceUrl)+'" target="_blank" class="btn-move" title="Norm/Vorgabe ?ffnen" onclick="event.stopPropagation();">' +
+          '<a href="'+esc(r.ReferenceUrl)+'" target="_blank" class="btn-move" title="Norm/Vorgabe öffnen" onclick="event.stopPropagation();">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>' +
           '</a>'
         ) : '';
@@ -1178,7 +1178,7 @@ function toggleViewMode() {
   showToast('Switching view mode...');
   google.script.run
     .withSuccessHandler(function(res) {
-      // Wenn vom Modal in die Seitenleiste gewechselt wurde, schlie?en wir das Dialogfenster automatisch
+      // Wenn vom Modal in die Seitenleiste gewechselt wurde, schließen wir das Dialogfenster automatisch
       if (res && res.newMode === 'SIDEBAR') {
         google.script.host.close();
       }

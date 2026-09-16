@@ -6,11 +6,11 @@ var DRIVE_PDF_MAX_BYTES = 15 * 1024 * 1024; // Sicherheitsgrenze, ca. 15 MB
 function onDriveHomepage(e) {
   var card = CardService.newCardBuilder();
   card.setHeader(CardService.newCardHeader()
-    .setTitle('K?rcher Author Check')
-    .setSubtitle('PDF-Pr?fung'));
+    .setTitle('Kärcher Author Check')
+    .setSubtitle('PDF-Prüfung'));
   card.addSection(CardService.newCardSection()
     .addWidget(CardService.newTextParagraph()
-      .setText('W?hle in Google Drive eine einzelne PDF-Datei aus, um sie gegen die Author-Check-Regeln zu pr?fen. Andere Dateitypen werden aktuell nicht unterst?tzt.')));
+      .setText('Wähle in Google Drive eine einzelne PDF-Datei aus, um sie gegen die Author-Check-Regeln zu prüfen. Andere Dateitypen werden aktuell nicht unterstützt.')));
   return card.build();
 }
 
@@ -18,22 +18,22 @@ function onDriveItemsSelected(e) {
   var items = (e.drive && e.drive.selectedItems) || [];
 
   if (items.length !== 1) {
-    return _buildDriveInfoCard_('Bitte genau eine Datei ausw?hlen', 'W?hle genau eine einzelne PDF-Datei in Drive aus, nicht mehrere und keine Ordner.');
+    return _buildDriveInfoCard_('Bitte genau eine Datei auswählen', 'Wähle genau eine einzelne PDF-Datei in Drive aus, nicht mehrere und keine Ordner.');
   }
 
   var item = items[0];
   if (item.mimeType !== 'application/pdf') {
-    return _buildDriveInfoCard_('Nur PDF wird unterst?tzt', 'Die Datei "' + item.title + '" ist kein PDF. Diese Pr?fung funktioniert aktuell ausschlie?lich f?r PDF-Dateien.');
+    return _buildDriveInfoCard_('Nur PDF wird unterstützt', 'Die Datei "' + item.title + '" ist kein PDF. Diese Prüfung funktioniert aktuell ausschließlich für PDF-Dateien.');
   }
 
   var card = CardService.newCardBuilder();
   card.setHeader(CardService.newCardHeader()
-    .setTitle('K?rcher Author Check')
+    .setTitle('Kärcher Author Check')
     .setSubtitle(item.title));
 
   var section = CardService.newCardSection();
   section.addWidget(CardService.newTextParagraph()
-    .setText('Pr?ft den kompletten Inhalt dieser PDF-Datei gegen die Author-Check-Regeln und erstellt automatisch einen Report als Google Sheet.'));
+    .setText('Prüft den kompletten Inhalt dieser PDF-Datei gegen die Author-Check-Regeln und erstellt automatisch einen Report als Google Sheet.'));
 
   var langSelect = CardService.newSelectionInput()
     .setType(CardService.SelectionInputType.DROPDOWN)
@@ -48,7 +48,7 @@ function onDriveItemsSelected(e) {
     .setParameters({ fileId: item.id, fileName: item.title });
 
   section.addWidget(CardService.newTextButton()
-    .setText('PDF pr?fen')
+    .setText('PDF prüfen')
     .setOnClickAction(action));
 
   card.addSection(section);
@@ -64,8 +64,8 @@ function _buildDriveInfoCard_(title, message) {
 }
 
 /**
- * Card-Action: pr?ft die ausgew?hlte PDF-Datei per Gemini und erstellt automatisch
- * einen Report als Google Sheet, der direkt ge?ffnet wird.
+ * Card-Action: prüft die ausgewählte PDF-Datei per Gemini und erstellt automatisch
+ * einen Report als Google Sheet, der direkt geöffnet wird.
  */
 function apiCheckDrivePdf(e) {
   var fileId = e.parameters.fileId;
@@ -75,20 +75,20 @@ function apiCheckDrivePdf(e) {
   try {
     var props = PropertiesService.getScriptProperties();
     var apiKey = (props.getProperty('GEMINI_API_KEY') || '').trim();
-    if (!apiKey) throw new Error('AI-Pr?fung ist nicht konfiguriert (Gemini API Key fehlt).');
+    if (!apiKey) throw new Error('AI-Prüfung ist nicht konfiguriert (Gemini API Key fehlt).');
 
     var blob = DriveApp.getFileById(fileId).getBlob();
     if (blob.getBytes().length > DRIVE_PDF_MAX_BYTES) {
-      throw new Error('Die PDF-Datei ist zu gro? (Limit: ' + (DRIVE_PDF_MAX_BYTES / (1024*1024)) + ' MB).');
+      throw new Error('Die PDF-Datei ist zu groß (Limit: ' + (DRIVE_PDF_MAX_BYTES / (1024*1024)) + ' MB).');
     }
     var base64 = Utilities.base64Encode(blob.getBytes());
 
     var promptParts = _buildAuthorCheckPromptParts_(language, {
-      noGlossary: '(keine spezifischen Eintr?ge f?r diese Sprache gefunden)',
+      noGlossary: '(keine spezifischen Einträge für diese Sprache gefunden)',
       valueLabel: 'Wert',
-      specificCheckPrefix: 'SPEZIFISCHE PR?FUNG',
+      specificCheckPrefix: 'SPEZIFISCHE PRÜFUNG',
       noStandardRules: '(Keine Standardregeln)',
-      additionalChecksHeader: 'ZUS?TZLICHE SPEZIFISCHE PR?FUNGEN'
+      additionalChecksHeader: 'ZUSÄTZLICHE SPEZIFISCHE PRÜFUNGEN'
     });
     var termListStr = promptParts.termListStr;
     var rulesStr = promptParts.rulesStr;
@@ -97,7 +97,7 @@ function apiCheckDrivePdf(e) {
     var targetLanguageName = languageNames[language] || language;
 
     var prompt =
-      'You are a proofreading assistant for K?rcher texts (manufacturer of cleaning equipment: ' +
+      'You are a proofreading assistant for Kärcher texts (manufacturer of cleaning equipment: ' +
       'high-pressure cleaners, sweepers, vacuum cleaners, accessories).\n\n' +
       'IMPORTANT: The attached PDF document may contain text in multiple languages (e.g. a multilingual manual with several language sections). ' +
       'Check ONLY the passages that are written in ' + targetLanguageName + '. ' +
@@ -105,7 +105,7 @@ function apiCheckDrivePdf(e) {
       'Do not report any issue whose "original" quote is not itself in ' + targetLanguageName + '.\n\n' +
       'Within the ' + targetLanguageName + ' passages, check for these error types:\n' +
       '1. GRAMMAR AND SPELLING ERRORS\n' +
-      '2. INCORRECT OR INCONSISTENT K?RCHER TERMINOLOGY ? compare against this list ' +
+      '2. INCORRECT OR INCONSISTENT KÄRCHER TERMINOLOGY ? compare against this list ' +
       '"incorrect term ? correct term":\n' + termListStr + '\n' +
       '3. SPECIFIC WRITING AND STYLE RULES:\n' + rulesStr + '\n\n' +
       'Respond EXCLUSIVELY with valid JSON in exactly this structure, without markdown formatting, without code block:\n' +
@@ -165,9 +165,9 @@ function apiCheckDrivePdf(e) {
 }
 
 /**
- * Erstellt den Audit-Report f?r eine gepr?fte PDF-Datei als Google Sheet
+ * Erstellt den Audit-Report für eine geprüfte PDF-Datei als Google Sheet
  * (inklusive Location-Spalte, da im PDF nichts automatisch ersetzt werden kann)
- * und gibt die URL zur?ck.
+ * und gibt die URL zurück.
  */
 function _buildDrivePdfReportSheet_(issues, fileName, language) {
   var title = "AuthorCheck_PDF_" + fileName.replace(/\.pdf$/i, '').slice(0, 60) + "_" + new Date().toISOString().slice(0, 10);

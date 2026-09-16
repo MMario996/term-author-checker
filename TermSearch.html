@@ -4,7 +4,7 @@
 <base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>K?rcher TermSearch</title>
+<title>Kärcher TermSearch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -456,7 +456,7 @@ button, input, select, textarea{ font-family:inherit; }
         <div class="ai-image-row">
           <label class="ai-image-attach">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            Bild anh?ngen
+            Bild anhängen
             <input type="file" id="aiImageInput" accept="image/*">
           </label>
           <div class="ai-image-preview" id="aiImagePreview">
@@ -480,11 +480,11 @@ button, input, select, textarea{ font-family:inherit; }
       </div>
       <div id="results-wrap-ai" aria-live="polite"></div>
       <div class="ai-box" id="aiRefineWrap" style="display:none; margin-top:14px;">
-        <textarea id="aiRefineQuery" placeholder="Frag nach, z.B. 'nur f?r Home and Garden' oder 'zeig mir auch passendes Zubeh?r'..." style="min-height:60px;"></textarea>
+        <textarea id="aiRefineQuery" placeholder="Frag nach, z.B. 'nur für Home and Garden' oder 'zeig mir auch passendes Zubehör'..." style="min-height:60px;"></textarea>
         <div class="ai-image-row">
           <label class="ai-image-attach">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            Bild anh?ngen
+            Bild anhängen
             <input type="file" id="aiRefineImageInput" accept="image/*">
           </label>
           <div class="ai-image-preview" id="aiRefineImagePreview">
@@ -570,7 +570,7 @@ button, input, select, textarea{ font-family:inherit; }
         <div class="form-row"><label>Phrase API Token</label><input type="password" id="set-token" placeholder="Leave unchanged if already set"></div>
         <div class="form-row"><label>Admin Emails</label><input type="text" id="set-admins" placeholder="a@karcher.com, b@karcher.com"></div>
         <div class="form-row"><label>Allowed Termbase UIDs (comma-separated, optional)</label><input type="text" id="set-allowed-tb"></div>
-        <div class="form-row"><label>Custom Rules Log Sheet ID (optional)</label><input type="text" id="set-custom-rules-log-sheet" placeholder="Sheet-ID aus der URL"><div class="hint">Zentrales Google Sheet, in das neu angelegte Author-Check-Regeln aller Nutzer geloggt werden. Muss vorher mit Bearbeiten-Zugriff f?r alle betroffenen Nutzer geteilt sein.</div></div>
+        <div class="form-row"><label>Custom Rules Log Sheet ID (optional)</label><input type="text" id="set-custom-rules-log-sheet" placeholder="Sheet-ID aus der URL"><div class="hint">Zentrales Google Sheet, in das neu angelegte Author-Check-Regeln aller Nutzer geloggt werden. Muss vorher mit Bearbeiten-Zugriff für alle betroffenen Nutzer geteilt sein.</div></div>
         <div class="form-row"><label>Gemini API Key (Apigee)</label><input type="password" id="set-gemini-key" placeholder="Leave unchanged if already set"></div>
         <div class="form-row"><label>Gemini Apigee Proxy URL</label><input type="text" id="set-gemini-url"><div class="hint">Apigee proxy URL (z.B. https://34-111-99-134.nip.io/gemini/v1beta/models/) ? auth via x-api-key header.</div></div>
         <div class="form-row-2">
@@ -580,7 +580,7 @@ button, input, select, textarea{ font-family:inherit; }
         <div class="form-row">
           <label>System Prompt (AI)</label>
           <textarea id="set-ai-prompt" style="width:100%; height:150px; font-family:monospace; resize:vertical; line-height:1.4;"></textarea>
-          <div class="hint"><strong>WICHTIG:</strong> Nutze <code>{freeText}</code> als Platzhalter. Die Sprache wird automatisch erkannt (Feld <code>lang</code> in der JSON-Antwort) und f?r Begriffe UND Erkl?rung verwendet. Die JSON-Struktur am Ende muss zwingend erhalten bleiben!</div>
+          <div class="hint"><strong>WICHTIG:</strong> Nutze <code>{freeText}</code> als Platzhalter. Die Sprache wird automatisch erkannt (Feld <code>lang</code> in der JSON-Antwort) und für Begriffe UND Erklärung verwendet. Die JSON-Struktur am Ende muss zwingend erhalten bleiben!</div>
         </div>
         <button class="btn-test" onclick="testGeminiConnection(this)">Test Gemini connection</button>
         <div class="test-result" id="geminiTestResult"></div>
@@ -618,12 +618,12 @@ var AI_STATUS_MSGS_TEXT = [
   "Consulting Gemini...",
   "Reading between the lines...",
   "Turning your description into terminology...",
-  "Thinking in K?rcher vocabulary...",
+  "Thinking in Kärcher vocabulary...",
   "Cross-checking candidate terms...",
   "Letting the AI do some detective work...",
   "Matching meaning to the right term...",
   "Double-checking with the termbase...",
-  "Translating your words into K?rcher-speak...",
+  "Translating your words into Kärcher-speak...",
   "Gemini is putting on its thinking cap...",
   "Brewing up some vocabulary...",
   "Almost there..."
@@ -632,7 +632,7 @@ var AI_STATUS_MSGS_IMAGE = [
   "Taking a good look at your image...",
   "Letting Gemini study the photo...",
   "Spotting the important bits in the picture...",
-  "Matching pixels to K?rcher parts...",
+  "Matching pixels to Kärcher parts...",
   "Turning what it sees into search terms...",
   "Squinting at the details...",
   "Comparing image to termbase...",
@@ -867,7 +867,7 @@ function triggerSearch(){
 }
 
 // Hinweis: der Aufruf renderResultsInto($rw, concepts, q) in .withSuccessHandler
-// weiter oben in dieser Funktion muss noch um ", true" erg?nzt werden, siehe Schritt 4.
+// weiter oben in dieser Funktion muss noch um ", true" ergänzt werden, siehe Schritt 4.
 
 // ??? AI SEARCH ??????????????????????????????????????????????????????????
 var $aiQuery = document.getElementById('aiQuery');
@@ -905,7 +905,7 @@ function setupImageAttach(inputId, previewId, thumbId, nameId, removeId, onChang
       nameEl.textContent = file.name;
       onChange({ mimeType: result.mimeType, data: result.base64 });
     }, function(){
-      // Fallback falls das Verkleinern fehlschl?gt: Original wie bisher verwenden
+      // Fallback falls das Verkleinern fehlschlägt: Original wie bisher verwenden
       var reader = new FileReader();
       reader.onload = function(){
         var dataUrl = reader.result;
@@ -991,7 +991,7 @@ var AI_REFINE_STATUS_MSGS_TEXT = [
 var AI_REFINE_STATUS_MSGS_IMAGE = [
   "Schaue mir das neue Bild an...",
   "Vergleiche Bild mit den bisherigen Treffern...",
-  "Gemini pr?ft die Details erneut...",
+  "Gemini prüft die Details erneut...",
   "Fast geschafft..."
 ];
 function triggerAiRefine(){
@@ -1208,7 +1208,7 @@ function selectDisplayLang(lang){
 function reshapeConceptForDisplayLang(c, lang){
   var allTerms = [c.sourceTerm].concat(c.translations || []);
   var newSource = allTerms.find(function(t){ return t.lang && t.lang.toLowerCase() === lang; });
-  if (!newSource) return c; // Sprache f?r dieses Konzept nicht vorhanden -> unver?ndert lassen
+  if (!newSource) return c; // Sprache für dieses Konzept nicht vorhanden -> unverändert lassen
   var copy = {};
   for (var k in c) { copy[k] = c[k]; }
   copy.sourceTerm = newSource;

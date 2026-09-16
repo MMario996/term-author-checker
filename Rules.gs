@@ -1,5 +1,5 @@
 // ============================================================================
-// REGEL-KONFIGURATION F?R DEN AUTOREN-CHECK
+// REGEL-KONFIGURATION FÜR DEN AUTOREN-CHECK
 // ============================================================================
  const DEFAULT_RULES_CONFIG = [
     {
@@ -27,7 +27,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Anaphorisches (r?ckbez?gliches) Pronomen",
+      "Description": "Anaphorisches (rückbezügliches) Pronomen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -135,7 +135,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Negativ-/Vorzugsterm, Vorschlag f?r Negativterm",
+      "Description": "Negativ-/Vorzugsterm, Vorschlag für Negativterm",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -171,7 +171,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibvarianten von Termen aus dem Benutzerw?rterbuch",
+      "Description": "Schreibvarianten von Termen aus dem Benutzerwörterbuch",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -195,7 +195,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "GK: Allein stehende Nebens?tze, Haupts?tze mit Verberststellung oder andere spezielle finite S?tze",
+      "Description": "GK: Allein stehende Nebensätze, Hauptsätze mit Verberststellung oder andere spezielle finite Sätze",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -219,7 +219,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "GK: Satzobjekte, die durchg?ngig als Phrasen erkannt wurden",
+      "Description": "GK: Satzobjekte, die durchgängig als Phrasen erkannt wurden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -303,7 +303,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "GK: Satzobjekte mit ?ffnender Klammer am Anfang",
+      "Description": "GK: Satzobjekte mit öffnender Klammer am Anfang",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -315,7 +315,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "GK: Satzobjekte mit schlie?ender Klammer vorn oder ?ffnender Klammer hinten",
+      "Description": "GK: Satzobjekte mit schließender Klammer vorn oder öffnender Klammer hinten",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -351,7 +351,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "GK: Satzobjekte mit K?stchen (U+2160)",
+      "Description": "GK: Satzobjekte mit Kästchen (U+2160)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -411,7 +411,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Verschachtelte Relativs?tze vermeiden",
+      "Description": "Verschachtelte Relativsätze vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -423,7 +423,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Koordination innerhalb von Relativs?tzen vermeiden",
+      "Description": "Koordination innerhalb von Relativsätzen vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -519,7 +519,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "\"um zu\"-Konstruktion als Erg?nzung des Oberbegriffs vermeiden",
+      "Description": "\"um zu\"-Konstruktion als Ergänzung des Oberbegriffs vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -531,7 +531,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "?bereinstimmung von Objekt und Pr?dikatsnomen kontrollieren",
+      "Description": "Übereinstimmung von Objekt und Prädikatsnomen kontrollieren",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -543,7 +543,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "?bereinstimmung von Subjekt und Pr?dikatsnomen kontrollieren",
+      "Description": "Übereinstimmung von Subjekt und Prädikatsnomen kontrollieren",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -555,7 +555,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Phrasen zur geschlechtlichen Identit?t ?berpr?fen",
+      "Description": "Diskriminierende Phrasen zur geschlechtlichen Identität überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -567,7 +567,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Phrasen, die sich auf Menschen mit k?rperlichen oder geistigen Beeintr?chtigungen beziehen, vermeiden",
+      "Description": "Diskriminierende Phrasen, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen, vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -603,7 +603,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schr?gstrich als Gendermethode verwenden",
+      "Description": "Schrägstrich als Gendermethode verwenden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -735,7 +735,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Verben, die sich auf k?rperliche oder geistige Beeintr?chtigungen beziehen, vermeiden",
+      "Description": "Diskriminierende Verben, die sich auf körperliche oder geistige Beeinträchtigungen beziehen, vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -795,7 +795,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Bezeichnungen, die sich auf die soziale Herkunft beziehen, ?berpr?fen",
+      "Description": "Diskriminierende Bezeichnungen, die sich auf die soziale Herkunft beziehen, überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -831,7 +831,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Adjektive, die sich auf die soziale Herkunft beziehen, ?berpr?fen",
+      "Description": "Diskriminierende Adjektive, die sich auf die soziale Herkunft beziehen, überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -843,7 +843,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Verben, die sich auf die soziale Herkunft beziehen, ?berpr?fen",
+      "Description": "Diskriminierende Verben, die sich auf die soziale Herkunft beziehen, überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -879,7 +879,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "\"verf?gen ?ber\" vermeiden",
+      "Description": "\"verfügen über\" vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -903,7 +903,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "F?llw?rter vermeiden",
+      "Description": "Füllwörter vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -915,7 +915,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung der Durchmesserangabe ?berpr?fen",
+      "Description": "Schreibung der Durchmesserangabe überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -927,7 +927,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung von Uhrzeiten ?berpr?fen",
+      "Description": "Schreibung von Uhrzeiten überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -963,7 +963,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Mehrdeutige Bez?ge vermeiden",
+      "Description": "Mehrdeutige Bezüge vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -975,7 +975,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Verb-Nomen-Ambiguit?t vermeiden",
+      "Description": "Verb-Nomen-Ambiguität vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -987,7 +987,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung von mehrteiligen Punktabk?rzungen ohne Leerzeichen",
+      "Description": "Schreibung von mehrteiligen Punktabkürzungen ohne Leerzeichen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -999,7 +999,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibweise von Ma?einheit und Spannungsart kontrollieren (Leerzeichen verwenden)",
+      "Description": "Schreibweise von Maßeinheit und Spannungsart kontrollieren (Leerzeichen verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1011,7 +1011,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibweise von Ma?einheit und Spannungsart kontrollieren (&nbsp; verwenden)",
+      "Description": "Schreibweise von Maßeinheit und Spannungsart kontrollieren (&nbsp; verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1023,7 +1023,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "L?scht bestimmte Regelcodes im Zusammenhang mit Auslassungspunkten am Satzende",
+      "Description": "Löscht bestimmte Regelcodes im Zusammenhang mit Auslassungspunkten am Satzende",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1047,7 +1047,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Steigerungsform des Adjektivs ?berpr?fen",
+      "Description": "Steigerungsform des Adjektivs überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1059,7 +1059,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Steigerungsformen von verst?rkten Adjektiven vermeiden",
+      "Description": "Steigerungsformen von verstärkten Adjektiven vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1083,7 +1083,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Negativ besetzte Ausdr?cke vermeiden",
+      "Description": "Negativ besetzte Ausdrücke vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1095,7 +1095,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Unfreundliche und abwertende Ausdr?cke vermeiden",
+      "Description": "Unfreundliche und abwertende Ausdrücke vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1143,7 +1143,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Bezeichnungen zur geschlechtlichen Identit?t vermeiden.",
+      "Description": "Diskriminierende Bezeichnungen zur geschlechtlichen Identität vermeiden.",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1155,7 +1155,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Phrasen, die sich auf Menschen mit k?rperlichen oder geistigen Beeintr?chtigungen beziehen, ?berpr?fen",
+      "Description": "Diskriminierende Phrasen, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen, überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1167,7 +1167,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Adjektive ?berpr?fen, die sich auf Menschen mit Behinderungen beziehen",
+      "Description": "Diskriminierende Adjektive überprüfen, die sich auf Menschen mit Behinderungen beziehen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1179,7 +1179,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Stark diskriminierende Adjektive, die sich auf Menschen mit k?rperlichen oder geistigen Beeintr?chtigungen beziehen",
+      "Description": "Stark diskriminierende Adjektive, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1191,7 +1191,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Bezeichnungen, die sich auf Menschen mit k?rperlichen oder geistigen Beeintr?chtigungen beziehen, ?berpr?fen",
+      "Description": "Diskriminierende Bezeichnungen, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen, überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1203,7 +1203,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Bezeichnungen, die sich auf Menschen mit k?rperlichen oder geistigen Beeintr?chtigungen beziehen, vermeiden",
+      "Description": "Diskriminierende Bezeichnungen, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen, vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1215,7 +1215,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Stark diskriminierende Bezeichnungen, die sich auf Menschen mit k?rperlichen oder geistigen Beeintr?chtigungen beziehen",
+      "Description": "Stark diskriminierende Bezeichnungen, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1227,7 +1227,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Personenbezeichnungen f?r Menschen mit Behinderung ?berpr?fen",
+      "Description": "Diskriminierende Personenbezeichnungen für Menschen mit Behinderung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1239,7 +1239,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Personenbezeichnungen f?r Menschen mit Behinderung vermeiden",
+      "Description": "Diskriminierende Personenbezeichnungen für Menschen mit Behinderung vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1275,7 +1275,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "W?rter mit diskriminierenden Personenbezeichnungen",
+      "Description": "Wörter mit diskriminierenden Personenbezeichnungen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1299,7 +1299,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Adjektive, die sich auf die Herkunft von Personen beziehen, ?berpr?fen",
+      "Description": "Diskriminierende Adjektive, die sich auf die Herkunft von Personen beziehen, überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1323,7 +1323,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Personenbezeichnungen aufgrund der Herkunft ?berpr?fen",
+      "Description": "Diskriminierende Personenbezeichnungen aufgrund der Herkunft überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1395,7 +1395,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Altersdiskriminierende Bezeichnungen ?berpr?fen",
+      "Description": "Altersdiskriminierende Bezeichnungen überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1431,7 +1431,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Geopolitisch fragw?rdige Bezeichnungen ?berpr?fen",
+      "Description": "Geopolitisch fragwürdige Bezeichnungen überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1443,7 +1443,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Geografische Bezeichnung ?berpr?fen",
+      "Description": "Geografische Bezeichnung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1455,7 +1455,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Personenbezeichnung zur geschlechtlichen Identit?t vermeiden",
+      "Description": "Diskriminierende Personenbezeichnung zur geschlechtlichen Identität vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1467,7 +1467,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Stark diskriminierende Personenbezeichnungen zur geschlechtlichen Identit?t",
+      "Description": "Stark diskriminierende Personenbezeichnungen zur geschlechtlichen Identität",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1479,7 +1479,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Bezeichnungen ?berpr?fen, die sich auf ein bestimmtes Alter von Menschen beziehen",
+      "Description": "Diskriminierende Bezeichnungen überprüfen, die sich auf ein bestimmtes Alter von Menschen beziehen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1515,7 +1515,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Stark diskriminierende oder besch?nigende Bezeichnungen",
+      "Description": "Stark diskriminierende oder beschönigende Bezeichnungen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1539,7 +1539,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Stark diskriminierende Personenbezeichnungen f?r Menschen mit Behinderung",
+      "Description": "Stark diskriminierende Personenbezeichnungen für Menschen mit Behinderung",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1551,7 +1551,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Diskriminierende Bezeichnungen ?berpr?fen, die sich auf die sexuelle Orientierung von Personen beziehen",
+      "Description": "Diskriminierende Bezeichnungen überprüfen, die sich auf die sexuelle Orientierung von Personen beziehen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1599,7 +1599,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Stark diskriminierende Personenbezeichnungen aufgrund der Religionszugeh?rigkeit ",
+      "Description": "Stark diskriminierende Personenbezeichnungen aufgrund der Religionszugehörigkeit ",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1707,7 +1707,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Typografische Anf?hrungszeichen verwenden",
+      "Description": "Typografische Anführungszeichen verwenden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1719,7 +1719,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung des Malzeichens ?berpr?fen",
+      "Description": "Schreibung des Malzeichens überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1731,7 +1731,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Darstellung von Zahlenbereichen ?berpr?fen",
+      "Description": "Darstellung von Zahlenbereichen überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1743,7 +1743,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "bis-Zeichen und Streckenstrich ?berpr?fen (kein Leerzeichen)",
+      "Description": "bis-Zeichen und Streckenstrich überprüfen (kein Leerzeichen)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1755,7 +1755,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "bis-Zeichen ?berpr?fen",
+      "Description": "bis-Zeichen überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1767,7 +1767,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung von Tausenderzahlen ?berpr?fen (kein Trennzeichen verwenden)",
+      "Description": "Schreibung von Tausenderzahlen überprüfen (kein Trennzeichen verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1779,7 +1779,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung von Tausenderzahlen ?berpr?fen (&nbsp; verwenden)",
+      "Description": "Schreibung von Tausenderzahlen überprüfen (&nbsp; verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1791,7 +1791,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "?berhebliche Floskeln vermeiden",
+      "Description": "überhebliche Floskeln vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1815,7 +1815,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Ausnahmeformulierung ?berpr?fen",
+      "Description": "Ausnahmeformulierung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1839,7 +1839,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Umgangssprachliche W?rter vermeiden",
+      "Description": "Umgangssprachliche Wörter vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1863,7 +1863,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "?berfl?ssige W?rter vermeiden",
+      "Description": "überflüssige Wörter vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1887,7 +1887,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "\"n?tig\" und \"notwendig\" vermeiden",
+      "Description": "\"nötig\" und \"notwendig\" vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1899,7 +1899,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Veraltete W?rter vermeiden",
+      "Description": "Veraltete Wörter vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1911,7 +1911,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Unpers?nliche Pronomen vermeiden",
+      "Description": "Unpersönliche Pronomen vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1959,7 +1959,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "L?scht ADM in unmittelbarer Nachbarschaft von Vorzugstermen",
+      "Description": "Löscht ADM in unmittelbarer Nachbarschaft von Vorzugstermen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -1983,7 +1983,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Funktionsverbgef?ge vermeiden (mit Korrekturvorschlag)",
+      "Description": "Funktionsverbgefüge vermeiden (mit Korrekturvorschlag)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2031,7 +2031,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Auslassungspunkte ?berpr?fen",
+      "Description": "Auslassungspunkte überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2079,7 +2079,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung von Tausenderzahlen ?berpr?fen (Punkt verwenden)",
+      "Description": "Schreibung von Tausenderzahlen überprüfen (Punkt verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2091,7 +2091,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung von Dezimalzahlen ?berpr?fen (Punkt verwenden)",
+      "Description": "Schreibung von Dezimalzahlen überprüfen (Punkt verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2115,7 +2115,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung von Dezimalzahlen ?berpr?fen (Komma verwenden)",
+      "Description": "Schreibung von Dezimalzahlen überprüfen (Komma verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2127,7 +2127,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Auslassungen bei weit voneinander entfernten W?rtern vermeiden",
+      "Description": "Auslassungen bei weit voneinander entfernten Wörtern vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2139,7 +2139,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Verwendung von Artikeln ?berpr?fen",
+      "Description": "Verwendung von Artikeln überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2163,7 +2163,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "S?tze nicht durch Listen unterbrechen",
+      "Description": "Sätze nicht durch Listen unterbrechen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2199,7 +2199,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibweise von etablierten Abk?rzungen kontrollieren",
+      "Description": "Schreibweise von etablierten Abkürzungen kontrollieren",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2271,7 +2271,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Endung im Genitiv bei W?rtern auf -sch kontrollieren",
+      "Description": "Endung im Genitiv bei Wörtern auf -sch kontrollieren",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2295,7 +2295,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Ungebr?uchliche Adjektive vermeiden",
+      "Description": "Ungebräuchliche Adjektive vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2343,7 +2343,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Auslassungen bei zusammengesetzten W?rtern vermeiden",
+      "Description": "Auslassungen bei zusammengesetzten Wörtern vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2403,7 +2403,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Doppelpunkt nach Pr?positionalphrasen setzen",
+      "Description": "Doppelpunkt nach Präpositionalphrasen setzen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2439,7 +2439,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Ordinalzahlen von 1.-12. ausschreiben und gr??er 12. nicht ausschreiben",
+      "Description": "Ordinalzahlen von 1.-12. ausschreiben und größer 12. nicht ausschreiben",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2463,7 +2463,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Kardinalzahlen von 0-12, Zahlen gr??er 12 nicht ausschreiben",
+      "Description": "Kardinalzahlen von 0-12, Zahlen größer 12 nicht ausschreiben",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2511,7 +2511,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Wortdopplung bei Abk?rzungen",
+      "Description": "Wortdopplung bei Abkürzungen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2523,7 +2523,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Plural von Akronymen gem?? Vorgaben aus dem BW oder mit \"s\" bilden",
+      "Description": "Plural von Akronymen gemäß Vorgaben aus dem BW oder mit \"s\" bilden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2631,7 +2631,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "\"d. h.\" in Einsch?ben vermeiden",
+      "Description": "\"d. h.\" in Einschüben vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2667,8 +2667,8 @@
       "IsEnabled": true
     },
     {
-      "Description": "Keine ?berpr?fung von Gro?-/Kleinschreibung am Anfang von Listen- und Tabellenelementen",
-      "Information": "Aktivieren Sie diese Regel, um in Listen und Tabellen nicht auf falsche Kleinschreibung am Satzanfang zu pr?fen.",
+      "Description": "Keine Überprüfung von Groß-/Kleinschreibung am Anfang von Listen- und Tabellenelementen",
+      "Information": "Aktivieren Sie diese Regel, um in Listen und Tabellen nicht auf falsche Kleinschreibung am Satzanfang zu prüfen.",
       "ConflictsWith": [],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
@@ -2679,8 +2679,8 @@
       "IsEnabled": false
     },
     {
-      "Description": "Keine ?berpr?fung von Satzendezeichen in Listen und Tabellen",
-      "Information": "Aktivieren Sie diese Regel, um Listen und Tabellen nicht auf Satzendezeichen zu pr?fen.",
+      "Description": "Keine Überprüfung von Satzendezeichen in Listen und Tabellen",
+      "Information": "Aktivieren Sie diese Regel, um Listen und Tabellen nicht auf Satzendezeichen zu prüfen.",
       "ConflictsWith": [],
       "IsConfigurable": false,
       "DefaultParameter": "-1",
@@ -2847,7 +2847,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "\"durchf?hren\" vermeiden",
+      "Description": "\"durchführen\" vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2859,7 +2859,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "\"bet?tigen\" vermeiden",
+      "Description": "\"betätigen\" vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2883,7 +2883,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "\"au?erdem\" vermeiden",
+      "Description": "\"außerdem\" vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2907,7 +2907,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "\"verm?gen\" vermeiden",
+      "Description": "\"vermögen\" vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -2967,7 +2967,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Lange Klammereinsch?be vermeiden",
+      "Description": "Lange Klammereinschübe vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": true,
@@ -3015,7 +3015,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Funktionsverbgef?ge vermeiden",
+      "Description": "Funktionsverbgefüge vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3063,7 +3063,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Zu viele Pr?positionalphrasen vermeiden",
+      "Description": "Zu viele Präpositionalphrasen vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": true,
@@ -3099,7 +3099,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Passiv mit T?terangabe (\"von\", \"durch\") vermeiden",
+      "Description": "Passiv mit Täterangabe (\"von\", \"durch\") vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3123,7 +3123,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "\"m?ssen\" mit Passiv vermeiden",
+      "Description": "\"müssen\" mit Passiv vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3219,7 +3219,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Distanz zwischen Verbteilen verk?rzen",
+      "Description": "Distanz zwischen Verbteilen verkürzen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": true,
@@ -3267,7 +3267,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Drei und mehr Klammereinsch?be vermeiden",
+      "Description": "Drei und mehr Klammereinschübe vermeiden",
       "Information": "Kann nicht zusammen mit 560de aktiv sein.",
       "ConflictsWith": [{"Name": "560de", "Type": "Style"}],
       "IsConfigurable": false,
@@ -3279,7 +3279,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Zwei und mehr Klammereinsch?be vermeiden",
+      "Description": "Zwei und mehr Klammereinschübe vermeiden",
       "Information": "Kann nicht zusammen mit 562de aktiv sein.",
       "ConflictsWith": [{"Name": "562de", "Type": "Style"}],
       "IsConfigurable": false,
@@ -3291,7 +3291,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Verwendung von Leerzeichen bei Schr?gstrichen vermeiden",
+      "Description": "Verwendung von Leerzeichen bei Schrägstrichen vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3327,7 +3327,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Zu lange ?berschriften vermeiden",
+      "Description": "Zu lange Überschriften vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": true,
@@ -3339,7 +3339,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Nebens?tze in ?berschriften vermeiden",
+      "Description": "Nebensätze in Überschriften vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3351,7 +3351,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Ganze S?tze in ?berschriften vermeiden",
+      "Description": "Ganze Sätze in Überschriften vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3363,7 +3363,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schr?gstriche vermeiden (Ausnahme: zwischen Ziffern oder Einheiten)",
+      "Description": "Schrägstriche vermeiden (Ausnahme: zwischen Ziffern oder Einheiten)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3387,7 +3387,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Ganze S?tze in Klammern vermeiden",
+      "Description": "Ganze Sätze in Klammern vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3399,7 +3399,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Mehrere Nebens?tze als Liste darstellen",
+      "Description": "Mehrere Nebensätze als Liste darstellen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3411,7 +3411,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Aufz?hlungen als Liste darstellen",
+      "Description": "Aufzählungen als Liste darstellen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": true,
@@ -3423,7 +3423,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Abk?rzungen ohne darauffolgende Zahl ausschreiben",
+      "Description": "Abkürzungen ohne darauffolgende Zahl ausschreiben",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3471,7 +3471,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibweise von \"T?r\" kontrollieren",
+      "Description": "Schreibweise von \"Tür\" kontrollieren",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3519,7 +3519,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Attributanh?ufungen vermeiden",
+      "Description": "Attributanhäufungen vermeiden",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3543,7 +3543,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Satzl?nge verk?rzen (f?r bestimmte Elemente)",
+      "Description": "Satzlänge verkürzen (für bestimmte Elemente)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": true,
@@ -3555,7 +3555,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Satzl?nge verk?rzen",
+      "Description": "Satzlänge verkürzen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": true,
@@ -3651,7 +3651,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Komposita mit Zahlw?rtern bilden",
+      "Description": "Komposita mit Zahlwörtern bilden",
       "Information": "Kann nicht zusammen mit 163de aktiv sein.",
       "ConflictsWith": [{"Name": "163de", "Type": "Style"}],
       "IsConfigurable": false,
@@ -3723,7 +3723,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Erkennung falscher Kleinschreibung substantivischer W?rter",
+      "Description": "Erkennung falscher Kleinschreibung substantivischer Wörter",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3735,7 +3735,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung falscher Gro?schreibung nicht substantivischer W?rter",
+      "Description": "Erkennung falscher Großschreibung nicht substantivischer Wörter",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3747,7 +3747,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung falscher Gro?schreibung nicht substantivischer W?rter am Anfang unvollst?ndiger S?tze",
+      "Description": "Erkennung falscher Großschreibung nicht substantivischer Wörter am Anfang unvollständiger Sätze",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3819,7 +3819,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Erkennung unbekannter W?rter (Tippfehler)",
+      "Description": "Erkennung unbekannter Wörter (Tippfehler)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3831,7 +3831,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung unbekannter W?rter als mutma?liche Stra?ennamen",
+      "Description": "Erkennung unbekannter Wörter als mutmaßliche Straßennamen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3843,7 +3843,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Erkennung unbekannter W?rter als mutma?liche Ortsnamen",
+      "Description": "Erkennung unbekannter Wörter als mutmaßliche Ortsnamen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3855,7 +3855,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Erkennung unbekannter W?rter als mutma?liche Familiennamen oder Vornamen",
+      "Description": "Erkennung unbekannter Wörter als mutmaßliche Familiennamen oder Vornamen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3879,7 +3879,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung falschgeschriebener Ma?einheiten",
+      "Description": "Erkennung falschgeschriebener Maßeinheiten",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3903,7 +3903,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung mehrteiliger Punktabk?rzungen ohne oder mit zu vielen Leerzeichen",
+      "Description": "Erkennung mehrteiliger Punktabkürzungen ohne oder mit zu vielen Leerzeichen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3915,7 +3915,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Erkennung mehrteiliger Punktabk?rzungen ohne Leerzeichen",
+      "Description": "Erkennung mehrteiliger Punktabkürzungen ohne Leerzeichen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3927,7 +3927,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Erkennung falsch geschriebener Abk?rzungen",
+      "Description": "Erkennung falsch geschriebener Abkürzungen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3963,7 +3963,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Erkennung ?berfl?ssiger W?rter",
+      "Description": "Erkennung überflüssiger Wörter",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -3987,7 +3987,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Wortfolge ?berpr?fen",
+      "Description": "Wortfolge überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4011,7 +4011,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Erkennung mutma?licher Wortverwechslung",
+      "Description": "Erkennung mutmaßlicher Wortverwechslung",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4023,7 +4023,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Bindestrichsetzung ?berpr?fen",
+      "Description": "Bindestrichsetzung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4119,7 +4119,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?-/Kleinschreibung des Pronomens ?berpr?fen",
+      "Description": "Groß-/Kleinschreibung des Pronomens überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4143,7 +4143,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung von Akronymen etc. ?berpr?fen",
+      "Description": "Schreibung von Akronymen etc. überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4167,7 +4167,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Kommasetzung ?berpr?fen",
+      "Description": "Kommasetzung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4179,7 +4179,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Anf?hrungszeichen ?berpr?fen",
+      "Description": "Anführungszeichen überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4191,7 +4191,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Klammersetzung ?berpr?fen",
+      "Description": "Klammersetzung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4215,7 +4215,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "?berfl?ssiges Leerzeichen entfernen",
+      "Description": "überflüssiges Leerzeichen entfernen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4227,7 +4227,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Fehlendes Leerzeichen nach Satzzeichen erg?nzen",
+      "Description": "Fehlendes Leerzeichen nach Satzzeichen ergänzen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4239,7 +4239,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Schreibung der W?hrungsangabe ?berpr?fen (Leerzeichen verwenden)",
+      "Description": "Schreibung der Währungsangabe überprüfen (Leerzeichen verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4251,7 +4251,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung der W?hrungsangabe ?berpr?fen (&nbsp; verwenden)",
+      "Description": "Schreibung der Währungsangabe überprüfen (&nbsp; verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4263,7 +4263,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung der Ma?angabe ?berpr?fen (ohne Leerzeichen)",
+      "Description": "Schreibung der Maßangabe überprüfen (ohne Leerzeichen)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4275,7 +4275,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung der Ma?angabe ?berpr?fen (Leerzeichen verwenden)",
+      "Description": "Schreibung der Maßangabe überprüfen (Leerzeichen verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4287,7 +4287,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung der Ma?angabe ?berpr?fen (&nbsp; verwenden)",
+      "Description": "Schreibung der Maßangabe überprüfen (&nbsp; verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4299,7 +4299,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Schreibung der Paragrafenangabe ?berpr?fen (Leerzeichen verwenden)",
+      "Description": "Schreibung der Paragrafenangabe überprüfen (Leerzeichen verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4311,7 +4311,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung der Paragrafenangabe ?berpr?fen (&nbsp; verwenden)",
+      "Description": "Schreibung der Paragrafenangabe überprüfen (&nbsp; verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4323,7 +4323,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung des Rechen- oder Verh?ltniszeichens ?berpr?fen (Leerzeichen verwenden)",
+      "Description": "Schreibung des Rechen- oder Verhältniszeichens überprüfen (Leerzeichen verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4335,7 +4335,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung des Rechen- oder Verh?ltniszeichens ?berpr?fen (&nbsp; verwenden)",
+      "Description": "Schreibung des Rechen- oder Verhältniszeichens überprüfen (&nbsp; verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4347,7 +4347,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung der Gradangabe ?berpr?fen (Leerzeichen zwischen Zahl und Gradzeichen verwenden)",
+      "Description": "Schreibung der Gradangabe überprüfen (Leerzeichen zwischen Zahl und Gradzeichen verwenden)",
       "Information": "Kann nicht zusammen mit 624de (Grammatik) aktiv sein.",
       "ConflictsWith": [{"Name": "624de", "Type": "Grammar"}],
       "IsConfigurable": false,
@@ -4359,7 +4359,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung der Gradangabe ?berpr?fen (&nbsp; zwischen Zahl und Gradzeichen verwenden)",
+      "Description": "Schreibung der Gradangabe überprüfen (&nbsp; zwischen Zahl und Gradzeichen verwenden)",
       "Information": "Kann nicht zusammen mit 6241de (Grammatik) aktiv sein.",
       "ConflictsWith": [{"Name": "6241de", "Type": "Grammar"}],
       "IsConfigurable": false,
@@ -4371,7 +4371,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung der Prozentangabe ?berpr?fen (Leerzeichen verwenden)",
+      "Description": "Schreibung der Prozentangabe überprüfen (Leerzeichen verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4383,7 +4383,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung der Prozentangabe ?berpr?fen (&nbsp; verwenden)",
+      "Description": "Schreibung der Prozentangabe überprüfen (&nbsp; verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4395,7 +4395,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Zwischenr?ume bei Datumsangaben ?berpr?fen (&nbsp; zwischen Tag und Monat verwenden)",
+      "Description": "Zwischenräume bei Datumsangaben überprüfen (&nbsp; zwischen Tag und Monat verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4407,7 +4407,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Zwischenr?ume bei Datumsangaben ?berpr?fen (Leerzeichen zwischen Tag und Monat verwenden)",
+      "Description": "Zwischenräume bei Datumsangaben überprüfen (Leerzeichen zwischen Tag und Monat verwenden)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4419,7 +4419,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Schreibung von \"dass\" ?berpr?fen",
+      "Description": "Schreibung von \"dass\" überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4443,7 +4443,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Satzzeichen in Aufz?hlungen und Tabellen ?berpr?fen",
+      "Description": "Satzzeichen in Aufzählungen und Tabellen überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4455,7 +4455,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Satzendezeichen ?berpr?fen",
+      "Description": "Satzendezeichen überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4479,7 +4479,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung von fehlendem Komma in Teils?tzen",
+      "Description": "Erkennung von fehlendem Komma in Teilsätzen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4491,7 +4491,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Falsche Kommasetzung bei Erl?uterung zwischen Adjektiv und Substantiv",
+      "Description": "Falsche Kommasetzung bei Erläuterung zwischen Adjektiv und Substantiv",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4503,7 +4503,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Falsche Kommasetzung bei Erl?uterung zwischen Artikelwort und Substantiv",
+      "Description": "Falsche Kommasetzung bei Erläuterung zwischen Artikelwort und Substantiv",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4515,7 +4515,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Fehlendes Komma vor Erl?uterung zwischen Adjektiv und Substantiv",
+      "Description": "Fehlendes Komma vor Erläuterung zwischen Adjektiv und Substantiv",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4527,7 +4527,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Kommasetzung bei erweitertem Infinitiv ?berpr?fen",
+      "Description": "Kommasetzung bei erweitertem Infinitiv überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4539,7 +4539,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Kommasetzung beim Infinitivsatz ?berpr?fen",
+      "Description": "Kommasetzung beim Infinitivsatz überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4551,7 +4551,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Ziffer und Nachsilbe ?berpr?fen",
+      "Description": "Getrenntschreibung von Ziffer und Nachsilbe überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4563,7 +4563,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung der Adjektive ?berpr?fen",
+      "Description": "Getrenntschreibung der Adjektive überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4575,7 +4575,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Superlativ und Adjektiv bedeutungsabh?ngig ?berpr?fen",
+      "Description": "Getrenntschreibung von Superlativ und Adjektiv bedeutungsabhängig überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4587,7 +4587,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Getrenntschreibung von Superlativ und Adjektiv ?berpr?fen",
+      "Description": "Getrenntschreibung von Superlativ und Adjektiv überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4599,7 +4599,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Getrenntschreibung der Adjektive bedeutungsabh?ngig ?berpr?fen",
+      "Description": "Getrenntschreibung der Adjektive bedeutungsabhängig überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4611,7 +4611,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung der Adjektive verwendungsabh?ngig ?berpr?fen",
+      "Description": "Getrenntschreibung der Adjektive verwendungsabhängig überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4623,7 +4623,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung der Adjektive bei progressiver Schreibweise ?berpr?fen",
+      "Description": "Getrenntschreibung der Adjektive bei progressiver Schreibweise überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4635,7 +4635,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?schreibung von attributiv-elliptisch gebrauchten Adjektiven ?berpr?fen",
+      "Description": "Großschreibung von attributiv-elliptisch gebrauchten Adjektiven überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4647,7 +4647,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Gro?schreibung von nicht-substantivischen Bruchzahlen ?berpr?fen",
+      "Description": "Großschreibung von nicht-substantivischen Bruchzahlen überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4659,7 +4659,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?schreibung von aus Substantiven entstandenen W?rtern ?berpr?fen",
+      "Description": "Großschreibung von aus Substantiven entstandenen Wörtern überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4671,7 +4671,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?schreibung nicht-substantivischer W?rter ?berpr?fen",
+      "Description": "Großschreibung nicht-substantivischer Wörter überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4683,7 +4683,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Adjektiv und Verb (untrennbare Zusammensetzung) ?berpr?fen",
+      "Description": "Getrenntschreibung von Adjektiv und Verb (untrennbare Zusammensetzung) überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4695,7 +4695,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Adjektiv und Verb (trennbare Zusammensetzung) ?berpr?fen",
+      "Description": "Getrenntschreibung von Adjektiv und Verb (trennbare Zusammensetzung) überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4707,7 +4707,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung der Verben bei progressiver Schreibweise bedeutungsabh?ngig ?berpr?fen",
+      "Description": "Getrenntschreibung der Verben bei progressiver Schreibweise bedeutungsabhängig überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4719,7 +4719,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung der Verben bei progressiver Schreibweise ?berpr?fen",
+      "Description": "Getrenntschreibung der Verben bei progressiver Schreibweise überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4731,7 +4731,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Adjektiv und Verb bedeutungsabh?ngig ?berpr?fen",
+      "Description": "Getrenntschreibung von Adjektiv und Verb bedeutungsabhängig überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4743,7 +4743,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Adjektiv und Verb bei progressiver Schreibweise bedeutungsabh?ngig ?berpr?fen",
+      "Description": "Getrenntschreibung von Adjektiv und Verb bei progressiver Schreibweise bedeutungsabhängig überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4755,7 +4755,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Adjektiv und Verb bei progressiver Schreibweise pr?fen",
+      "Description": "Getrenntschreibung von Adjektiv und Verb bei progressiver Schreibweise prüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4767,7 +4767,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Schreibung der Prozentangabe ?berpr?fen (ohne Leerzeichen)",
+      "Description": "Schreibung der Prozentangabe überprüfen (ohne Leerzeichen)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4779,7 +4779,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Getrenntschreibung von Substantiv und Adjektiv ?berpr?fen",
+      "Description": "Getrenntschreibung von Substantiv und Adjektiv überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4791,7 +4791,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Substantiv und Partizip ?berpr?fen",
+      "Description": "Getrenntschreibung von Substantiv und Partizip überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4803,7 +4803,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Zusammenschreibung von nicht verblasstem Substantiv und Verb ?berpr?fen",
+      "Description": "Zusammenschreibung von nicht verblasstem Substantiv und Verb überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4815,7 +4815,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Zusammenschreibung von Substantiv und Adjektiv ?berpr?fen",
+      "Description": "Zusammenschreibung von Substantiv und Adjektiv überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4827,7 +4827,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?-/Kleinschreibung des Adjektivs ?berpr?fen",
+      "Description": "Groß-/Kleinschreibung des Adjektivs überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4839,7 +4839,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Kleinschreibung der adverbialen Wendung bei progressiver Schreibweise ?berpr?fen",
+      "Description": "Kleinschreibung der adverbialen Wendung bei progressiver Schreibweise überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4851,7 +4851,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Kleinschreibung der festen adverbialen Wendung bei progressiver Schreibweise ?berpr?fen",
+      "Description": "Kleinschreibung der festen adverbialen Wendung bei progressiver Schreibweise überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4887,7 +4887,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "?bereinstimmung von Satzteilen ?berpr?fen",
+      "Description": "Übereinstimmung von Satzteilen überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4899,7 +4899,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Verbform nach Pr?position ?berpr?fen",
+      "Description": "Verbform nach Präposition überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4911,7 +4911,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Erkennung von fehlender Pr?positionalerg?nzung",
+      "Description": "Erkennung von fehlender Präpositionalergänzung",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4923,7 +4923,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung von Artikel nach kontrahierter Pr?position",
+      "Description": "Erkennung von Artikel nach kontrahierter Präposition",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4935,7 +4935,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung von nichtstandardsprachlichem Pr?positionalkasus bei \"statt\"",
+      "Description": "Erkennung von nichtstandardsprachlichem Präpositionalkasus bei \"statt\"",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4947,7 +4947,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung von nichtstandardsprachlichem Pr?positionalkasus bei \"pro\"",
+      "Description": "Erkennung von nichtstandardsprachlichem Präpositionalkasus bei \"pro\"",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4959,7 +4959,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung von nichtstandardsprachlichem Pr?positionalkasus",
+      "Description": "Erkennung von nichtstandardsprachlichem Präpositionalkasus",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4971,7 +4971,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Kasus der Pr?positionalerg?nzung ?berpr?fen",
+      "Description": "Kasus der Präpositionalergänzung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4983,7 +4983,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Wortverdopplung ?berpr?fen",
+      "Description": "Wortverdopplung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -4995,7 +4995,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Punktverdoppelung ?berpr?fen",
+      "Description": "Punktverdoppelung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5007,7 +5007,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Wortverdoppelung ?berpr?fen",
+      "Description": "Wortverdoppelung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5019,7 +5019,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Beugung von \"diesen\" und \"jenen\" ?berpr?fen",
+      "Description": "Beugung von \"diesen\" und \"jenen\" überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5031,7 +5031,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Nominalkongruenz ?berpr?fen",
+      "Description": "Nominalkongruenz überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5043,7 +5043,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung von fehlendem Bindestrich bei Zusammensetzungen mit Abk?rzungen aus dem Benutzerw?rterbuch",
+      "Description": "Erkennung von fehlendem Bindestrich bei Zusammensetzungen mit Abkürzungen aus dem Benutzerwörterbuch",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5079,7 +5079,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Erkennung von fehlendem Erg?nzungsstrich",
+      "Description": "Erkennung von fehlendem Ergänzungsstrich",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5091,7 +5091,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung von falsch gesetztem Erg?nzungsstrich",
+      "Description": "Erkennung von falsch gesetztem Ergänzungsstrich",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5115,7 +5115,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Bindestrichsetzung ?berpr?fen",
+      "Description": "Bindestrichsetzung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5127,7 +5127,7 @@
       "IsEnabled": false
     },
     {
-      "Description": "Leerzeichen in Bindestrichzusammensetzungen l?schen",
+      "Description": "Leerzeichen in Bindestrichzusammensetzungen löschen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5139,7 +5139,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von verk?rztem Adverb und Verb ?berpr?fen",
+      "Description": "Getrenntschreibung von verkürztem Adverb und Verb überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5151,7 +5151,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Substantiv und Verb ?berpr?fen",
+      "Description": "Getrenntschreibung von Substantiv und Verb überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5163,7 +5163,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?-/Kleinschreibung ?berpr?fen",
+      "Description": "Groß-/Kleinschreibung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5175,7 +5175,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?-/Kleinschreibung der Tageszeitangabe ?berpr?fen",
+      "Description": "Groß-/Kleinschreibung der Tageszeitangabe überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5187,7 +5187,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?-/Kleinschreibung bei Mehrwortausdr?cken ?berpr?fen",
+      "Description": "Groß-/Kleinschreibung bei Mehrwortausdrücken überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5199,7 +5199,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?-/Kleinschreibung des Infinitivs ?berpr?fen",
+      "Description": "Groß-/Kleinschreibung des Infinitivs überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5211,7 +5211,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?-/Kleinschreibung der Interjektion ?berpr?fen",
+      "Description": "Groß-/Kleinschreibung der Interjektion überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5223,7 +5223,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?-/Kleinschreibung der Konjunktion ?berpr?fen",
+      "Description": "Groß-/Kleinschreibung der Konjunktion überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5235,7 +5235,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?-/Kleinschreibung der Pr?position ?berpr?fen",
+      "Description": "Groß-/Kleinschreibung der Präposition überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5247,7 +5247,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?-/Kleinschreibung des Adverbs ?berpr?fen",
+      "Description": "Groß-/Kleinschreibung des Adverbs überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5259,7 +5259,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Kleinschreibung der Ordnungszahl ?berpr?fen",
+      "Description": "Kleinschreibung der Ordnungszahl überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5271,7 +5271,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Kleinschreibung der Bruchzahl ?berpr?fen",
+      "Description": "Kleinschreibung der Bruchzahl überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5283,7 +5283,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Kleinschreibung des Zahlworts ?berpr?fen",
+      "Description": "Kleinschreibung des Zahlworts überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5295,7 +5295,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Kleinschreibung des Pronomens ?berpr?fen",
+      "Description": "Kleinschreibung des Pronomens überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5307,7 +5307,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Schreibung von \"das\" und Kommasetzung ?berpr?fen",
+      "Description": "Schreibung von \"das\" und Kommasetzung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5319,7 +5319,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Schreibung von \"das\" ?berpr?fen",
+      "Description": "Schreibung von \"das\" überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5331,7 +5331,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung ?berpr?fen",
+      "Description": "Getrenntschreibung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5343,7 +5343,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung der Zahlableitung ?berpr?fen",
+      "Description": "Getrenntschreibung der Zahlableitung überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5355,7 +5355,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung der Zahlw?rter ?berpr?fen",
+      "Description": "Getrenntschreibung der Zahlwörter überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5379,7 +5379,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Kommasetzung ?berpr?fen (?berfl?ssiges Komma)",
+      "Description": "Kommasetzung überprüfen (überflüssiges Komma)",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5427,7 +5427,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Kommasetzung beim Relativsatz ?berpr?fen",
+      "Description": "Kommasetzung beim Relativsatz überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5439,7 +5439,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Kleinschreibung nach Doppelpunkt ?berpr?fen",
+      "Description": "Kleinschreibung nach Doppelpunkt überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5451,7 +5451,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Gro?schreibung nach Doppelpunkt ?berpr?fen",
+      "Description": "Großschreibung nach Doppelpunkt überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5463,7 +5463,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Pr?fix und Verb (untrennbare Zusammensetzung) ?berpr?fen",
+      "Description": "Getrenntschreibung von Präfix und Verb (untrennbare Zusammensetzung) überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5475,7 +5475,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von pr?positionalem Pr?fix und Verb (trennbare Zusammensetzung) ?berpr?fen",
+      "Description": "Getrenntschreibung von präpositionalem Präfix und Verb (trennbare Zusammensetzung) überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5487,7 +5487,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Korrelat und Verb bedeutungsabh?ngig ?berpr?fen",
+      "Description": "Getrenntschreibung von Korrelat und Verb bedeutungsabhängig überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5499,7 +5499,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Partikel und Verb bei progressiver Schreibweise ?berpr?fen",
+      "Description": "Getrenntschreibung von Partikel und Verb bei progressiver Schreibweise überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5511,7 +5511,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Substantiv und Verb ?berpr?fen. Untrennbare Zusammensetzung",
+      "Description": "Getrenntschreibung von Substantiv und Verb überprüfen. Untrennbare Zusammensetzung",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5523,7 +5523,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von verblasstem Substantiv und Verb ?berpr?fen",
+      "Description": "Getrenntschreibung von verblasstem Substantiv und Verb überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5535,7 +5535,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Getrenntschreibung von Pr?position und Substantiv ?berpr?fen",
+      "Description": "Getrenntschreibung von Präposition und Substantiv überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5547,7 +5547,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Leerzeichen vor Apostroph ?berpr?fen",
+      "Description": "Leerzeichen vor Apostroph überprüfen",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5559,7 +5559,7 @@
       "IsEnabled": true
     },
     {
-      "Description": "Erkennung von unbekannten Einzelteilen bei zusammengesetzten W?rtern",
+      "Description": "Erkennung von unbekannten Einzelteilen bei zusammengesetzten Wörtern",
       "Information": null,
       "ConflictsWith": [],
       "IsConfigurable": false,
@@ -5780,7 +5780,7 @@ function _getOrCreateRulesFolder_() {
 // SECTION MAPPING (folgt deiner Allgemein/Technisch/Marketing-Sortierung oben)
 // ============================================================================
 // Nur Style-Regeln werden weiter unterteilt. Terminology, Grammar, Spelling
-// und Abbreviation bleiben jeweils eine eigene Section, unabh?ngig davon,
+// und Abbreviation bleiben jeweils eine eigene Section, unabhängig davon,
 // in welchem Block sie oben stehen.
 var STYLE_SECTION_GENERAL = ["110de", "111de", "113de", "114de", "121de", "140de", "141de", "142de", "143de", "150de", "1601de", "161de", "162de", "165de", "1661de", "1662de", "166de", "167de", "168de", "1691de", "169de", "171de", "172de", "173de", "180de", "181de", "182de", "190de", "191de", "192de", "193de", "210de", "220de", "221de", "230de", "240de", "310de", "311de", "312de", "313de", "314de", "315de", "316de", "317de", "330de", "331de", "332de", "334de", "335de", "336de", "337de", "339de", "340de", "341de", "342de", "343de", "344de", "345de", "346de", "349de", "350de", "353de", "360de", "361de", "362de", "363de", "364de", "365de", "366de", "367de", "368de", "3441de", "3442de", "3443de", "3444de", "3691de", "380de", "410de", "411de", "420de", "430de", "431de", "440de", "441de", "442de", "510de", "511de", "512de", "514de", "520de", "521de", "530de", "5301de", "531de", "532de", "533de", "534de", "540de", "541de", "542de", "543de", "550de", "560de", "561de", "562de", "610de", "611de", "620de", "622de", "630de", "710de", "711de", "720de", "722de", "723de", "7221de", "724de", "730de", "733de", "734de", "740de", "741de", "750de", "751de", "752de", "753de", "770de", "771de", "772de", "780de", "930de", "3912de", "950001de", "951000de", "951102de", "951111de", "951112de", "951113de", "951114de", "951115de", "951116de", "951202de", "951302de", "951402de", "952101de", "952102de", "952103de", "952302de", "952303de", "952401de", "952503de", "952601de", "952602de", "952701de", "952801de", "952802de", "952803de", "953101de", "953102de", "953202de", "953203de", "954102de", "954103de", "954301de", "954302de", "954303de", "954401de", "954402de", "954502de", "955101de", "955102de", "955103de", "955201de", "955202de", "955203de", "955301de", "955302de", "955303de", "955402de", "955502de", "955503de", "956101de", "956201de", "957101de", "957102de", "957202de", "957303de", "958101de", "958102de", "958201de", "958202de", "958203de", "958301de", "958302de", "958303de", "958403de", "79003de", "def101de", "def102de", "def103de", "def104de", "def106de", "def107de", "def108de", "def210de", "def220de", "gc1de", "gc2de", "gc3de", "gc4de", "gc6de", "gc7de", "gc8de"];
 var STYLE_SECTION_TECHNICAL = ["112de", "1221de", "122de", "1301de", "1302de", "1303de", "130de", "1311de", "131de", "1321de", "133de", "134de", "135de", "136de", "1371de", "1372de", "137de", "1381de", "1382de", "138de", "139de", "163de", "170de", "321de", "322de", "371de", "372de", "563de", "621de", "623de", "624de", "760de", "761de", "7611de", "762de", "763de", "764de", "721de", "def110de", "gk0001de", "gk0002de", "gk1001de", "gk1002de", "gk1003de", "gk1004de", "gk1005de", "gk1006de", "gk2001de", "gk3001de", "gk3002de", "gk3003de", "gk3004de", "gk3005de", "gk4001de", "gk5001de", "gk5002de", "gk6001de"];
@@ -5939,7 +5939,7 @@ var DEFAULT_RULES_CONFIG_EN = [
   { "Description": "Avoid excessive politeness fillers like \"please\"", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "333de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid first person (\"I\"/\"we\")", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "732de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid directly addressing the reader", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "736de", "Type": "Style", "Parameter": "-1", "IsEnabled": true },
-  { "Description": "Avoid empty phrases and clich?s", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "338de", "Type": "Style", "Parameter": null, "IsEnabled": false },
+  { "Description": "Avoid empty phrases and clichés", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "338de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid exception phrasing", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "351de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid hedging and softening words", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "352de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid colloquial words", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "369de", "Type": "Style", "Parameter": null, "IsEnabled": false },
@@ -6091,7 +6091,7 @@ function _getOrCreateNamedSheet_(ss, name) {
 }
 
 /**
- * Stellt sicher, dass das Log-Sheet eine Kopfzeile hat, bevor Zeilen angeh?ngt werden.
+ * Stellt sicher, dass das Log-Sheet eine Kopfzeile hat, bevor Zeilen angehängt werden.
  */
 function _ensureLogSheetHeaders_(sheet) {
   var firstCell = sheet.getRange(1, 1).getValue();
@@ -6107,7 +6107,7 @@ function _ensureLogSheetHeaders_(sheet) {
 
 /**
  * Loggt neu angelegte oder importierte Custom-Regeln zentral im Tabellenblatt "Custom"
- * (nur anh?ngen, nie l?schen) + Mail an Admins, damit Admins mitbekommen, wenn
+ * (nur anhängen, nie löschen) + Mail an Admins, damit Admins mitbekommen, wenn
  * irgendwer im Team eine neue Regel anlegt.
  */
 function apiLogNewCustomRules(newRules, language) {
@@ -6157,12 +6157,12 @@ function apiLogNewCustomRules(newRules, language) {
 /**
  * Einmaliger Bulk-Export: schreibt NUR die Standardregeln (keine Custom-Regeln, die
  * liegen bereits fortlaufend im Tabellenblatt "Custom") in das Tabellenblatt "Standard",
- * das dabei jedes Mal komplett geleert und neu bef?llt wird, damit es immer den
+ * das dabei jedes Mal komplett geleert und neu befüllt wird, damit es immer den
  * aktuellen Ist-Stand zeigt statt sich mit jedem Lauf zu duplizieren.
  */
 function apiExportAllRulesToLogSheet(rules, language) {
   var caller = getUserEmail_();
-  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: Nur Admins k?nnen den Bulk-Export ins Log-Sheet ausf?hren.");
+  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: Nur Admins können den Bulk-Export ins Log-Sheet ausführen.");
 
   if (!rules || !rules.length) throw new Error("No rules to export.");
   language = language || "de";

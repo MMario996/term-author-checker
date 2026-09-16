@@ -2,14 +2,14 @@ const PHRASE_V1 = 'https://cloud.memsource.com/web/api2/v1';
 const PHRASE_V1_TC = 'https://cloud.memsource.com/web/api2/v1';
 const PHRASE_V2_TC = 'https://cloud.memsource.com/web/api2/v2';
 
-const DEFAULT_AI_PROMPT = 'Du bist ein Terminologie-Assistent f?r K?rcher, Hersteller von Reinigungsger?ten (Hochdruckreiniger, Kehrmaschinen, Sauger, Zubeh?r).\n\nDer Nutzer beschreibt in eigenen Worten, wonach er sucht:\n"{freeText}"\n\nErkenne die Sprache AUSSCHLIESSLICH anhand dieses Textfelds (ISO-639-1-Code, z.B. "de", "en", "it", "fr", "es"). Ein eventuell zus?tzlich angeh?ngtes Bild hat KEINEN Einfluss auf die Sprachwahl, es dient nur der inhaltlichen Erkennung des Objekts. Nutze "de" als Standard NUR dann, wenn das Textfeld leer ist (reine Bildsuche ohne Text) oder wirklich zu kurz/mehrdeutig ist, um ?berhaupt eine Sprache zu erkennen. Ist echter, eindeutiger Text vorhanden (z.B. eine ganze Frage in einer bestimmten Sprache), MUSS diese Sprache verwendet werden, auch wenn zus?tzlich ein Bild angeh?ngt ist.\n\nNenne dann die 1 bis 3 wahrscheinlichsten Fachbegriffe, nach denen in einer Terminologie-Datenbank gesucht werden sollte (kurze, konkrete Substantive/Fachw?rter, keine ganzen S?tze). WICHTIG: Sowohl die Begriffe als auch deine Erkl?rung m?ssen zwingend in der erkannten Sprache formuliert sein, nicht auf Deutsch ?bersetzt, au?er die erkannte Sprache ist bereits Deutsch.\n\nAntworte AUSSCHLIESSLICH mit validem JSON in exakt dieser Struktur, ohne Markdown-Formatierung, ohne Codeblock:\n{"lang": "...", "terms": ["...", "..."], "explanation": "..."}';
+const DEFAULT_AI_PROMPT = 'Du bist ein Terminologie-Assistent für Kärcher, Hersteller von Reinigungsgeräten (Hochdruckreiniger, Kehrmaschinen, Sauger, Zubehör).\n\nDer Nutzer beschreibt in eigenen Worten, wonach er sucht:\n"{freeText}"\n\nErkenne die Sprache AUSSCHLIESSLICH anhand dieses Textfelds (ISO-639-1-Code, z.B. "de", "en", "it", "fr", "es"). Ein eventuell zusätzlich angehängtes Bild hat KEINEN Einfluss auf die Sprachwahl, es dient nur der inhaltlichen Erkennung des Objekts. Nutze "de" als Standard NUR dann, wenn das Textfeld leer ist (reine Bildsuche ohne Text) oder wirklich zu kurz/mehrdeutig ist, um überhaupt eine Sprache zu erkennen. Ist echter, eindeutiger Text vorhanden (z.B. eine ganze Frage in einer bestimmten Sprache), MUSS diese Sprache verwendet werden, auch wenn zusätzlich ein Bild angehängt ist.\n\nNenne dann die 1 bis 3 wahrscheinlichsten Fachbegriffe, nach denen in einer Terminologie-Datenbank gesucht werden sollte (kurze, konkrete Substantive/Fachwörter, keine ganzen Sätze). WICHTIG: Sowohl die Begriffe als auch deine Erklärung müssen zwingend in der erkannten Sprache formuliert sein, nicht auf Deutsch übersetzt, außer die erkannte Sprache ist bereits Deutsch.\n\nAntworte AUSSCHLIESSLICH mit validem JSON in exakt dieser Struktur, ohne Markdown-Formatierung, ohne Codeblock:\n{"lang": "...", "terms": ["...", "..."], "explanation": "..."}';
 
 // ============================================================================
 // 1. WEB APP ENTRY & ROUTING
 // ============================================================================
 function doGet(e) {
   return HtmlService.createHtmlOutputFromFile('TermSearch')
-    .setTitle('K?rcher TermSearch')
+    .setTitle('Kärcher TermSearch')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
@@ -40,7 +40,7 @@ function apiGetContext() {
 
 function apiGetSettings() {
   var caller = getUserEmail_();
-  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: Nur Admins k?nnen Einstellungen sehen.");
+  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: Nur Admins können Einstellungen sehen.");
   var props = PropertiesService.getScriptProperties();
   var token = props.getProperty('PHRASE_API_TOKEN') || '';
   var geminiKey = props.getProperty('GEMINI_API_KEY') || '';
@@ -65,7 +65,7 @@ function apiGetSettings() {
 
 function apiSaveSettings(data) {
   var caller = getUserEmail_();
-  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: Nur Admins k?nnen Einstellungen speichern.");
+  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: Nur Admins können Einstellungen speichern.");
   var props = PropertiesService.getScriptProperties();
   
   if (data.PHRASE_API_TOKEN && !data.PHRASE_API_TOKEN.includes('????')) {
@@ -339,7 +339,7 @@ function apiBrowseTermbase(tbUid, pageNumber, lang, searchQuery, sortDir) {
     (concept.terms || []).forEach(function(ti) { (Array.isArray(ti) ? ti : [ti]).forEach(function(t){ allTerms.push(t); }); });
     if (!allTerms.length) return null;
     
-    // Gew?hlte Sprache respektieren, Fallback auf DE wenn keine Sprache gew?hlt ist
+    // Gewählte Sprache respektieren, Fallback auf DE wenn keine Sprache gewählt ist
     var wantLang = (lang || '').toLowerCase();
     var sourceTermRaw = null;
     var translationsRaw = [];
@@ -382,16 +382,16 @@ function _searchCore_(query, sourceLang, searchLang) {
   
   var targetTermbases = _getTargetTermbases_();
   if (!targetTermbases.length) return [];
-    var displayLang = (sourceLang || 'de').toLowerCase(); // Standard: Deutsch als Referenzsprache oben, unabh?ngig von der Trefferspache
+    var displayLang = (sourceLang || 'de').toLowerCase(); // Standard: Deutsch als Referenzsprache oben, unabhängig von der Trefferspache
   var queryLangs = searchLang ? [String(searchLang).toLowerCase()] : TERMSEARCH_ALL_LANGS;
   var core = raw.replace(/\*/g, '').trim();
-  var phraseQuery = core ? ('*' + core + '*') : raw; // Sterne f?r Phrase, sonst nur exakte Treffer
+  var phraseQuery = core ? ('*' + core + '*') : raw; // Sterne für Phrase, sonst nur exakte Treffer
   var auth = _phraseAuth_();
   var BATCH = 10;
   var conceptMap = {};
 
   // Alle Termbase/Sprache-Kombinationen als flache Liste, damit wir sie
-  // gemeinsam in Batches abfragen k?nnen (queryLang ist bei Phrase Pflicht).
+  // gemeinsam in Batches abfragen können (queryLang ist bei Phrase Pflicht).
   var jobs = [];
   targetTermbases.forEach(function(tb) {
     queryLangs.forEach(function(lang) { jobs.push({ tb: tb, lang: lang }); });
@@ -512,23 +512,23 @@ function apiAiAssistedSearch(freeText, history, imageData) {
   var temperature = parseFloat(props.getProperty('AI_TEMPERATURE')) || 0.2;
   var promptTemplate = props.getProperty('AI_PROMPT') || DEFAULT_AI_PROMPT;
   // Absicherung: ein alter, gespeicherter Custom-Prompt ohne das "lang"-Feld
-  // w?rde die Spracherkennung stillschweigend brechen (Fallback immer 'de').
+  // würde die Spracherkennung stillschweigend brechen (Fallback immer 'de').
   // In dem Fall lieber den aktuellen Default verwenden statt einen kaputten
   // Custom-Prompt weiterzuschleifen.
   if (promptTemplate.indexOf('"lang"') === -1) {
-    console.warn('Gespeicherter AI_PROMPT enth?lt kein "lang"-Feld (veraltete Version) - verwende DEFAULT_AI_PROMPT stattdessen.');
+    console.warn('Gespeicherter AI_PROMPT enthält kein "lang"-Feld (veraltete Version) - verwende DEFAULT_AI_PROMPT stattdessen.');
     promptTemplate = DEFAULT_AI_PROMPT;
   }
-  var freeTextForPrompt = freeText || '(siehe angeh?ngtes Bild)';
+  var freeTextForPrompt = freeText || '(siehe angehängtes Bild)';
   var turnPrompt;
   if (!history.length) {
     turnPrompt = promptTemplate.replace(/\{freeText\}/g, freeTextForPrompt.replace(/"/g, "'"));
-    if (hasImage) turnPrompt += '\n\nBer?cksichtige zus?tzlich das angeh?ngte Bild f?r die inhaltliche Erkennung des Objekts. Das Bild ?ndert NICHTS an der Sprachwahl, diese richtet sich ausschlie?lich nach dem Textfeld oben.';
+    if (hasImage) turnPrompt += '\n\nBerücksichtige zusätzlich das angehängte Bild für die inhaltliche Erkennung des Objekts. Das Bild ändert NICHTS an der Sprachwahl, diese richtet sich ausschließlich nach dem Textfeld oben.';
   } else {
     turnPrompt = 'Verfeinerung der bisherigen Suche: "' + freeTextForPrompt.replace(/"/g, "'") + '"\n\n' +
-      (hasImage ? 'Ber?cksichtige zus?tzlich das angeh?ngte Bild.\n\n' : '') +
-      'Erkenne erneut die Sprache dieser Nachfrage und antworte in genau dieser Sprache (Begriffe UND Erkl?rung), auch wenn sie von der vorherigen Sprache abweicht. ' +
-      'Ber?cksichtige den bisherigen Gespr?chsverlauf. Antworte weiterhin AUSSCHLIESSLICH mit validem JSON in exakt derselben Struktur wie zuvor, ohne Markdown-Formatierung, ohne Codeblock:\n' +
+      (hasImage ? 'Berücksichtige zusätzlich das angehängte Bild.\n\n' : '') +
+      'Erkenne erneut die Sprache dieser Nachfrage und antworte in genau dieser Sprache (Begriffe UND Erklärung), auch wenn sie von der vorherigen Sprache abweicht. ' +
+      'Berücksichtige den bisherigen Gesprächsverlauf. Antworte weiterhin AUSSCHLIESSLICH mit validem JSON in exakt derselben Struktur wie zuvor, ohne Markdown-Formatierung, ohne Codeblock:\n' +
       '{"lang": "...", "terms": ["...", "..."], "explanation": "..."}';
   }
   var contents = history.map(function(h) {
@@ -557,7 +557,7 @@ function apiAiAssistedSearch(freeText, history, imageData) {
   var clean = String(text).replace(/```json/gi, '').replace(/```/g, '').trim();
   var parsed;
   try { parsed = JSON.parse(clean); }
-  catch(e) { throw new Error('KI-Antwort war kein g?ltiges JSON: ' + clean.slice(0, 200)); }
+  catch(e) { throw new Error('KI-Antwort war kein gültiges JSON: ' + clean.slice(0, 200)); }
   var terms = Array.isArray(parsed.terms) ? parsed.terms.slice(0, 3).filter(Boolean) : [];
   var detectedLang = String(parsed.lang || 'de').toLowerCase().slice(0, 2);
   var merged = {};
@@ -748,7 +748,7 @@ function _normStatus_(uiStatus) {
 
 function printAllTermbaseUIDs() {
   var termbases = apiListTermbases();
-  Logger.log("=== VERF?GBARE TERMBASES ===");
+  Logger.log("=== VERFÜGBARE TERMBASES ===");
   termbases.forEach(function(tb){ Logger.log("Name: " + tb.name + " | UID: " + tb.uid); });
   Logger.log("============================");
 }
@@ -760,11 +760,11 @@ function onOpen(e) {
   var menu = null;
   try {
     if (DocumentApp.getActiveDocument()) {
-      menu = DocumentApp.getUi().createMenu('K?rcher TermCheck');
+      menu = DocumentApp.getUi().createMenu('Kärcher TermCheck');
     } else if (SpreadsheetApp.getActiveSpreadsheet()) {
-      menu = SpreadsheetApp.getUi().createMenu('K?rcher TermCheck');
+      menu = SpreadsheetApp.getUi().createMenu('Kärcher TermCheck');
     } else if (SlidesApp.getActivePresentation()) {
-      menu = SlidesApp.getUi().createMenu('K?rcher TermCheck');
+      menu = SlidesApp.getUi().createMenu('Kärcher TermCheck');
     }
     if (menu) {
       menu.addItem('Open Terminology Search', 'showSidebar')
@@ -778,7 +778,7 @@ function onOpen(e) {
 
 function showSidebar() {
   var ui = HtmlService.createHtmlOutputFromFile('Sidebar')
-    .setTitle('K?rcher TermCheck')
+    .setTitle('Kärcher TermCheck')
     .setWidth(300);
     
   if (DocumentApp.getActiveDocument()) DocumentApp.getUi().showSidebar(ui);
