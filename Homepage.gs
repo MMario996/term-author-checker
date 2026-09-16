@@ -5,7 +5,7 @@ function onHomepage(e) {
   var card = CardService.newCardBuilder();
 
   card.setHeader(CardService.newCardHeader()
-    .setTitle('K?rcher TermCheck')
+    .setTitle('Kärcher TermCheck')
     .setSubtitle('Terminology Search & Authoring-Tool Check'));
 
   var section = CardService.newCardSection()
@@ -25,7 +25,7 @@ function onHomepage(e) {
 }
 function apiShowHomeChooser(e) {
   var ui = HtmlService.createHtmlOutputFromFile('HomeChooser')
-    .setTitle('K?rcher TermCheck')
+    .setTitle('Kärcher TermCheck')
     .setWidth(300);
   _getUiSafe_(e).showSidebar(ui);
 }

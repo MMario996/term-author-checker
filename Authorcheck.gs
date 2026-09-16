@@ -1,13 +1,13 @@
 // ============================================================================
-// AUTHOR CHECK ? Grammatik- & Terminologiepr?fung (Docs / Sheets / Slides)
+// AUTHOR CHECK ? Grammatik- & Terminologieprüfung (Docs / Sheets / Slides)
 // ============================================================================
 
 const AUTHORCHECK_DEFAULT_PROMPT =
-'Du bist ein Lektorats-Assistent f?r K?rcher-Texte (Hersteller von Reinigungsger?ten: ' +
-'Hochdruckreiniger, Kehrmaschinen, Sauger, Zubeh?r).\n\n' +
-'Pr?fe den folgenden Text (Sprache: {sourceLang}) auf diese Fehlerarten:\n' +
+'Du bist ein Lektorats-Assistent für Kärcher-Texte (Hersteller von Reinigungsgeräten: ' +
+'Hochdruckreiniger, Kehrmaschinen, Sauger, Zubehör).\n\n' +
+'Prüfe den folgenden Text (Sprache: {sourceLang}) auf diese Fehlerarten:\n' +
 '1. GRAMMATIK- UND RECHTSCHREIBFEHLER\n' +
-'2. FALSCHE ODER UNEINHEITLICHE K?RCHER-FACHBEGRIFFE ? vergleiche mit dieser Liste ' +
+'2. FALSCHE ODER UNEINHEITLICHE KÄRCHER-FACHBEGRIFFE ? vergleiche mit dieser Liste ' +
 '"falscher Begriff ? korrekter Begriff":\n{termList}\n' +
 '3. SPEZIFISCHE SCHREIB- UND STILREGELN:\n{styleRules}\n\n' +
 'Text:\n"""\n{text}\n"""\n\n' +
@@ -16,15 +16,15 @@ const AUTHORCHECK_DEFAULT_PROMPT =
 '{"issues":[{"type":"grammar|terminology|style","original":"...","suggestion":"...","explanation":"..."}]}\n\n' +
 'Regeln:\n' +
 '- "type" ist entweder "grammar", "terminology" oder "style".\n' +
-'- "original" muss ein EXAKTES, zusammenh?ngendes Zitat aus dem Originaltext sein.\n' +
+'- "original" muss ein EXAKTES, zusammenhängendes Zitat aus dem Originaltext sein.\n' +
 '- Ignoriere Passagen, die nicht in der Sprache {sourceLang} verfasst sind (z. B. fremdsprachige Abschnitte in einem mehrsprachigen Dokument); melde dort keine Fehler.\n' +
-'- Gib nur echte Fehler zur?ck, basierend auf den Vorgaben. Wenn keine Fehler gefunden werden, gib {"issues":[]} zur?ck.';
+'- Gib nur echte Fehler zurück, basierend auf den Vorgaben. Wenn keine Fehler gefunden werden, gib {"issues":[]} zurück.';
 
 // ??? ANSICHTEN: CHECKS IN DER SEITENLEISTE / RULES IM POPUP ???????????????
 function showAuthorCheckSidebar(e) {
   PropertiesService.getUserProperties().deleteProperty('AUTHORCHECK_IS_RULES_ONLY');
   var ui = HtmlService.createHtmlOutputFromFile('AuthorCheck')
-    .setTitle('K?rcher Author Check')
+    .setTitle('Kärcher Author Check')
     .setWidth(350);
 
   _getUiSafe_(e).showSidebar(ui);
@@ -46,9 +46,9 @@ function apiMarkRulesHelpSeen() {
 }
 
 /**
- * Hilfsfunktion: Ermittelt sicher das UI f?r Docs, Sheets oder Slides
+ * Hilfsfunktion: Ermittelt sicher das UI für Docs, Sheets oder Slides
  * ohne Permission-Exceptions abzuwerfen.
- * @param {Object} e Das Event-Objekt der Card-Action (enth?lt hostApp/docs/sheets/slides)
+ * @param {Object} e Das Event-Objekt der Card-Action (enthält hostApp/docs/sheets/slides)
  */
 function _getUiSafe_(e) {
   var hostApp = e && (e.hostApp || (e.docs && 'docs') || (e.sheets && 'sheets') || (e.slides && 'slides'));
@@ -144,7 +144,7 @@ function _buildTerminologyGlossary_(sourceLang) {
   return unique;
 }
 
-// ??? GLOSSAR + REGELTEXT F?R DEN PROMPT (geteilt zwischen Docs/Sheets/Slides
+// ??? GLOSSAR + REGELTEXT FÜR DEN PROMPT (geteilt zwischen Docs/Sheets/Slides
 // und dem Drive-PDF-Check, damit eine Anpassung nicht an zwei Stellen gepflegt
 // werden muss) ?????????????????????????????????????????????????????????????
 // "labels" laesst jeden Aufrufer seine bisherige Formulierung (EN/DE) behalten,
@@ -198,7 +198,7 @@ function _parseGeminiIssuesResponse_(res, requestFailedMessage) {
   return issues.filter(function (i) { return i && i.original && i.suggestion; });
 }
 
-// ??? HAUPTPR?FUNG ????????????????????????????????????????????????????????
+// ??? HAUPTPRÜFUNG ????????????????????????????????????????????????????????
 function apiRunAuthorCheck(sourceLang, checkScope) {
   var props = PropertiesService.getScriptProperties();
   var apiKey = (props.getProperty('GEMINI_API_KEY') || '').trim();
@@ -357,7 +357,7 @@ function apiJumpToIssue(searchText) {
   return false;
 }
 
-// ??? INTERAKTION: NOTIZ / KOMMENTAR EXAKT AN TEXTSTELLE VERKN?PFEN ?????????
+// ??? INTERAKTION: NOTIZ / KOMMENTAR EXAKT AN TEXTSTELLE VERKNÜPFEN ?????????
 function apiCommentIssue(originalText, suggestion, explanation) {
   var commentText = "TermCheck Suggestion:\n" + suggestion + "\n\nExplanation: " + (explanation || "");
   var cleanOriginal = String(originalText).replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
@@ -366,7 +366,7 @@ function apiCommentIssue(originalText, suggestion, explanation) {
     var doc = DocumentApp.getActiveDocument();
     var found = doc.getBody().findText(_escapeRegexAC_(cleanOriginal));
     
-    // Fallback falls die flexible Suche fehlschl?gt: Exakter Treffer
+    // Fallback falls die flexible Suche fehlschlägt: Exakter Treffer
     if (!found) {
       try { found = doc.getBody().findText(_escapeRegexAC_(originalText)); } catch(e) {}
     }
@@ -422,7 +422,7 @@ function apiBackToHomepage() {
 }
 
 /**
- * Exportiert die komplette Regel-?bersicht (aktuelle Sprache) als Google Sheet,
+ * Exportiert die komplette Regel-Übersicht (aktuelle Sprache) als Google Sheet,
  * sortiert und filterbar nach Section/Unterthema.
  */
 function apiExportRulesOverview(rules) {
