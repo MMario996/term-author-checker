@@ -228,11 +228,16 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
 // ??? KORREKTUR IM DOKUMENT ANWENDEN ????????????????????????????????????????
 function apiApplyAuthorCheckFix(original, suggestion) {
   var count = 0;
+  // Sicherheitsgrenze: falls "suggestion" das "original"-Muster selbst enthaelt
+  // (z.B. Erweiterung eines Kompositums), wuerde findText() es nach dem Einfuegen
+  // sofort wieder finden -> ohne Obergrenze eine Endlosschleife bis zum
+  // Apps-Script-Timeout.
+  var MAX_REPLACEMENTS = 200;
 
   if (DocumentApp.getActiveDocument()) {
     var body = DocumentApp.getActiveDocument().getBody();
     var found = body.findText(_escapeRegexAC_(original));
-    while (found) {
+    while (found && count < MAX_REPLACEMENTS) {
       var el = found.getElement().asText();
       var start = found.getStartOffset();
       var end = found.getEndOffsetInclusive();
@@ -305,23 +310,15 @@ function apiJumpToIssue(searchText) {
   } else if (SlidesApp.getActivePresentation()) {
     var pres = SlidesApp.getActivePresentation();
     var slides = pres.getSlides();
+    var cleanSearch = String(searchText).replace(/&nbsp;/g, ' ').replace(/ /g, ' ');
     for (var i = 0; i < slides.length; i++) {
       var shapes = slides[i].getShapes();
       for (var j = 0; j < shapes.length; j++) {
         if (shapes[j].getShapeType() === SlidesApp.ShapeType.TEXT_BOX) {
           var txt = shapes[j].getText().asString();
-          if (txt.indexOf(originalText) !== -1 || txt.indexOf(cleanOriginal) !== -1) {
+          if (txt.indexOf(searchText) !== -1 || txt.indexOf(cleanSearch) !== -1) {
             slides[i].selectAsCurrentPage();
             shapes[j].select();
-
-            try {
-              Drive.Comments.create({
-                content: commentText,
-                context: { type: 'text/plain', value: cleanOriginal }
-              }, pres.getId(), {fields: '*'});
-            } catch (e) {
-              Logger.log('apiCommentIssue (Slides): Drive.Comments.create fehlgeschlagen: ' + e);
-            }
             return true;
           }
         }
