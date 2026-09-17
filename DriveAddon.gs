@@ -1,7 +1,23 @@
 // ============================================================================
-// DRIVE ADD-ON ? PDF-Check mit automatischem Report
+// DRIVE ADD-ON - PDF-Check mit Notes/Highlights (Feature-Parität zu Docs/Sheets/Slides)
 // ============================================================================
 var DRIVE_PDF_MAX_BYTES = 15 * 1024 * 1024; // Sicherheitsgrenze, ca. 15 MB
+var DRIVE_PDF_RESULT_CACHE_TTL = 3600; // 1h, reicht für eine interaktive Session in Drive
+var DRIVE_PDF_MAX_CARD_ISSUES = 25; // Card-UI bleibt sonst zu groß/langsam
+var DRIVE_PDF_MAX_BULK_NOTES = 40; // Obergrenze für "Add All as Notes" (Drive-API-Calls, Laufzeit)
+
+// Gleiche Sprachliste wie im Author-Check-Sidebar (AuthorCheck.html), damit die
+// PDF-Prüfung aus Google Drive dieselben Sprachen wie Docs/Sheets/Slides anbietet.
+var DRIVE_PDF_LANGUAGES = [
+  ['de', 'German'], ['en', 'English'], ['es', 'Spanish'], ['sv', 'Swedish'],
+  ['pt', 'Portuguese'], ['ru', 'Russian'], ['it', 'Italian'], ['fr', 'French'],
+  ['nl', 'Dutch'], ['hu', 'Hungarian'], ['sk', 'Slovak'], ['hr', 'Croatian'],
+  ['tr', 'Turkish'], ['pl', 'Polish'], ['fi', 'Finnish'], ['sr', 'Serbian'],
+  ['ar', 'Arabic'], ['bg', 'Bulgarian'], ['el', 'Greek'], ['ko', 'Korean'],
+  ['da', 'Danish'], ['ja', 'Japanese'], ['vi', 'Vietnamese'], ['zh', 'Chinese'],
+  ['lv', 'Latvian'], ['cs', 'Czech'], ['uk', 'Ukrainian'], ['ro', 'Romanian'],
+  ['et', 'Estonian'], ['sl', 'Slovenian'], ['nb', 'Norwegian']
+];
 
 function onDriveHomepage(e) {
   var card = CardService.newCardBuilder();
@@ -33,14 +49,15 @@ function onDriveItemsSelected(e) {
 
   var section = CardService.newCardSection();
   section.addWidget(CardService.newTextParagraph()
-    .setText('Prüft den kompletten Inhalt dieser PDF-Datei gegen die Author-Check-Regeln und erstellt automatisch einen Report als Google Sheet.'));
+    .setText('Prüft den kompletten Inhalt dieser PDF-Datei gegen die Author-Check-Regeln (Grammatik, Terminologie, Stil) - genau wie Author Check in Docs, Sheets und Slides.'));
 
   var langSelect = CardService.newSelectionInput()
     .setType(CardService.SelectionInputType.DROPDOWN)
     .setTitle('Sprache')
-    .setFieldName('language')
-    .addItem('German', 'de', true)
-    .addItem('English', 'en', false);
+    .setFieldName('language');
+  DRIVE_PDF_LANGUAGES.forEach(function(pair) {
+    langSelect.addItem(pair[1], pair[0], pair[0] === 'de');
+  });
   section.addWidget(langSelect);
 
   var action = CardService.newAction()
@@ -49,7 +66,8 @@ function onDriveItemsSelected(e) {
 
   section.addWidget(CardService.newTextButton()
     .setText('PDF prüfen')
-    .setOnClickAction(action));
+    .setOnClickAction(action)
+    .setLoadIndicator(CardService.LoadIndicator.SPINNER));
 
   card.addSection(section);
   return card.build();
@@ -63,9 +81,22 @@ function _buildDriveInfoCard_(title, message) {
   return card.build();
 }
 
+function _drivePdfLanguageName_(code) {
+  var match = DRIVE_PDF_LANGUAGES.find(function(p) { return p[0] === code; });
+  return match ? match[1] : code;
+}
+
+function _drivePdfResultCacheKey_(resultId) {
+  return 'DRIVE_PDF_RESULT_' + resultId;
+}
+
 /**
- * Card-Action: prüft die ausgewählte PDF-Datei per Gemini und erstellt automatisch
- * einen Report als Google Sheet, der direkt geöffnet wird.
+ * Card-Action: prüft die ausgewählte PDF-Datei per Gemini und zeigt die Treffer
+ * direkt interaktiv an (wie die Issue-Karten im Author-Check-Sidebar), statt nur
+ * ein separates Sheet zu erzeugen. Von hier aus können pro Fund oder für alle
+ * Funde auf einmal echte, an der Textstelle "verankerte" Drive-Kommentare
+ * (Highlights) auf der PDF selbst angelegt werden - siehe apiAddDrivePdfNote /
+ * apiAddAllDrivePdfNotes.
  */
 function apiCheckDrivePdf(e) {
   var fileId = e.parameters.fileId;
@@ -93,8 +124,7 @@ function apiCheckDrivePdf(e) {
     var termListStr = promptParts.termListStr;
     var rulesStr = promptParts.rulesStr;
 
-    var languageNames = { de: 'German', en: 'English' };
-    var targetLanguageName = languageNames[language] || language;
+    var targetLanguageName = _drivePdfLanguageName_(language);
 
     var prompt =
       'You are a proofreading assistant for Kärcher texts (manufacturer of cleaning equipment: ' +
@@ -105,8 +135,8 @@ function apiCheckDrivePdf(e) {
       'Do not report any issue whose "original" quote is not itself in ' + targetLanguageName + '.\n\n' +
       'Within the ' + targetLanguageName + ' passages, check for these error types:\n' +
       '1. GRAMMAR AND SPELLING ERRORS\n' +
-      '2. INCORRECT OR INCONSISTENT KÄRCHER TERMINOLOGY ? compare against this list ' +
-      '"incorrect term ? correct term":\n' + termListStr + '\n' +
+      '2. INCORRECT OR INCONSISTENT KÄRCHER TERMINOLOGY - compare against this list ' +
+      '"incorrect term -> correct term":\n' + termListStr + '\n' +
       '3. SPECIFIC WRITING AND STYLE RULES:\n' + rulesStr + '\n\n' +
       'Respond EXCLUSIVELY with valid JSON in exactly this structure, without markdown formatting, without code block:\n' +
       '{"issues":[{"type":"grammar|terminology|style","location":"...","original":"...","suggestion":"...","explanation":"..."}]}\n\n' +
@@ -138,19 +168,18 @@ function apiCheckDrivePdf(e) {
     });
     var issues = _parseGeminiIssuesResponse_(res, 'AI request failed');
 
-    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_CHECK_RUN', fileName + ' ? ' + issues.length + ' issue(s)');
+    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_CHECK_RUN', fileName + ' - ' + issues.length + ' issue(s)');
 
-    var sheetUrl = _buildDrivePdfReportSheet_(issues, fileName, language);
-
-    var doneCard = CardService.newCardBuilder();
-    doneCard.setHeader(CardService.newCardHeader().setTitle('Done'));
-    doneCard.addSection(CardService.newCardSection()
-      .addWidget(CardService.newTextParagraph()
-        .setText(issues.length + ' issue(s) found in "' + fileName + '". Opening the report.')));
+    var resultId = Utilities.getUuid();
+    var cachePayload = { fileId: fileId, fileName: fileName, language: language, issues: issues };
+    try {
+      CacheService.getUserCache().put(_drivePdfResultCacheKey_(resultId), JSON.stringify(cachePayload), DRIVE_PDF_RESULT_CACHE_TTL);
+    } catch (cacheErr) {
+      Logger.log('apiCheckDrivePdf: Ergebnis-Cache fehlgeschlagen (Ergebnis evtl. zu groß): ' + cacheErr);
+    }
 
     return CardService.newActionResponseBuilder()
-      .setNavigation(CardService.newNavigation().updateCard(doneCard.build()))
-      .setOpenLink(CardService.newOpenLink().setUrl(sheetUrl))
+      .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfResultsCard_(resultId, fileName, issues)))
       .build();
 
   } catch (err) {
@@ -160,6 +189,154 @@ function apiCheckDrivePdf(e) {
       .addWidget(CardService.newTextParagraph().setText(err.message || String(err))));
     return CardService.newActionResponseBuilder()
       .setNavigation(CardService.newNavigation().updateCard(errCard.build()))
+      .build();
+  }
+}
+
+/**
+ * Baut die interaktive Ergebnis-Card: Zusammenfassung + Bulk-Aktionen oben,
+ * darunter pro Fund eine Mini-"Issue-Card" mit Original -> Vorschlag, Erklärung
+ * und einem "Notiz hinzufügen"-Button, der einen echten, hervorgehobenen
+ * Drive-Kommentar auf der PDF anlegt (siehe _createHighlightedDriveComment_ in
+ * Authorcheck.gs) - dieselbe "Note"-Aktion wie im Docs/Sheets/Slides-Sidebar.
+ */
+function _buildDrivePdfResultsCard_(resultId, fileName, issues) {
+  var card = CardService.newCardBuilder();
+  card.setHeader(CardService.newCardHeader()
+    .setTitle(issues.length + ' issue(s) found')
+    .setSubtitle(fileName));
+
+  var topSection = CardService.newCardSection();
+  if (!issues.length) {
+    topSection.addWidget(CardService.newTextParagraph().setText('No errors found for the selected language.'));
+    card.addSection(topSection);
+    return card.build();
+  }
+
+  topSection.addWidget(CardService.newTextButton()
+    .setText('Export as Sheet')
+    .setOnClickAction(CardService.newAction().setFunctionName('apiExportDrivePdfResultToSheet').setParameters({ resultId: resultId })));
+  topSection.addWidget(CardService.newTextButton()
+    .setText('Add All as Notes')
+    .setOnClickAction(CardService.newAction().setFunctionName('apiAddAllDrivePdfNotes').setParameters({ resultId: resultId }))
+    .setLoadIndicator(CardService.LoadIndicator.SPINNER));
+  card.addSection(topSection);
+
+  var shown = issues.slice(0, DRIVE_PDF_MAX_CARD_ISSUES);
+  shown.forEach(function(issue, idx) {
+    var section = CardService.newCardSection();
+    var typeLabel = (issue.type || 'style').toUpperCase();
+    var locationLabel = issue.location ? ' - ' + issue.location : '';
+    section.addWidget(CardService.newTextParagraph()
+      .setText('<b>' + _escapeCardHtml_(typeLabel) + '</b>' + _escapeCardHtml_(locationLabel)));
+    section.addWidget(CardService.newTextParagraph()
+      .setText('<s>' + _escapeCardHtml_(issue.original) + '</s> &rarr; ' + _escapeCardHtml_(issue.suggestion)));
+    if (issue.explanation) {
+      section.addWidget(CardService.newTextParagraph().setText(_escapeCardHtml_(issue.explanation)));
+    }
+    section.addWidget(CardService.newTextButton()
+      .setText('Add Note')
+      .setOnClickAction(CardService.newAction()
+        .setFunctionName('apiAddDrivePdfNote')
+        .setParameters({ resultId: resultId, issueIndex: String(idx) })));
+    card.addSection(section);
+  });
+
+  if (issues.length > shown.length) {
+    var moreSection = CardService.newCardSection();
+    moreSection.addWidget(CardService.newTextParagraph()
+      .setText('+ ' + (issues.length - shown.length) + ' more issue(s). Use "Export as Sheet" for the full list.'));
+    card.addSection(moreSection);
+  }
+
+  return card.build();
+}
+
+// CardService-TextParagraph unterstützt ein kleines HTML-Subset (b/s/i/...),
+// daher hier - analog zu esc() in den Sidebar-HTMLs - Nutzertext/KI-Text vor der
+// Einbettung escapen, statt rohen Text in setText() zu interpolieren.
+function _escapeCardHtml_(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function _loadDrivePdfResult_(resultId) {
+  var raw = CacheService.getUserCache().get(_drivePdfResultCacheKey_(resultId));
+  if (!raw) throw new Error('This result has expired. Please run the PDF check again.');
+  return JSON.parse(raw);
+}
+
+/**
+ * Fügt für EINEN Fund einen echten, an der Textstelle verankerten Drive-Kommentar
+ * (Highlight) auf der PDF hinzu - das PDF-Äquivalent zum "Note"-Button in
+ * Docs/Sheets/Slides.
+ */
+function apiAddDrivePdfNote(e) {
+  var resultId = e.parameters.resultId;
+  var issueIndex = parseInt(e.parameters.issueIndex, 10);
+  var notifText;
+  try {
+    var data = _loadDrivePdfResult_(resultId);
+    var issue = data.issues[issueIndex];
+    if (!issue) throw new Error('Issue not found.');
+    var commentText = 'TermCheck Suggestion:\n' + issue.suggestion + '\n\nExplanation: ' + (issue.explanation || '');
+    _createHighlightedDriveComment_(data.fileId, issue.original, commentText);
+    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_NOTE_ADDED', data.fileName + ' - issue #' + issueIndex);
+    notifText = 'Note added.';
+  } catch (err) {
+    notifText = 'Error: ' + (err.message || String(err));
+  }
+  return CardService.newActionResponseBuilder()
+    .setNotification(CardService.newNotification().setText(notifText))
+    .build();
+}
+
+/**
+ * Fügt Notizen für alle (bis zu DRIVE_PDF_MAX_BULK_NOTES) Funde eines Ergebnisses
+ * hinzu - das PDF-Äquivalent zum "Note All"-Bulk-Button im Author-Check-Sidebar.
+ */
+function apiAddAllDrivePdfNotes(e) {
+  var resultId = e.parameters.resultId;
+  var added = 0, failed = 0;
+  try {
+    var data = _loadDrivePdfResult_(resultId);
+    var toProcess = data.issues.slice(0, DRIVE_PDF_MAX_BULK_NOTES);
+    toProcess.forEach(function(issue) {
+      try {
+        var commentText = 'TermCheck Suggestion:\n' + issue.suggestion + '\n\nExplanation: ' + (issue.explanation || '');
+        _createHighlightedDriveComment_(data.fileId, issue.original, commentText);
+        added++;
+      } catch (err) {
+        failed++;
+      }
+    });
+    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_NOTE_ADDED_ALL', data.fileName + ' - ' + added + ' note(s), ' + failed + ' failed');
+  } catch (err) {
+    return CardService.newActionResponseBuilder()
+      .setNotification(CardService.newNotification().setText('Error: ' + (err.message || String(err))))
+      .build();
+  }
+  var msg = added + ' note(s) added' + (failed ? ', ' + failed + ' failed' : '') +
+    (added >= DRIVE_PDF_MAX_BULK_NOTES ? ' (limit reached, run again or use Export as Sheet for the rest)' : '') + '.';
+  return CardService.newActionResponseBuilder()
+    .setNotification(CardService.newNotification().setText(msg))
+    .build();
+}
+
+/**
+ * Card-Action-Variante von _buildDrivePdfReportSheet_: nutzt das bereits
+ * gecachte Prüfergebnis (kein erneuter Gemini-Call nötig) und öffnet das Sheet.
+ */
+function apiExportDrivePdfResultToSheet(e) {
+  try {
+    var data = _loadDrivePdfResult_(e.parameters.resultId);
+    var sheetUrl = _buildDrivePdfReportSheet_(data.issues, data.fileName, data.language);
+    return CardService.newActionResponseBuilder()
+      .setOpenLink(CardService.newOpenLink().setUrl(sheetUrl))
+      .build();
+  } catch (err) {
+    return CardService.newActionResponseBuilder()
+      .setNotification(CardService.newNotification().setText('Error: ' + (err.message || String(err))))
       .build();
   }
 }

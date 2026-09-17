@@ -358,6 +358,20 @@ function apiJumpToIssue(searchText) {
 }
 
 // ??? INTERAKTION: NOTIZ / KOMMENTAR EXAKT AN TEXTSTELLE VERKNÜPFEN ?????????
+// Erzeugt einen echten, an der Textstelle "verankerten" Drive-Kommentar (Highlight),
+// so wie beim manuellen "Kommentar hinzufügen" in Docs/Slides/Drive-PDF-Vorschau.
+// WICHTIG: Die Drive Advanced Service läuft hier auf v3 (siehe appsscript.json).
+// In Drive API v3 heißt das Anker-Feld "quotedFileContent" (mimeType/value), NICHT
+// "context" (das war das veraltete Feldschema von Drive API v2 und wird von v3
+// stillschweigend ignoriert) ? mit "context" wurde bislang zwar ein Kommentar
+// angelegt, aber ohne Bezug zur Textstelle, weshalb nichts markiert/verlinkt wurde.
+function _createHighlightedDriveComment_(fileId, quotedText, commentText) {
+  return Drive.Comments.create({
+    content: commentText,
+    quotedFileContent: { mimeType: 'text/plain', value: quotedText }
+  }, fileId, { fields: '*' });
+}
+
 function apiCommentIssue(originalText, suggestion, explanation) {
   var commentText = "TermCheck Suggestion:\n" + suggestion + "\n\nExplanation: " + (explanation || "");
   var cleanOriginal = String(originalText).replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
@@ -377,13 +391,9 @@ function apiCommentIssue(originalText, suggestion, explanation) {
       doc.setSelection(rangeBuilder.build());
       
       try {
-        var docId = doc.getId();
-        Drive.Comments.create({ 
-          content: commentText, 
-          context: { type: 'text/plain', value: cleanOriginal } 
-        }, docId, {fields: '*'});
+        _createHighlightedDriveComment_(doc.getId(), cleanOriginal, commentText);
         return true;
-      } catch(e) { 
+      } catch(e) {
         Logger.log('apiCommentIssue: Drive.Comments.create fehlgeschlagen: ' + e);
         return true; // Auswertung/Selektion hat geklappt, selbst wenn Drive Comments offline sind
       }
@@ -399,7 +409,8 @@ function apiCommentIssue(originalText, suggestion, explanation) {
       return true; 
     }
   } else if (SlidesApp.getActivePresentation()) {
-    var slides = SlidesApp.getActivePresentation().getSlides();
+    var pres = SlidesApp.getActivePresentation();
+    var slides = pres.getSlides();
     for (var i = 0; i < slides.length; i++) {
       var shapes = slides[i].getShapes();
       for (var j = 0; j < shapes.length; j++) {
@@ -408,6 +419,15 @@ function apiCommentIssue(originalText, suggestion, explanation) {
           if (txt.indexOf(originalText) !== -1 || txt.indexOf(cleanOriginal) !== -1) {
             slides[i].selectAsCurrentPage();
             shapes[j].select();
+            try {
+              // Slides unterstuetzt keinen Anker auf eine Textstelle innerhalb einer
+              // Shape, daher zusaetzlich die Foliennummer im Kommentartext nennen,
+              // damit die Notiz trotzdem eindeutig einer Stelle zuzuordnen ist.
+              var slideCommentText = commentText + '\n\n(Slide ' + (i + 1) + ')';
+              _createHighlightedDriveComment_(pres.getId(), cleanOriginal, slideCommentText);
+            } catch(e) {
+              Logger.log('apiCommentIssue: Drive.Comments.create (Slides) fehlgeschlagen: ' + e);
+            }
             return true;
           }
         }
