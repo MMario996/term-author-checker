@@ -198,14 +198,17 @@ function apiCheckDrivePdf(e) {
  * Baut die interaktive Ergebnis-Card: Zusammenfassung oben, darunter pro Fund
  * eine Mini-"Issue-Card" mit Original -> Vorschlag, Erklärung.
  *
- * WICHTIG: Es gibt hier bewusst KEINEN "Add Note"-Button. Laut Googles eigener
- * Drive-API-Doku ("Kommentare und Antworten verwalten") unterstützt die Drive
- * API für Blob-Dateien (u.a. PDFs) grundsätzlich keine verankerten Kommentare,
- * und selbst nicht verankerte Kommentare werden in der PDF-Vorschau von Drive
- * NIE angezeigt (nur über die API abrufbar). Ein "Note"-Button würde hier also
- * etwas erzeugen, das der Nutzer im Drive-UI nie zu sehen bekommt - daher bleibt
- * "Export as Sheet" der einzige Ausgabeweg für die PDF-Prüfung. Für Docs/Slides
- * (keine Blob-Dateien) funktioniert die Note-Funktion in Authorcheck.gs normal.
+ * WICHTIG: Es gibt hier bewusst KEINEN "Add Note"-Button (Drive-API-Kommentare).
+ * Laut Googles eigener Drive-API-Doku unterstützt die Drive API für Blob-Dateien
+ * (u.a. PDFs) grundsätzlich keine verankerten Kommentare, und selbst nicht
+ * verankerte Kommentare werden in der PDF-Vorschau von Drive NIE angezeigt (nur
+ * über die API abrufbar) - ein Kommentar über die Drive-API wäre also für den
+ * Nutzer unsichtbar. Stattdessen gibt es "Open Annotated PDF": das schreibt
+ * echte PDF-Annotationsobjekte direkt in eine Kopie der PDF-Bytes (siehe
+ * PdfAnnotate.gs) - diese Notizen SIND beim Öffnen der Datei sichtbar, in
+ * jedem PDF-Viewer, weil sie Teil des Dateiformats selbst sind, nicht von
+ * Drive verwaltete Metadaten. "Export as Sheet" bleibt als tabellarische
+ * Alternative bestehen.
  */
 function _buildDrivePdfResultsCard_(resultId, fileName, issues) {
   var card = CardService.newCardBuilder();
@@ -221,10 +224,16 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues) {
   }
 
   topSection.addWidget(CardService.newTextButton()
+    .setText('Open Annotated PDF')
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('apiExportDrivePdfAnnotated')
+      .setParameters({ resultId: resultId })
+      .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
+  topSection.addWidget(CardService.newTextButton()
     .setText('Export as Sheet')
     .setOnClickAction(CardService.newAction().setFunctionName('apiExportDrivePdfResultToSheet').setParameters({ resultId: resultId })));
   topSection.addWidget(CardService.newTextParagraph()
-    .setText('<i>Google Drive does not support visible comments on PDF files, so results here are read-only. Use "Export as Sheet" to get a shareable list.</i>'));
+    .setText('<i>"Open Annotated PDF" creates a copy of this file with a sticky-note comment per finding, placed on its best-guess page (Google Drive itself does not support visible comments on PDFs). Placement is best-effort; the full original quote is always in the note text.</i>'));
   card.addSection(topSection);
 
   var shown = issues.slice(0, DRIVE_PDF_MAX_CARD_ISSUES);
@@ -282,6 +291,67 @@ function apiExportDrivePdfResultToSheet(e) {
       .setNotification(CardService.newNotification().setText('Error: ' + (err.message || String(err))))
       .build();
   }
+}
+
+/**
+ * Card-Action: erzeugt eine ANNOTIERTE KOPIE der PDF (echte, im Viewer sichtbare
+ * PDF-Kommentare, siehe PdfAnnotate.gs) und öffnet sie. Nutzt das bereits
+ * gecachte Prüfergebnis (kein erneuter Gemini-Call nötig), lädt aber die
+ * Original-PDF-Bytes erneut, da diese - anders als das Textergebnis - nicht
+ * mit in den Cache passen.
+ */
+function apiExportDrivePdfAnnotated(e) {
+  try {
+    var data = _loadDrivePdfResult_(e.parameters.resultId);
+    var pdfUrl = _buildAnnotatedPdfFile_(data.fileId, data.fileName, data.issues);
+    return CardService.newActionResponseBuilder()
+      .setOpenLink(CardService.newOpenLink().setUrl(pdfUrl))
+      .build();
+  } catch (err) {
+    // Bewusst kein technischer Rohtext (z.B. "compressed object stream") in der
+    // Notification, nur eine Zeile plus Alternative - der Grund landet im Log.
+    Logger.log('apiExportDrivePdfAnnotated: ' + (err.message || err));
+    return CardService.newActionResponseBuilder()
+      .setNotification(CardService.newNotification().setText(
+        'Could not create an annotated PDF for this file (unsupported internal PDF structure). Please use "Export as Sheet" instead.'))
+      .build();
+  }
+}
+
+/**
+ * Lädt die Original-PDF-Bytes erneut, platziert pro Fund eine Sticky-Note-
+ * Annotation auf der (best-effort geschätzten) Seite und legt das Ergebnis als
+ * neue Datei in Drive ab. Gibt deren URL zurück. Wirft weiter, wenn
+ * buildAnnotatedPdfBytes_ die PDF-Struktur nicht in Klartext finden konnte
+ * (siehe PdfAnnotate.gs) - der Aufrufer fängt das ab.
+ */
+function _buildAnnotatedPdfFile_(fileId, fileName, issues) {
+  var blob = DriveApp.getFileById(fileId).getBlob();
+  var bytes = blob.getBytes();
+
+  var capped = issues.slice(0, PDF_ANNOT_MAX_PER_PDF);
+  var pageAnnotations = {};
+  var countOnPage = {};
+  capped.forEach(function(issue) {
+    var pageIdx = _pdfGuessPageIndex_(issue.location);
+    if (pageIdx === null) pageIdx = 0;
+    countOnPage[pageIdx] = (countOnPage[pageIdx] || 0) + 1;
+
+    var typeLabel = (issue.type || 'style').toUpperCase();
+    var contents = '[' + typeLabel + ']\n' + issue.original + '\n\n-> ' + issue.suggestion +
+      (issue.explanation ? '\n\n' + issue.explanation : '') +
+      (issue.location ? '\n\n(AI-reported location: ' + issue.location + ')' : '');
+
+    if (!pageAnnotations[pageIdx]) pageAnnotations[pageIdx] = [];
+    pageAnnotations[pageIdx].push({ contents: contents, title: 'Author Check (' + typeLabel + ')' });
+  });
+
+  var newBytes = buildAnnotatedPdfBytes_(bytes, pageAnnotations);
+  var outName = fileName.replace(/\.pdf$/i, '') + ' (annotated).pdf';
+  var newBlob = Utilities.newBlob(newBytes, 'application/pdf', outName);
+  var file = DriveApp.createFile(newBlob);
+  logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_ANNOTATED', fileName + ' - ' + capped.length + ' annotation(s) -> ' + file.getId());
+  return file.getUrl();
 }
 
 /**
