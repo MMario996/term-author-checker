@@ -54,6 +54,15 @@
         "runFunction": "onHomepage",
         "enabled": true
       }
+    },
+    "drive": {
+      "homepageTrigger": {
+        "runFunction": "onDriveHomepage",
+        "enabled": true
+      },
+      "onItemsSelectedTrigger": {
+        "runFunction": "onDriveItemsSelected"
+      }
     }
   },
   "dependencies": {

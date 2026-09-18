@@ -1461,7 +1461,20 @@ function saveAdminSettings(){
 
 // ??? UTIL ???????????????????????????????????????????????????????????????
 function esc(str){ if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function escJs(str){ return String(str||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+// Für Werte, die in ein einfach-gequotetes onclick="...('...')"-JS-Literal eingebettet
+// werden: erst als JS-String escapen (\ und '), danach zusätzlich als HTML-Attribut
+// escapen (das onclick-Attribut selbst steht in doppelten Anführungszeichen) -
+// ohne das könnte z.B. ein Termbase-Eintrag mit einem " im Text aus dem Attribut
+// ausbrechen und beliebige weitere Attribute/Handler einschleusen.
+function escJs(str){
+  return String(str||'')
+    .replace(/\\/g,'\\\\')
+    .replace(/'/g,"\\'")
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
 function highlight(escapedText, rawQuery){
   var core = String(rawQuery||'').replace(/\*/g,'').trim();
   if (!core) return escapedText;

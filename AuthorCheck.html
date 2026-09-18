@@ -708,6 +708,25 @@ function showToast(msg){
 }
 
 function esc(str){ if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// Für Werte, die in ein einfach-gequotetes onclick="...('...')"-JS-Literal eingebettet
+// werden (z.B. r.Name aus importierten/custom Regeln, siehe importRulesFile): erst als
+// JS-String escapen (\ und '), danach zusätzlich als HTML-Attribut escapen, da das
+// gesamte onclick-Attribut selbst wieder in doppelten Anführungszeichen steht.
+function escJsAttr(str){
+  return String(str||'')
+    .replace(/\\/g,'\\\\')
+    .replace(/'/g,"\\'")
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+// Nur http(s)-Links zulassen: verhindert z.B. "javascript:"-URLs in importierten/
+// geteilten Regeln (ReferenceUrl), die sonst beim Klick im Sidebar-Kontext ausgeführt würden.
+function safeHref(url){
+  var u = String(url||'').trim();
+  return /^https?:\/\//i.test(u) ? u : '';
+}
 
 function openRulesHelp() {
   document.getElementById('rulesHelpOverlay').classList.add('open');
@@ -848,18 +867,19 @@ function renderRulesUI(rules) {
             var sel = (String(v) === String(r.Parameter)) ? 'selected' : '';
             return '<option value="'+esc(v)+'" '+sel+'>'+esc(v)+'</option>';
           }).join('');
-          inputHtml = '<select data-name="'+r.Name+'">' + options + '</select>';
+          inputHtml = '<select data-name="'+esc(r.Name)+'">' + options + '</select>';
         }
-        var refLinkHtml = r.ReferenceUrl ? (
-          '<a href="'+esc(r.ReferenceUrl)+'" target="_blank" class="btn-move" title="Norm/Vorgabe öffnen" onclick="event.stopPropagation();">' +
+        var safeRefUrl = safeHref(r.ReferenceUrl);
+        var refLinkHtml = safeRefUrl ? (
+          '<a href="'+esc(safeRefUrl)+'" target="_blank" class="btn-move" title="Norm/Vorgabe öffnen" onclick="event.stopPropagation();">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>' +
           '</a>'
         ) : '';
         html += '<div class="rule-item">' +
-                '<label><input type="checkbox" class="rule-checkbox" data-name="'+r.Name+'" data-group="'+esc(section)+'" data-subgroup="'+esc(subId)+'" onchange="updateGroupSelectAllState(\''+esc(section).replace(/'/g,"\\'")+'\'); updateSubgroupSelectAllState(\''+esc(subId).replace(/'/g,"\\'")+'\')" '+checked+'> ' + esc(r.Description) + '</label>' +
+                '<label><input type="checkbox" class="rule-checkbox" data-name="'+esc(r.Name)+'" data-group="'+esc(section)+'" data-subgroup="'+esc(subId)+'" onchange="updateGroupSelectAllState(\''+esc(section).replace(/'/g,"\\'")+'\'); updateSubgroupSelectAllState(\''+esc(subId).replace(/'/g,"\\'")+'\')" '+checked+'> ' + esc(r.Description) + '</label>' +
                 inputHtml +
                 refLinkHtml +
-                '<button class="btn-move" title="In andere Section/Unterthema verschieben" onclick="openMoveRuleDialog(\''+r.Name+'\')">' +
+                '<button class="btn-move" title="In andere Section/Unterthema verschieben" onclick="openMoveRuleDialog(\''+escJsAttr(r.Name)+'\')">' +
                   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 6h18M3 12h18M3 18h18"/></svg>' +
                 '</button>' +
                 '</div>';
@@ -1082,8 +1102,8 @@ function addNewCustomRule() {
 function saveRulesSettings() {
   var body = document.getElementById('rulesListContainer');
   var updatedRules = _currentRulesData.map(function(r) {
-    var cb = body.querySelector('input.rule-checkbox[data-name="'+r.Name+'"]');
-    var sel = body.querySelector('select[data-name="'+r.Name+'"]');
+    var cb = body.querySelector('input.rule-checkbox[data-name="'+cssEscapeAC(r.Name)+'"]');
+    var sel = body.querySelector('select[data-name="'+cssEscapeAC(r.Name)+'"]');
     if (cb) r.IsEnabled = cb.checked;
     if (sel) r.Parameter = sel.value;
     return r;
@@ -1156,7 +1176,14 @@ function importRulesFile(event) {
       var imported = JSON.parse(e.target.result);
       if (!Array.isArray(imported)) imported = [imported];
       
+      // Namen aus importierten Dateien (z.B. von einem Kollegen geteilt, siehe Hilfetext)
+      // sind nicht vertrauenswürdig: ein manipuliertes JSON könnte sonst über den Namen
+      // Skript-Code in dieses Sidebar-UI einschleusen. "Name" wird daher auf ein
+      // sicheres Muster geprüft; alles andere wird übersprungen statt gerendert.
+      var SAFE_RULE_NAME = /^[A-Za-z0-9_.\- ]{1,100}$/;
+      var skipped = 0;
       imported.forEach(function(imp) {
+        if (!imp || !imp.Name || !SAFE_RULE_NAME.test(String(imp.Name))) { skipped++; return; }
         var idx = _currentRulesData.findIndex(function(r) { return r.Name === imp.Name; });
         if (idx !== -1) {
           _currentRulesData[idx] = imp;
@@ -1166,7 +1193,7 @@ function importRulesFile(event) {
         }
       });
       renderRulesUI(_currentRulesData);
-      showToast('Rules imported successfully!');
+      showToast(skipped ? ('Imported (skipped ' + skipped + ' invalid entr' + (skipped===1?'y':'ies') + ')') : 'Rules imported successfully!');
     } catch(err) {
       showToast('Invalid JSON file!');
     }

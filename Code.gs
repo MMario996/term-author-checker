@@ -180,6 +180,11 @@ function apiHealthCheck() {
 }
 
 function apiDebugConnection() {
+  // Admin-only: tokenPrefix unten gibt (absichtlich gekürzte) Zeichen des echten
+  // PHRASE_API_TOKEN preis. Ohne diese Prüfung könnte jeder Nutzer mit Zugriff auf
+  // eine der Sidebars diese Funktion direkt über google.script.run aus der
+  // Browser-Konsole aufrufen, auch ohne dass ein Button dafür existiert.
+  if (getUserRole_(getUserEmail_()) !== 'ADMIN') throw new Error('Unauthorized: Admins only.');
   var result = { ok: false, httpStatus: null, totalItems: null, errorMsg: null, tokenPrefix: null };
   try {
     var auth = _phraseAuth_();
