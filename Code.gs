@@ -40,7 +40,7 @@ function apiGetContext() {
 
 function apiGetSettings() {
   var caller = getUserEmail_();
-  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: Nur Admins können Einstellungen sehen.");
+  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: only admins can view settings.");
   var props = PropertiesService.getScriptProperties();
   var token = props.getProperty('PHRASE_API_TOKEN') || '';
   var geminiKey = props.getProperty('GEMINI_API_KEY') || '';
@@ -65,7 +65,7 @@ function apiGetSettings() {
 
 function apiSaveSettings(data) {
   var caller = getUserEmail_();
-  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: Nur Admins können Einstellungen speichern.");
+  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: only admins can save settings.");
   var props = PropertiesService.getScriptProperties();
   
   if (data.PHRASE_API_TOKEN && !data.PHRASE_API_TOKEN.includes('????')) {
@@ -165,17 +165,17 @@ function apiHealthCheck() {
   var checks = [];
   var props = PropertiesService.getScriptProperties();
   var token = (props.getProperty('PHRASE_API_TOKEN') || '').trim();
-  checks.push({ name: 'Phrase API Token', status: token.length > 10 ? 'ok' : 'error', message: token ? 'Set (' + token.length + ' chars)' : '? PHRASE_API_TOKEN not configured!' });
+  checks.push({ name: 'Phrase API Token', status: token.length > 10 ? 'ok' : 'error', message: token ? 'Set (' + token.length + ' chars)' : 'PHRASE_API_TOKEN not configured!' });
   try {
     var res  = UrlFetchApp.fetch('https://cloud.memsource.com/web/api2/v1/termBases?pageNumber=0&pageSize=1', { method: 'get', headers: { Authorization: _phraseAuth_() }, muteHttpExceptions: true });
     var code = res.getResponseCode();
     var cnt  = '?';
     try { cnt = JSON.parse(res.getContentText()).totalElements; } catch(e) {}
-    checks.push({ name: 'Termbase Access', status: code === 200 ? 'ok' : 'error', message: code === 200 ? '? Connected ? ' + cnt + ' termbase(s)' : 'HTTP ' + code + ': ' + res.getContentText().slice(0,100) });
+    checks.push({ name: 'Termbase Access', status: code === 200 ? 'ok' : 'error', message: code === 200 ? 'Connected - ' + cnt + ' termbase(s)' : 'HTTP ' + code + ': ' + res.getContentText().slice(0,100) });
   } catch(e) { checks.push({ name: 'Termbase Access', status: 'error', message: e.message }); }
-  
+
   var geminiKey = (props.getProperty('GEMINI_API_KEY') || '').trim();
-  checks.push({ name: 'Gemini AI (Apigee)', status: geminiKey ? 'ok' : 'warning', message: geminiKey ? '? Configured' : '? Kein GEMINI_API_KEY ? KI-Suche ist deaktiviert' });
+  checks.push({ name: 'Gemini AI (Apigee)', status: geminiKey ? 'ok' : 'warning', message: geminiKey ? 'Configured' : 'GEMINI_API_KEY missing - AI search is disabled' });
   return { authorized: true, checks: checks, timestamp: new Date().toISOString() };
 }
 
@@ -330,7 +330,7 @@ function apiBrowseTermbase(tbUid, pageNumber, lang, searchQuery, sortDir) {
     method: 'post', contentType: 'application/json', headers: { Authorization: _phraseAuth_() },
     payload: JSON.stringify(body), muteHttpExceptions: true
   });
-  if (res.getResponseCode() !== 200) throw new Error('Browse fehlgeschlagen (' + res.getResponseCode() + ').');
+  if (res.getResponseCode() !== 200) throw new Error('Browse failed (' + res.getResponseCode() + ').');
   var data = JSON.parse(res.getContentText());
   var concepts = data.searchResults || data.concepts || [];
   
@@ -507,10 +507,10 @@ function apiAiAssistedSearch(freeText, history, imageData) {
   freeText = String(freeText || '').trim();
   history = Array.isArray(history) ? history : [];
   var hasImage = !!(imageData && imageData.data && imageData.mimeType);
-  if (!freeText && !hasImage) throw new Error('Bitte eine Beschreibung eingeben oder ein Bild hochladen.');
+  if (!freeText && !hasImage) throw new Error('Please enter a description or upload an image.');
   var props = PropertiesService.getScriptProperties();
   var apiKey = (props.getProperty('GEMINI_API_KEY') || '').trim();
-  if (!apiKey) throw new Error('Die KI-Suche ist noch nicht konfiguriert (Gemini API Key fehlt). Bitte einen Admin kontaktieren.');
+  if (!apiKey) throw new Error('AI search is not configured yet (Gemini API Key missing). Please contact an admin.');
   var rawUrl = props.getProperty('GEMINI_API_URL') || 'https://34-111-99-134.nip.io/gemini/v1beta/models/';
   var apiUrl = rawUrl.split(']')[0].replace('[', '').trim();
   var model  = (props.getProperty('AI_MODEL') || 'gemini-3.6-flash').trim();
@@ -553,7 +553,7 @@ function apiAiAssistedSearch(freeText, history, imageData) {
   });
   var code = res.getResponseCode();
   if (code !== 200) {
-    throw new Error('KI-Anfrage fehlgeschlagen (' + code + '): ' + res.getContentText().slice(0, 300));
+    throw new Error('AI request failed (' + code + '): ' + res.getContentText().slice(0, 300));
   }
   var data = JSON.parse(res.getContentText());
   var text;
@@ -562,7 +562,7 @@ function apiAiAssistedSearch(freeText, history, imageData) {
   var clean = String(text).replace(/```json/gi, '').replace(/```/g, '').trim();
   var parsed;
   try { parsed = JSON.parse(clean); }
-  catch(e) { throw new Error('KI-Antwort war kein gültiges JSON: ' + clean.slice(0, 200)); }
+  catch(e) { throw new Error('AI response was not valid JSON: ' + clean.slice(0, 200)); }
   var terms = Array.isArray(parsed.terms) ? parsed.terms.slice(0, 3).filter(Boolean) : [];
   var detectedLang = String(parsed.lang || 'de').toLowerCase().slice(0, 2);
   var merged = {};
@@ -696,7 +696,7 @@ function apiExportToSheet(rows) {
     }
     return ss.getUrl();
   } catch(e) {
-    throw new Error("Export fehlgeschlagen: " + e.message);
+    throw new Error("Export failed: " + e.message);
   }
 }
 

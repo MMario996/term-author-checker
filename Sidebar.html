@@ -137,9 +137,9 @@ button, input, select{ font-family:inherit; }
   </div>
 
   <div class="search-bar" id="searchBar">
-    <input type="text" id="query" placeholder="Begriff suchen ?" autocomplete="off" autocorrect="off" spellcheck="false">
+    <input type="text" id="query" placeholder="Search term..." autocomplete="off" autocorrect="off" spellcheck="false">
     <div class="search-divider"></div>
-    <select id="lang-select" title="Ausgangssprache">
+    <select id="lang-select" title="Source language">
       <option value="de" selected>DE</option>
       <option value="en">EN</option>
       <option value="fr">FR</option>
@@ -149,9 +149,9 @@ button, input, select{ font-family:inherit; }
   </div>
   <button class="btn-search" id="searchBtn">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-    Suchen
+    Search
   </button>
-  <p class="search-hint">Wildcards: * am Anfang/Ende möglich</p>
+  <p class="search-hint">Wildcards: * at the start/end is supported</p>
 
   <div class="recent" id="recentWrap"></div>
   <div id="resultsWrap" aria-live="polite"></div>
@@ -162,10 +162,10 @@ button, input, select{ font-family:inherit; }
 <script>
 var RECENTS_KEY = 'termcheck_sidebar_recent_v1', MAX_RECENTS = 5;
 var STATUS_MSGS = [
-  "Termbases werden durchsucht...",
-  "Treffer werden abgeglichen...",
-  "Übersetzungen werden geladen...",
-  "Fast fertig..."
+  "Searching termbases...",
+  "Matching results...",
+  "Loading translations...",
+  "Almost done..."
 ];
 var _loadingInterval = null;
 var _debounceTimer = null, _requestToken = 0;
@@ -217,7 +217,7 @@ function triggerSearch(){
   if (!q) return;
   var core = q.replace(/\*/g, '').trim();
   var $rw = document.getElementById('resultsWrap');
-  if (core.length < 1) { showState($rw, 'warn', 'Suchbegriff zu kurz', 'Bitte mindestens ein Zeichen eingeben.'); return; }
+  if (core.length < 1) { showState($rw, 'warn', 'Search term too short', 'Please enter at least one character.'); return; }
 
   var myToken = ++_requestToken;
   startLoading($rw);
@@ -232,7 +232,7 @@ function triggerSearch(){
     .withFailureHandler(function(err){
       if (myToken !== _requestToken) return;
       stopLoading();
-      showState($rw, 'error', 'Fehler', (err && err.message) ? err.message : String(err));
+      showState($rw, 'error', 'Error', (err && err.message) ? err.message : String(err));
     })
     .apiSearchTerms(q, src);
 }
@@ -251,11 +251,11 @@ function stopLoading(){ if (_loadingInterval) { clearInterval(_loadingInterval);
 
 function renderResults(wrap, concepts, query){
   if (!concepts || concepts.length === 0){
-    showState(wrap, 'empty', 'Keine Treffer', 'Für "'+esc(query)+'" wurden keine Begriffe gefunden.');
+    showState(wrap, 'empty', 'No results', 'No terms were found for "'+esc(query)+'".');
     return;
   }
   var n = concepts.length;
-  var meta = '<div class="results-meta"><b>'+n+'</b> Treffer für "'+esc(query)+'"</div>';
+  var meta = '<div class="results-meta"><b>'+n+'</b> result'+(n!==1?'s':'')+' for "'+esc(query)+'"</div>';
   var cards = concepts.map(function(c, i){ return renderCard(c, query, i); }).join('');
   wrap.innerHTML = meta + cards;
 }
@@ -285,7 +285,7 @@ function renderCard(c, query, idx){
     }).join('');
     tlHtml = '<div class="translations">'+rows+'</div>';
   } else {
-    tlHtml = '<div class="no-translations">Keine Übersetzungen vorhanden</div>';
+    tlHtml = '<div class="no-translations">No translations available</div>';
   }
 
   return '<div class="concept-card expanded" style="animation-delay:'+delay+'ms">'+header+'<div class="card-body">'+tlHtml+'</div></div>';
@@ -299,7 +299,7 @@ function copyTerm(text){
   document.body.appendChild(ta); ta.select();
   try { document.execCommand('copy'); } catch(e){}
   document.body.removeChild(ta);
-  showToast('"'+text+'" kopiert');
+  showToast('"'+text+'" copied');
 }
 
 function showState(wrap, type, title, sub){
