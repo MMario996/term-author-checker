@@ -23,10 +23,10 @@ function onDriveHomepage(e) {
   var card = CardService.newCardBuilder();
   card.setHeader(CardService.newCardHeader()
     .setTitle('Kärcher Author Check')
-    .setSubtitle('PDF-Prüfung'));
+    .setSubtitle('PDF check'));
   card.addSection(CardService.newCardSection()
     .addWidget(CardService.newTextParagraph()
-      .setText('Wähle in Google Drive eine einzelne PDF-Datei aus, um sie gegen die Author-Check-Regeln zu prüfen. Andere Dateitypen werden aktuell nicht unterstützt.')));
+      .setText('Select a single PDF file in Google Drive to check it against the Author Check rules. Other file types are not supported yet.')));
   return card.build();
 }
 
@@ -34,12 +34,12 @@ function onDriveItemsSelected(e) {
   var items = (e.drive && e.drive.selectedItems) || [];
 
   if (items.length !== 1) {
-    return _buildDriveInfoCard_('Bitte genau eine Datei auswählen', 'Wähle genau eine einzelne PDF-Datei in Drive aus, nicht mehrere und keine Ordner.');
+    return _buildDriveInfoCard_('Please select exactly one file', 'Select a single PDF file in Drive - not multiple files, and no folders.');
   }
 
   var item = items[0];
   if (item.mimeType !== 'application/pdf') {
-    return _buildDriveInfoCard_('Nur PDF wird unterstützt', 'Die Datei "' + item.title + '" ist kein PDF. Diese Prüfung funktioniert aktuell ausschließlich für PDF-Dateien.');
+    return _buildDriveInfoCard_('Only PDF is supported', 'The file "' + item.title + '" is not a PDF. This check currently only works for PDF files.');
   }
 
   var card = CardService.newCardBuilder();
@@ -49,11 +49,13 @@ function onDriveItemsSelected(e) {
 
   var section = CardService.newCardSection();
   section.addWidget(CardService.newTextParagraph()
-    .setText('Prüft den kompletten Inhalt dieser PDF-Datei gegen die Author-Check-Regeln (Grammatik, Terminologie, Stil) - genau wie Author Check in Docs, Sheets und Slides.'));
+    .setText('Checks the entire content of this PDF against the Author Check rules (grammar, terminology, style) - the same as Author Check in Docs, Sheets and Slides.'));
+  section.addWidget(CardService.newTextParagraph()
+    .setText('<i>Rules are personal to you and shared across Docs, Sheets, Slides and Drive. To view or change them, open Author Check in a Google Doc, Sheet or Slide deck and click "Rules".</i>'));
 
   var langSelect = CardService.newSelectionInput()
     .setType(CardService.SelectionInputType.DROPDOWN)
-    .setTitle('Sprache')
+    .setTitle('Language')
     .setFieldName('language');
   DRIVE_PDF_LANGUAGES.forEach(function(pair) {
     langSelect.addItem(pair[1], pair[0], pair[0] === 'de');
@@ -66,7 +68,7 @@ function onDriveItemsSelected(e) {
     .setLoadIndicator(CardService.LoadIndicator.SPINNER);
 
   section.addWidget(CardService.newTextButton()
-    .setText('PDF prüfen')
+    .setText('Check PDF')
     .setOnClickAction(action));
 
   card.addSection(section);
@@ -106,20 +108,20 @@ function apiCheckDrivePdf(e) {
   try {
     var props = PropertiesService.getScriptProperties();
     var apiKey = (props.getProperty('GEMINI_API_KEY') || '').trim();
-    if (!apiKey) throw new Error('AI-Prüfung ist nicht konfiguriert (Gemini API Key fehlt).');
+    if (!apiKey) throw new Error('AI inspection is not configured (Gemini API Key missing).');
 
     var blob = DriveApp.getFileById(fileId).getBlob();
     if (blob.getBytes().length > DRIVE_PDF_MAX_BYTES) {
-      throw new Error('Die PDF-Datei ist zu groß (Limit: ' + (DRIVE_PDF_MAX_BYTES / (1024*1024)) + ' MB).');
+      throw new Error('The PDF file is too large (limit: ' + (DRIVE_PDF_MAX_BYTES / (1024*1024)) + ' MB).');
     }
     var base64 = Utilities.base64Encode(blob.getBytes());
 
     var promptParts = _buildAuthorCheckPromptParts_(language, {
-      noGlossary: '(keine spezifischen Einträge für diese Sprache gefunden)',
-      valueLabel: 'Wert',
-      specificCheckPrefix: 'SPEZIFISCHE PRÜFUNG',
-      noStandardRules: '(Keine Standardregeln)',
-      additionalChecksHeader: 'ZUSÄTZLICHE SPEZIFISCHE PRÜFUNGEN'
+      noGlossary: '(no specific entries found for this language)',
+      valueLabel: 'Value',
+      specificCheckPrefix: 'SPECIFIC CHECK',
+      noStandardRules: '(No standard rules)',
+      additionalChecksHeader: 'ADDITIONAL SPECIFIC PROMPTS/CHECKS'
     });
     var termListStr = promptParts.termListStr;
     var rulesStr = promptParts.rulesStr;
@@ -175,7 +177,7 @@ function apiCheckDrivePdf(e) {
     try {
       CacheService.getUserCache().put(_drivePdfResultCacheKey_(resultId), JSON.stringify(cachePayload), DRIVE_PDF_RESULT_CACHE_TTL);
     } catch (cacheErr) {
-      Logger.log('apiCheckDrivePdf: Ergebnis-Cache fehlgeschlagen (Ergebnis evtl. zu groß): ' + cacheErr);
+      Logger.log('apiCheckDrivePdf: result cache failed (result possibly too large): ' + cacheErr);
     }
 
     return CardService.newActionResponseBuilder()
@@ -184,7 +186,7 @@ function apiCheckDrivePdf(e) {
 
   } catch (err) {
     var errCard = CardService.newCardBuilder();
-    errCard.setHeader(CardService.newCardHeader().setTitle('Fehler'));
+    errCard.setHeader(CardService.newCardHeader().setTitle('Error'));
     errCard.addSection(CardService.newCardSection()
       .addWidget(CardService.newTextParagraph().setText(err.message || String(err))));
     return CardService.newActionResponseBuilder()
@@ -282,9 +284,14 @@ function apiAddDrivePdfNote(e) {
     var issue = data.issues[issueIndex];
     if (!issue) throw new Error('Issue not found.');
     var commentText = 'TermCheck Suggestion:\n' + issue.suggestion + '\n\nExplanation: ' + (issue.explanation || '');
-    _createHighlightedDriveComment_(data.fileId, issue.original, commentText);
-    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_NOTE_ADDED', data.fileName + ' - issue #' + issueIndex);
-    notifText = 'Note added.';
+    var comment = _createHighlightedDriveComment_(data.fileId, issue.original, commentText);
+    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_NOTE_ADDED', data.fileName + ' - issue #' + issueIndex + ' - anchored=' + comment._anchored);
+    // Ehrliches Feedback statt eines blinden "Note added": bei PDFs übernimmt Drive
+    // den quotedFileContent-Anker nicht zuverlässig (siehe _createHighlightedDriveComment_),
+    // der Kommentar landet dann trotzdem im Kommentarverlauf, aber ohne Markierung.
+    notifText = comment._anchored
+      ? 'Note added and anchored - open the comment icon (top right of the PDF preview) to see it.'
+      : 'Note added, but not anchored to the passage - open the comment icon (top right of the PDF preview) to find it in the general list.';
   } catch (err) {
     notifText = 'Error: ' + (err.message || String(err));
   }
@@ -299,27 +306,29 @@ function apiAddDrivePdfNote(e) {
  */
 function apiAddAllDrivePdfNotes(e) {
   var resultId = e.parameters.resultId;
-  var added = 0, failed = 0;
+  var added = 0, anchored = 0, failed = 0;
   try {
     var data = _loadDrivePdfResult_(resultId);
     var toProcess = data.issues.slice(0, DRIVE_PDF_MAX_BULK_NOTES);
     toProcess.forEach(function(issue) {
       try {
         var commentText = 'TermCheck Suggestion:\n' + issue.suggestion + '\n\nExplanation: ' + (issue.explanation || '');
-        _createHighlightedDriveComment_(data.fileId, issue.original, commentText);
+        var comment = _createHighlightedDriveComment_(data.fileId, issue.original, commentText);
         added++;
+        if (comment._anchored) anchored++;
       } catch (err) {
         failed++;
       }
     });
-    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_NOTE_ADDED_ALL', data.fileName + ' - ' + added + ' note(s), ' + failed + ' failed');
+    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_NOTE_ADDED_ALL', data.fileName + ' - ' + added + ' note(s) (' + anchored + ' anchored), ' + failed + ' failed');
   } catch (err) {
     return CardService.newActionResponseBuilder()
       .setNotification(CardService.newNotification().setText('Error: ' + (err.message || String(err))))
       .build();
   }
-  var msg = added + ' note(s) added' + (failed ? ', ' + failed + ' failed' : '') +
-    (added >= DRIVE_PDF_MAX_BULK_NOTES ? ' (limit reached, run again or use Export as Sheet for the rest)' : '') + '.';
+  var msg = added + ' note(s) added (' + anchored + ' anchored to the passage)' + (failed ? ', ' + failed + ' failed' : '') +
+    (added >= DRIVE_PDF_MAX_BULK_NOTES ? ' (limit reached, run again or use Export as Sheet for the rest)' : '') +
+    '. Open the comment icon (top right of the PDF preview) to see them.';
   return CardService.newActionResponseBuilder()
     .setNotification(CardService.newNotification().setText(msg))
     .build();
@@ -358,8 +367,7 @@ function _buildDrivePdfReportSheet_(issues, fileName, language) {
   var rows = [headers];
 
   if (!issues.length) {
-    var noIssuesText = language === 'en' ? "No errors found." : "Keine Fehler gefunden.";
-    rows.push(["-", "-", noIssuesText, "-", "-"]);
+    rows.push(["-", "-", "No errors found.", "-", "-"]);
   } else {
     issues.forEach(function(issue) {
       rows.push([

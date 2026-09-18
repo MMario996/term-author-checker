@@ -5948,18 +5948,18 @@ var DEFAULT_RULES_CONFIG_EN = [
   { "Description": "Check the comparison form of the adjective", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "3922de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "Avoid arrogant, overselling phrases", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "3930de", "Type": "Style", "Parameter": null, "IsEnabled": false },
   { "Description": "State the benefit before the feature", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "625de", "Type": "Style", "Parameter": null, "IsEnabled": false },
-  { "Description": "Stellt sicher, dass Aufzählungspunkte, die explizit werbliche Vorteile (Benefits) beschreiben, am Ende immer mit einem Schlusspunkt versehen werden – auch wenn es sich um syntaktisch unvollständige Sätze handelt (z. B. „- 50 Prozent Zeitersparnis beim Bügeln.“).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU09", "Type": "Style", "Parameter": null, "IsEnabled": true },
-  { "Description": "Erfordert, dass die Marken-URL www.karcher.com im Fließtext konsequent kleingeschrieben wird – dies gilt ausdrücklich auch dann, wenn sie direkt auf einen Schlusspunkt des vorhergehenden Satzes folgt.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU11", "Type": "Style", "Parameter": null, "IsEnabled": true },
-  { "Description": "Kontrolliert, ob Fußnoten regelkonform formatiert sind. Der Text muss mit einem Großbuchstaben beginnen und mit einem Schlusspunkt enden. Einzige Ausnahme ist das alleinstehende Kennzeichnungswort „NEU“.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU12", "Type": "Style", "Parameter": null, "IsEnabled": true },
-  { "Description": "Trennt Tausenderstellen ab 4 Ziffern zwingend mit einem Komma statt einem Punkt (z. B. 1,000 oder 193,000).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU13", "Type": "Style", "Parameter": null, "IsEnabled": true },
-  { "Description": "Erfordert, dass das Prozentzeichen (%) in Kurztexten und Tabellen ohne Leerzeichen direkt an die Ziffer anschließt (z. B. 5%).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU14", "Type": "Style", "Parameter": null, "IsEnabled": true },
-  { "Description": "Prüft, ob Abkürzungen von Monaten (z. B. Oct, Jun) und Wochentagen (z. B. Mon, Wed) in Kurztexten ohne abschließenden Punkt geschrieben sind.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU15", "Type": "Abbreviation", "Parameter": null, "IsEnabled": true },
-  { "Description": "Identifiziert und entfernt das Komma vor dem letzten Element in Aufzählungen (Oxford Comma), außer es ist zur Vermeidung von Mehrdeutigkeiten zwingend nötig.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU16", "Type": "Style", "Parameter": null, "IsEnabled": true },
-  { "Description": "Meldet Sätze, die mit einer Zahl als Ziffer beginnen, und fordert eine Umformulierung oder das Ausschreiben als Wort.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU17", "Type": "Style", "Parameter": null, "IsEnabled": true },
-  { "Description": "Kontrolliert, ob der Text nach einem Doppelpunkt mit einem Kleinbuchstaben fortgesetzt wird, sofern kein Eigenname folgt.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU18", "Type": "Style", "Parameter": null, "IsEnabled": true },
-  { "Description": "Erfordert in Fließtexten die Verwendung des Wortes \"to\" anstelle eines Bis-Strichs und verhindert die doppelte Nennung der Maßeinheit (z. B. 5 to 8 mg).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU19", "Type": "Style", "Parameter": null, "IsEnabled": true },
-  { "Description": "Erkennt geschlechtsspezifische Endungen bei Personenbezeichnungen (z. B. chairman, policeman) und fordert neutrale Alternativen (z. B. chair, police officer).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU20", "Type": "Style", "Parameter": null, "IsEnabled": true },
-  { "Description": "Erkennt und entfernt Leerzeichen vor oder nach einem Schrägstrich bei Wortverbindungen (z. B. erlaubt ist nur: plug/unplug).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU21", "Type": "Style", "Parameter": null, "IsEnabled": true }
+  { "Description": "Ensures that bullet points explicitly describing marketing benefits always end with a full stop - even for syntactically incomplete sentences (e.g. \"- 50 percent time savings when ironing.\").", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU09", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Requires the brand URL www.karcher.com to always be written in lowercase in body text - this applies even when it directly follows the full stop of the previous sentence.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU11", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Checks that footnotes are formatted correctly: the text must start with a capital letter and end with a full stop. The only exception is the standalone marker word \"NEU\".", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU12", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Requires thousands separators (numbers with 4+ digits) to always use a comma instead of a period (e.g. 1,000 or 193,000).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU13", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Requires the percent sign (%) to directly follow the digit without a space in short texts and tables (e.g. 5%).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU14", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Checks that month abbreviations (e.g. Oct, Jun) and weekday abbreviations (e.g. Mon, Wed) in short texts are written without a trailing period.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU15", "Type": "Abbreviation", "Parameter": null, "IsEnabled": true },
+  { "Description": "Identifies and removes the comma before the last item in a list (Oxford comma), unless it is strictly necessary to avoid ambiguity.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU16", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Flags sentences that start with a number written as a digit and requires rephrasing or spelling it out as a word.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU17", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Checks that text continues with a lowercase letter after a colon, unless followed by a proper noun.", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU18", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Requires the word \"to\" instead of an en dash in body text, and prevents the unit of measurement from being stated twice (e.g. 5 to 8 mg).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU19", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Detects gender-specific endings in job titles/person references (e.g. chairman, policeman) and requires gender-neutral alternatives (e.g. chair, police officer).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU20", "Type": "Style", "Parameter": null, "IsEnabled": true },
+  { "Description": "Detects and removes spaces before or after a slash in compound terms (e.g. only \"plug/unplug\" is allowed).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU21", "Type": "Style", "Parameter": null, "IsEnabled": true }
 ];
 
 function _getDefaultRulesForLanguage_(language) {
@@ -6131,7 +6131,7 @@ function apiLogNewCustomRules(newRules, language) {
         ]);
       });
     } catch(e) {
-      console.warn("Konnte zentrales Regel-Log nicht schreiben: " + e.message);
+      console.warn("Could not write to the central rules log: " + e.message);
     }
   }
 
@@ -6143,12 +6143,12 @@ function apiLogNewCustomRules(newRules, language) {
       }).join('\n');
       MailApp.sendEmail({
         to: admins.join(','),
-        subject: 'Neue Author-Check-Regel(n) von ' + caller,
-        body: caller + ' hat ' + newRules.length + ' neue Regel(n) angelegt (Sprache: ' + language + '):\n\n' + lines
+        subject: 'New Author Check rule(s) from ' + caller,
+        body: caller + ' created ' + newRules.length + ' new rule(s) (language: ' + language + '):\n\n' + lines
       });
     }
   } catch(e) {
-    console.warn("Konnte Admin-Benachrichtigung nicht senden: " + e.message);
+    console.warn("Could not send admin notification: " + e.message);
   }
 
   return { success: true, logged: newRules.length };
@@ -6162,14 +6162,14 @@ function apiLogNewCustomRules(newRules, language) {
  */
 function apiExportAllRulesToLogSheet(rules, language) {
   var caller = getUserEmail_();
-  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: Nur Admins können den Bulk-Export ins Log-Sheet ausführen.");
+  if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: only admins can run the bulk export to the log sheet.");
 
   if (!rules || !rules.length) throw new Error("No rules to export.");
   language = language || "de";
 
   var props = PropertiesService.getScriptProperties();
   var sheetId = (props.getProperty('CUSTOM_RULES_LOG_SHEET_ID') || '').trim();
-  if (!sheetId) throw new Error("Kein Custom Rules Log Sheet hinterlegt (Admin-Einstellungen).");
+  if (!sheetId) throw new Error("No Custom Rules Log Sheet configured (Admin Settings).");
 
   var timestamp = new Date();
   var ss = SpreadsheetApp.openById(sheetId);

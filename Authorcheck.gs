@@ -365,11 +365,24 @@ function apiJumpToIssue(searchText) {
 // "context" (das war das veraltete Feldschema von Drive API v2 und wird von v3
 // stillschweigend ignoriert) ? mit "context" wurde bislang zwar ein Kommentar
 // angelegt, aber ohne Bezug zur Textstelle, weshalb nichts markiert/verlinkt wurde.
+// Für Google Docs matcht der Drive-Client den quotedFileContent-Text gegen den
+// Dokumenttext und zeigt den Kommentar dann als Highlight an der passenden Stelle.
+// Für Dateitypen ohne echtes Google-Textmodell (v.a. PDFs) garantiert die öffentliche
+// Drive API dieses Verhalten NICHT ? der Kommentar wird immer angelegt (er landet im
+// Kommentar-Verlauf, Sprechblasen-Icon oben rechts in der Drive-Vorschau), aber ob er
+// dabei auch visuell an der Textstelle markiert wird, hängt von Googles interner PDF-
+// Texterkennung ab. Deshalb hier prüfen, ob Drive quotedFileContent überhaupt
+// übernommen hat, und das Ergebnis zurückgeben statt es zu verschlucken.
 function _createHighlightedDriveComment_(fileId, quotedText, commentText) {
-  return Drive.Comments.create({
+  var comment = Drive.Comments.create({
     content: commentText,
     quotedFileContent: { mimeType: 'text/plain', value: quotedText }
   }, fileId, { fields: '*' });
+  comment._anchored = !!(comment.quotedFileContent && comment.quotedFileContent.value);
+  if (!comment._anchored) {
+    Logger.log('_createHighlightedDriveComment_: quotedFileContent wurde von Drive nicht uebernommen (fileId=' + fileId + ', id=' + comment.id + ') - Kommentar existiert, ist aber vermutlich nicht an der Textstelle markiert.');
+  }
+  return comment;
 }
 
 function apiCommentIssue(originalText, suggestion, explanation) {

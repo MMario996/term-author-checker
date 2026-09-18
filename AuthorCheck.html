@@ -368,7 +368,7 @@ body.popup-mode .modal-foot .btn-mini { font-size: 16px; padding: 10px 18px; }
         </select>
       </div>
       <div class="control-row" style="margin-bottom:8px;">
-        <input type="text" id="rulesSearchInput" placeholder="Regeln durchsuchen..." oninput="filterRulesList()" style="flex:1; padding:8px 10px; font-size:13px; border:1.5px solid var(--gray-300);">
+        <input type="text" id="rulesSearchInput" placeholder="Search rules..." oninput="filterRulesList()" style="flex:1; padding:8px 10px; font-size:13px; border:1.5px solid var(--gray-300);">
       </div>
       <div id="rulesListContainer">
         <div class="loading-state"><div class="loading-text">Loading rules...</div></div>
@@ -389,16 +389,16 @@ body.popup-mode .modal-foot .btn-mini { font-size: 16px; padding: 10px 18px; }
 
     <div class="move-dialog-overlay" id="moveRuleOverlay">
       <div class="move-dialog-box">
-        <h3>Regel verschieben</h3>
+        <h3>Move Rule</h3>
         <label>Section</label>
         <select id="moveRuleSectionSelect" onchange="onMoveSectionChange()"></select>
-        <input type="text" id="moveRuleSectionCustom" placeholder="Neuer Section-Name" style="display:none;">
-        <label>Unterthema</label>
+        <input type="text" id="moveRuleSectionCustom" placeholder="New section name" style="display:none;">
+        <label>Subsection</label>
         <select id="moveRuleSubsectionSelect" onchange="onMoveSubsectionChange()"></select>
-        <input type="text" id="moveRuleSubsectionCustom" placeholder="Neues Unterthema" style="display:none;">
+        <input type="text" id="moveRuleSubsectionCustom" placeholder="New subsection" style="display:none;">
         <div class="move-dialog-actions">
-          <button class="btn-mini ghost" onclick="closeMoveRuleDialog()">Abbrechen</button>
-          <button class="btn-mini primary" onclick="confirmMoveRule()">Verschieben</button>
+          <button class="btn-mini ghost" onclick="closeMoveRuleDialog()">Cancel</button>
+          <button class="btn-mini primary" onclick="confirmMoveRule()">Move</button>
         </div>
       </div>
     </div>
@@ -806,7 +806,7 @@ function renderRulesUI(rules) {
     return '<option value="' + esc(t) + '">' + esc(t) + '</option>';
   }).join('');
   var topAddHeader = '<div style="margin-bottom:12px; padding:10px; background:var(--gray-50); border:1px solid var(--gray-200);">' +
-    '<a href="https://gemini.google.com/gem/1U9keOE3XPTPG3QEq63ZCYZ-5EOTruqgC?usp=sharing" target="_blank" class="btn-mini ghost" style="width:100%; margin-bottom:8px; text-decoration:none; display:flex; align-items:center; justify-content:center;">? Regel mit Gemini vorbereiten</a>' +
+    '<a href="https://gemini.google.com/gem/1U9keOE3XPTPG3QEq63ZCYZ-5EOTruqgC?usp=sharing" target="_blank" class="btn-mini ghost" style="width:100%; margin-bottom:8px; text-decoration:none; display:flex; align-items:center; justify-content:center;">Prepare a rule with Gemini</a>' +
     '<button class="btn-mini primary" style="width:100%; font-weight:bold;" onclick="toggleAddCustomRuleForm()">+ Create New Rule / AI Prompt</button>' +
     '<div id="addCustomRuleForm" style="display:none; margin-top:10px; border-top:1px solid var(--gray-200); padding-top:10px;">' +
       '<label style="font-size:10px; font-weight:bold; color:var(--gray-500);">CATEGORY / DROPDOWN</label>' +
@@ -871,7 +871,7 @@ function renderRulesUI(rules) {
         }
         var safeRefUrl = safeHref(r.ReferenceUrl);
         var refLinkHtml = safeRefUrl ? (
-          '<a href="'+esc(safeRefUrl)+'" target="_blank" class="btn-move" title="Norm/Vorgabe öffnen" onclick="event.stopPropagation();">' +
+          '<a href="'+esc(safeRefUrl)+'" target="_blank" class="btn-move" title="Open reference / standard" onclick="event.stopPropagation();">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>' +
           '</a>'
         ) : '';
@@ -978,7 +978,7 @@ function openMoveRuleDialog(ruleName) {
   sectionSelect.innerHTML = Object.keys(existingSections).sort().map(function(s) {
     var sel = (s === rule.Section) ? 'selected' : '';
     return '<option value="'+esc(s)+'" '+sel+'>'+esc(s)+'</option>';
-  }).join('') + '<option value="__NEW__">+ Neue Section...</option>';
+  }).join('') + '<option value="__NEW__">+ New section...</option>';
   document.getElementById('moveRuleSectionCustom').style.display = 'none';
   document.getElementById('moveRuleSectionCustom').value = '';
 
@@ -994,7 +994,7 @@ function populateSubsectionSelect(section, currentSub) {
   subSelect.innerHTML = Object.keys(existingSubs).sort().map(function(s) {
     var sel = (s === currentSub) ? 'selected' : '';
     return '<option value="'+esc(s)+'" '+sel+'>'+esc(s)+'</option>';
-  }).join('') + '<option value="__NEW__">+ Neues Unterthema...</option>';
+  }).join('') + '<option value="__NEW__">+ New subsection...</option>';
   document.getElementById('moveRuleSubsectionCustom').style.display = 'none';
   document.getElementById('moveRuleSubsectionCustom').value = '';
 }
@@ -1032,7 +1032,7 @@ function confirmMoveRule() {
   var sub = (subVal === '__NEW__') ? document.getElementById('moveRuleSubsectionCustom').value.trim() : subVal;
 
   if (!section || !sub) {
-    showToast('Bitte Section und Unterthema angeben!');
+    showToast('Please specify a section and subsection!');
     return;
   }
 
@@ -1044,7 +1044,7 @@ function confirmMoveRule() {
 
   closeMoveRuleDialog();
   renderRulesUI(_currentRulesData);
-  showToast('Regel verschoben. Klicke "Save Settings" zum Speichern.');
+  showToast('Rule moved. Click "Save Settings" to save.');
 }
 
 function toggleAddCustomRuleForm() {
@@ -1130,11 +1130,11 @@ function saveRulesSettings() {
     .apiSaveRulesConfig(updatedRules, _currentRulesLang);
 }
 function exportAllRulesToLogSheet() {
-  if (!confirm('Alle ' + _currentRulesData.length + ' aktuell geladenen Regeln (Standard + deine eigenen Custom-Regeln) einmalig in das zentrale Log-Sheet schreiben?')) return;
-  showToast('Exportiere alle Regeln ins Log-Sheet...');
+  if (!confirm('Write all ' + _currentRulesData.length + ' currently loaded rules (default + your own custom rules) to the central log sheet, once?')) return;
+  showToast('Exporting all rules to the log sheet...');
   google.script.run
     .withSuccessHandler(function(res) {
-      showToast(res.exported + ' Regeln ins Log-Sheet geschrieben.');
+      showToast(res.exported + ' rule(s) written to the log sheet.');
     })
     .withFailureHandler(function(err) {
       showToast('Fehler: ' + (err.message || err));
