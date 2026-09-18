@@ -233,7 +233,7 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues) {
     .setText('Export as Sheet')
     .setOnClickAction(CardService.newAction().setFunctionName('apiExportDrivePdfResultToSheet').setParameters({ resultId: resultId })));
   topSection.addWidget(CardService.newTextParagraph()
-    .setText('<i>"Open Annotated PDF" creates a copy of this file with a sticky-note comment per finding, placed on its best-guess page (Google Drive itself does not support visible comments on PDFs). Placement is best-effort; the full original quote is always in the note text.</i>'));
+    .setText('<i>"Open Annotated PDF" creates a copy of this file with a sticky-note comment per finding, placed right next to the matching text where possible (Google Drive itself does not support visible comments on PDFs). Placement is best-effort - if the exact spot can’t be located, the note falls back to the top of its best-guess page; the full original quote is always in the note text either way.</i>'));
   card.addSection(topSection);
 
   var shown = issues.slice(0, DRIVE_PDF_MAX_CARD_ISSUES);
@@ -319,38 +319,95 @@ function apiExportDrivePdfAnnotated(e) {
 }
 
 /**
- * Lädt die Original-PDF-Bytes erneut, platziert pro Fund eine Sticky-Note-
- * Annotation auf der (best-effort geschätzten) Seite und legt das Ergebnis als
- * neue Datei in Drive ab. Gibt deren URL zurück. Wirft weiter, wenn
- * buildAnnotatedPdfBytes_ die PDF-Struktur nicht in Klartext finden konnte
+ * Lädt die Original-PDF-Bytes erneut, findet pro Fund per Content-Stream-
+ * Analyse (PdfTextPosition.gs) die tatsächliche Y-Position von issue.original
+ * auf der Seite und platziert die Sticky-Note-Annotation dort statt generisch
+ * oben links. Wenn keine Textposition gefunden wird (z.B. Seite mit nicht
+ * unterstütztem Stream-Filter, oder das Zitat kommt so im Content-Stream
+ * nicht vor - etwa bei Diagramm-/Formular-Layouts), fällt die einzelne Notiz
+ * automatisch auf die alte Stapel-oben-links-Platzierung zurück (siehe
+ * buildAnnotatedPdfBytes_ in PdfAnnotate.gs) - nie ein harter Fehler dafür.
+ * Legt das Ergebnis als neue Datei in Drive ab und gibt deren URL zurück.
+ * Wirft weiter, wenn die PDF-Struktur selbst nicht in Klartext auffindbar war
  * (siehe PdfAnnotate.gs) - der Aufrufer fängt das ab.
  */
 function _buildAnnotatedPdfFile_(fileId, fileName, issues) {
   var blob = DriveApp.getFileById(fileId).getBlob();
   var bytes = blob.getBytes();
+  var text = _pdfBytesToBinaryString_(bytes);
+
+  var rootNum = _pdfFindRootRef_(text);
+  var offsets = _pdfScanObjectOffsets_(text);
+  var pages = _pdfCollectPages_(text, offsets, rootNum);
+
+  // Pro Seite werden die Content-Stream-Textausgaben nur EINMAL dekomprimiert/
+  // geparst und dann für alle Funde wiederverwendet (Laufzeit).
+  var pageRunsCache = {};
+  function getPageRuns(pageIdx) {
+    if (pageIdx in pageRunsCache) return pageRunsCache[pageIdx];
+    var runs = null;
+    try {
+      var contentText = _pdfGetPageContentText_(text, offsets, pages[pageIdx].dictText);
+      if (contentText) runs = _pdfExtractTextRuns_(contentText);
+    } catch (e) {
+      Logger.log('_buildAnnotatedPdfFile_: Seite ' + pageIdx + ' - Content-Stream nicht auswertbar: ' + e.message);
+    }
+    pageRunsCache[pageIdx] = runs;
+    return runs;
+  }
 
   var capped = issues.slice(0, PDF_ANNOT_MAX_PER_PDF);
   var pageAnnotations = {};
   var countOnPage = {};
+  var positioned = 0;
+
   capped.forEach(function(issue) {
-    var pageIdx = _pdfGuessPageIndex_(issue.location);
-    if (pageIdx === null) pageIdx = 0;
+    var guessedPage = _pdfGuessPageIndex_(issue.location);
+    if (guessedPage === null || guessedPage < 0 || guessedPage >= pages.length) guessedPage = 0;
+
+    // Erst die von Gemini genannte Seite versuchen, danach alle anderen -
+    // der tatsächliche Textinhalt ist zuverlässiger als Geminis Seitenangabe.
+    var matchedPage = null, matchedY = null;
+    var searchOrder = [guessedPage];
+    for (var p = 0; p < pages.length; p++) { if (p !== guessedPage) searchOrder.push(p); }
+    for (var si = 0; si < searchOrder.length; si++) {
+      var runs = getPageRuns(searchOrder[si]);
+      if (!runs) continue;
+      var y = _pdfFindQuoteYOnPage_(runs, issue.original);
+      if (y !== null) { matchedPage = searchOrder[si]; matchedY = y; break; }
+    }
+
+    var pageIdx = matchedPage !== null ? matchedPage : guessedPage;
     countOnPage[pageIdx] = (countOnPage[pageIdx] || 0) + 1;
 
     var typeLabel = (issue.type || 'style').toUpperCase();
     var contents = '[' + typeLabel + ']\n' + issue.original + '\n\n-> ' + issue.suggestion +
       (issue.explanation ? '\n\n' + issue.explanation : '') +
       (issue.location ? '\n\n(AI-reported location: ' + issue.location + ')' : '');
+    var ann = { contents: contents, title: 'Author Check (' + typeLabel + ')' };
+
+    if (matchedY !== null) {
+      positioned++;
+      var mediaBox = pages[pageIdx].mediaBox || [0, 0, 612, 792];
+      var iconSize = 20, margin = 16;
+      // Mehrere Treffer auf derselben Zeile/Höhe leicht nach rechts staffeln,
+      // damit sich die Icons nicht exakt überlappen.
+      var stackOffset = (countOnPage[pageIdx] - 1) * (iconSize + 4);
+      var x = Math.min(mediaBox[0] + margin + stackOffset, mediaBox[2] - iconSize - margin);
+      var yTop = Math.min(mediaBox[3] - margin, matchedY + iconSize / 2);
+      var yBottom = Math.max(mediaBox[1] + margin, yTop - iconSize);
+      ann.rect = [x, yBottom, x + iconSize, yTop];
+    } // sonst: kein rect -> automatischer Stapel-Fallback oben links
 
     if (!pageAnnotations[pageIdx]) pageAnnotations[pageIdx] = [];
-    pageAnnotations[pageIdx].push({ contents: contents, title: 'Author Check (' + typeLabel + ')' });
+    pageAnnotations[pageIdx].push(ann);
   });
 
   var newBytes = buildAnnotatedPdfBytes_(bytes, pageAnnotations);
   var outName = fileName.replace(/\.pdf$/i, '') + ' (annotated).pdf';
   var newBlob = Utilities.newBlob(newBytes, 'application/pdf', outName);
   var file = DriveApp.createFile(newBlob);
-  logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_ANNOTATED', fileName + ' - ' + capped.length + ' annotation(s) -> ' + file.getId());
+  logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_ANNOTATED', fileName + ' - ' + capped.length + ' annotation(s), ' + positioned + ' precisely positioned -> ' + file.getId());
   return file.getUrl();
 }
 
