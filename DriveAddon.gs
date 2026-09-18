@@ -62,12 +62,12 @@ function onDriveItemsSelected(e) {
 
   var action = CardService.newAction()
     .setFunctionName('apiCheckDrivePdf')
-    .setParameters({ fileId: item.id, fileName: item.title });
+    .setParameters({ fileId: item.id, fileName: item.title })
+    .setLoadIndicator(CardService.LoadIndicator.SPINNER);
 
   section.addWidget(CardService.newTextButton()
     .setText('PDF prüfen')
-    .setOnClickAction(action)
-    .setLoadIndicator(CardService.LoadIndicator.SPINNER));
+    .setOnClickAction(action));
 
   card.addSection(section);
   return card.build();
@@ -218,8 +218,10 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues) {
     .setOnClickAction(CardService.newAction().setFunctionName('apiExportDrivePdfResultToSheet').setParameters({ resultId: resultId })));
   topSection.addWidget(CardService.newTextButton()
     .setText('Add All as Notes')
-    .setOnClickAction(CardService.newAction().setFunctionName('apiAddAllDrivePdfNotes').setParameters({ resultId: resultId }))
-    .setLoadIndicator(CardService.LoadIndicator.SPINNER));
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('apiAddAllDrivePdfNotes')
+      .setParameters({ resultId: resultId })
+      .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
   card.addSection(topSection);
 
   var shown = issues.slice(0, DRIVE_PDF_MAX_CARD_ISSUES);
