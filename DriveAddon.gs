@@ -1,10 +1,11 @@
 // ============================================================================
-// DRIVE ADD-ON - PDF-Check mit Notes/Highlights (Feature-Parität zu Docs/Sheets/Slides)
+// DRIVE ADD-ON - PDF-Check (Grammatik/Terminologie/Stil, wie Author Check in
+// Docs/Sheets/Slides). Ergebnis-Ausgabe nur als Sheet-Export, da Drive für PDFs
+// keine sichtbaren Kommentare unterstützt (siehe _buildDrivePdfResultsCard_).
 // ============================================================================
 var DRIVE_PDF_MAX_BYTES = 15 * 1024 * 1024; // Sicherheitsgrenze, ca. 15 MB
 var DRIVE_PDF_RESULT_CACHE_TTL = 3600; // 1h, reicht für eine interaktive Session in Drive
 var DRIVE_PDF_MAX_CARD_ISSUES = 25; // Card-UI bleibt sonst zu groß/langsam
-var DRIVE_PDF_MAX_BULK_NOTES = 40; // Obergrenze für "Add All as Notes" (Drive-API-Calls, Laufzeit)
 
 // Gleiche Sprachliste wie im Author-Check-Sidebar (AuthorCheck.html), damit die
 // PDF-Prüfung aus Google Drive dieselben Sprachen wie Docs/Sheets/Slides anbietet.
@@ -94,11 +95,9 @@ function _drivePdfResultCacheKey_(resultId) {
 
 /**
  * Card-Action: prüft die ausgewählte PDF-Datei per Gemini und zeigt die Treffer
- * direkt interaktiv an (wie die Issue-Karten im Author-Check-Sidebar), statt nur
- * ein separates Sheet zu erzeugen. Von hier aus können pro Fund oder für alle
- * Funde auf einmal echte, an der Textstelle "verankerte" Drive-Kommentare
- * (Highlights) auf der PDF selbst angelegt werden - siehe apiAddDrivePdfNote /
- * apiAddAllDrivePdfNotes.
+ * direkt interaktiv an (wie die Issue-Karten im Author-Check-Sidebar). Das
+ * Ergebnis wird gecacht (siehe _drivePdfResultCacheKey_), damit "Export as
+ * Sheet" es ohne erneuten Gemini-Call weiterverwenden kann.
  */
 function apiCheckDrivePdf(e) {
   var fileId = e.parameters.fileId;
@@ -196,11 +195,17 @@ function apiCheckDrivePdf(e) {
 }
 
 /**
- * Baut die interaktive Ergebnis-Card: Zusammenfassung + Bulk-Aktionen oben,
- * darunter pro Fund eine Mini-"Issue-Card" mit Original -> Vorschlag, Erklärung
- * und einem "Notiz hinzufügen"-Button, der einen echten, hervorgehobenen
- * Drive-Kommentar auf der PDF anlegt (siehe _createHighlightedDriveComment_ in
- * Authorcheck.gs) - dieselbe "Note"-Aktion wie im Docs/Sheets/Slides-Sidebar.
+ * Baut die interaktive Ergebnis-Card: Zusammenfassung oben, darunter pro Fund
+ * eine Mini-"Issue-Card" mit Original -> Vorschlag, Erklärung.
+ *
+ * WICHTIG: Es gibt hier bewusst KEINEN "Add Note"-Button. Laut Googles eigener
+ * Drive-API-Doku ("Kommentare und Antworten verwalten") unterstützt die Drive
+ * API für Blob-Dateien (u.a. PDFs) grundsätzlich keine verankerten Kommentare,
+ * und selbst nicht verankerte Kommentare werden in der PDF-Vorschau von Drive
+ * NIE angezeigt (nur über die API abrufbar). Ein "Note"-Button würde hier also
+ * etwas erzeugen, das der Nutzer im Drive-UI nie zu sehen bekommt - daher bleibt
+ * "Export as Sheet" der einzige Ausgabeweg für die PDF-Prüfung. Für Docs/Slides
+ * (keine Blob-Dateien) funktioniert die Note-Funktion in Authorcheck.gs normal.
  */
 function _buildDrivePdfResultsCard_(resultId, fileName, issues) {
   var card = CardService.newCardBuilder();
@@ -218,16 +223,12 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues) {
   topSection.addWidget(CardService.newTextButton()
     .setText('Export as Sheet')
     .setOnClickAction(CardService.newAction().setFunctionName('apiExportDrivePdfResultToSheet').setParameters({ resultId: resultId })));
-  topSection.addWidget(CardService.newTextButton()
-    .setText('Add All as Notes')
-    .setOnClickAction(CardService.newAction()
-      .setFunctionName('apiAddAllDrivePdfNotes')
-      .setParameters({ resultId: resultId })
-      .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
+  topSection.addWidget(CardService.newTextParagraph()
+    .setText('<i>Google Drive does not support visible comments on PDF files, so results here are read-only. Use "Export as Sheet" to get a shareable list.</i>'));
   card.addSection(topSection);
 
   var shown = issues.slice(0, DRIVE_PDF_MAX_CARD_ISSUES);
-  shown.forEach(function(issue, idx) {
+  shown.forEach(function(issue) {
     var section = CardService.newCardSection();
     var typeLabel = (issue.type || 'style').toUpperCase();
     var locationLabel = issue.location ? ' - ' + issue.location : '';
@@ -238,11 +239,6 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues) {
     if (issue.explanation) {
       section.addWidget(CardService.newTextParagraph().setText(_escapeCardHtml_(issue.explanation)));
     }
-    section.addWidget(CardService.newTextButton()
-      .setText('Add Note')
-      .setOnClickAction(CardService.newAction()
-        .setFunctionName('apiAddDrivePdfNote')
-        .setParameters({ resultId: resultId, issueIndex: String(idx) })));
     card.addSection(section);
   });
 
@@ -268,70 +264,6 @@ function _loadDrivePdfResult_(resultId) {
   var raw = CacheService.getUserCache().get(_drivePdfResultCacheKey_(resultId));
   if (!raw) throw new Error('This result has expired. Please run the PDF check again.');
   return JSON.parse(raw);
-}
-
-/**
- * Fügt für EINEN Fund einen echten, an der Textstelle verankerten Drive-Kommentar
- * (Highlight) auf der PDF hinzu - das PDF-Äquivalent zum "Note"-Button in
- * Docs/Sheets/Slides.
- */
-function apiAddDrivePdfNote(e) {
-  var resultId = e.parameters.resultId;
-  var issueIndex = parseInt(e.parameters.issueIndex, 10);
-  var notifText;
-  try {
-    var data = _loadDrivePdfResult_(resultId);
-    var issue = data.issues[issueIndex];
-    if (!issue) throw new Error('Issue not found.');
-    var commentText = 'TermCheck Suggestion:\n' + issue.suggestion + '\n\nExplanation: ' + (issue.explanation || '');
-    var comment = _createHighlightedDriveComment_(data.fileId, issue.original, commentText);
-    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_NOTE_ADDED', data.fileName + ' - issue #' + issueIndex + ' - anchored=' + comment._anchored);
-    // Ehrliches Feedback statt eines blinden "Note added": bei PDFs übernimmt Drive
-    // den quotedFileContent-Anker nicht zuverlässig (siehe _createHighlightedDriveComment_),
-    // der Kommentar landet dann trotzdem im Kommentarverlauf, aber ohne Markierung.
-    notifText = comment._anchored
-      ? 'Note added and anchored - open the comment icon (top right of the PDF preview) to see it.'
-      : 'Note added, but not anchored to the passage - open the comment icon (top right of the PDF preview) to find it in the general list.';
-  } catch (err) {
-    notifText = 'Error: ' + (err.message || String(err));
-  }
-  return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText(notifText))
-    .build();
-}
-
-/**
- * Fügt Notizen für alle (bis zu DRIVE_PDF_MAX_BULK_NOTES) Funde eines Ergebnisses
- * hinzu - das PDF-Äquivalent zum "Note All"-Bulk-Button im Author-Check-Sidebar.
- */
-function apiAddAllDrivePdfNotes(e) {
-  var resultId = e.parameters.resultId;
-  var added = 0, anchored = 0, failed = 0;
-  try {
-    var data = _loadDrivePdfResult_(resultId);
-    var toProcess = data.issues.slice(0, DRIVE_PDF_MAX_BULK_NOTES);
-    toProcess.forEach(function(issue) {
-      try {
-        var commentText = 'TermCheck Suggestion:\n' + issue.suggestion + '\n\nExplanation: ' + (issue.explanation || '');
-        var comment = _createHighlightedDriveComment_(data.fileId, issue.original, commentText);
-        added++;
-        if (comment._anchored) anchored++;
-      } catch (err) {
-        failed++;
-      }
-    });
-    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_NOTE_ADDED_ALL', data.fileName + ' - ' + added + ' note(s) (' + anchored + ' anchored), ' + failed + ' failed');
-  } catch (err) {
-    return CardService.newActionResponseBuilder()
-      .setNotification(CardService.newNotification().setText('Error: ' + (err.message || String(err))))
-      .build();
-  }
-  var msg = added + ' note(s) added (' + anchored + ' anchored to the passage)' + (failed ? ', ' + failed + ' failed' : '') +
-    (added >= DRIVE_PDF_MAX_BULK_NOTES ? ' (limit reached, run again or use Export as Sheet for the rest)' : '') +
-    '. Open the comment icon (top right of the PDF preview) to see them.';
-  return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText(msg))
-    .build();
 }
 
 /**
