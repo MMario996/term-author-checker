@@ -548,7 +548,7 @@ button, input, select, textarea{ font-family:inherit; }
         REPORT A BUG
       </a>
     </div>
-    <span class="support-note">Please choose "Phrase" as Appication</span>
+    <span class="support-note">Please choose "PHRASE" as Application</span>
   </div>
 
 </div>
@@ -567,7 +567,7 @@ button, input, select, textarea{ font-family:inherit; }
     </div>
     <div class="modal-body">
       <div class="modal-panel active" id="adminpanel-settings">
-        <div class="form-row"><label>Phrase API Token</label><input type="password" id="set-token" placeholder="Leave unchanged if already set"></div>
+        <div class="form-row"><label>PHRASE API Token</label><input type="password" id="set-token" placeholder="Leave unchanged if already set"></div>
         <div class="form-row"><label>Admin Emails</label><input type="text" id="set-admins" placeholder="a@karcher.com, b@karcher.com"></div>
         <div class="form-row"><label>Allowed Termbase UIDs (comma-separated, optional)</label><input type="text" id="set-allowed-tb"></div>
         <div class="form-row"><label>Custom Rules Log Sheet ID (optional)</label><input type="text" id="set-custom-rules-log-sheet" placeholder="Sheet ID from the URL"><div class="hint">Central Google Sheet that newly created Author Check rules from all users are logged to. Must already be shared with edit access for all affected users.</div></div>
@@ -614,7 +614,7 @@ var SEARCH_STATUS_MSGS = [
   "Looking up terminology...",
   "Chasing down every language...",
   "Dusting off the dictionaries...",
-  "Politely asking Phrase for terms...",
+  "Politely asking PHRASE for terms...",
   "Herding stray translations into place...",
   "Making sure nothing hides behind a wildcard...",
   "Almost done..."
@@ -680,7 +680,7 @@ function populateLangSelect(selectEl, opts){
   opts = opts || {};
   var list = [['de','DE'],['en','EN'],['fr','FR'],['es','ES'],['it','IT'],['pt','PT'],['nl','NL'],
     ['pl','PL'],['cs','CS'],['ru','RU'],['zh','ZH'],['ja','JA'],['ko','KO'],['tr','TR'],['ar','AR']];
-  var html = opts.includeAll ? '<option value="">? All languages</option>' : '';
+  var html = opts.includeAll ? '<option value="">All languages</option>' : '';
   html += list.map(function(pair){ return '<option value="'+pair[0]+'">'+pair[1]+'</option>'; }).join('');
   selectEl.innerHTML = html;
   selectEl.value = opts.selected || (opts.includeAll ? '' : 'de');

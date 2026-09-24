@@ -193,7 +193,7 @@ function apiHealthCheck() {
   var checks = [];
   var props = PropertiesService.getScriptProperties();
   var token = (props.getProperty('PHRASE_API_TOKEN') || '').trim();
-  checks.push({ name: 'Phrase API Token', status: token.length > 10 ? 'ok' : 'error', message: token ? 'Set (' + token.length + ' chars)' : 'PHRASE_API_TOKEN not configured!' });
+  checks.push({ name: 'PHRASE API Token', status: token.length > 10 ? 'ok' : 'error', message: token ? 'Set (' + token.length + ' chars)' : 'PHRASE_API_TOKEN not configured!' });
   try {
     var res  = UrlFetchApp.fetch('https://cloud.memsource.com/web/api2/v1/termBases?pageNumber=0&pageSize=1', { method: 'get', headers: { Authorization: _phraseAuth_() }, muteHttpExceptions: true });
     var code = res.getResponseCode();
@@ -246,7 +246,7 @@ function _phraseFetch_(url, options) {
   var res = UrlFetchApp.fetch(url, options);
   var code = res.getResponseCode();
   if (code >= 400) {
-    var msg = 'Phrase API error ' + code;
+    var msg = 'PHRASE API error ' + code;
     try { msg += ': ' + (JSON.parse(res.getContentText()).errorDescription || res.getContentText().slice(0,200)); } catch(e) {}
     throw new Error(msg);
   }
