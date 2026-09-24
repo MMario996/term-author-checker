@@ -253,50 +253,52 @@ body.popup-mode .modal-foot .btn-mini { font-size: 16px; padding: 10px 18px; }
 .check-notice{margin:0 0 10px;padding:8px 10px;background:#FFF8D6;border-left:3px solid var(--yellow);font-size:11.5px;line-height:1.45;color:#3A3A3A;}
 .remaining-hint{font-size:11px;color:#767676;margin:0 6px;}
 .failed-tag{font-size:11px;color:#D32F2F;margin-right:6px;}
+.ui-lang-select{ border:1px solid var(--gray-200); background:var(--white); color:var(--gray-600); padding:4px; font-size:11px; cursor:pointer; outline:none; max-width:96px; }
+.ui-lang-select:hover, .ui-lang-select:focus{ border-color:var(--ink); color:var(--ink); }
+body.popup-mode .ui-lang-select{ font-size:13px; max-width:none; }
 </style>
 </head>
 <body>
 <div id="app">
   <div class="header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
     <div>
-      <h1>Author Check</h1>
-      <p>Check active text for grammar, terminology, and custom style rules.</p>
+      <h1 data-i18n="ac.title">Author Check</h1>
+      <p data-i18n="ac.subtitle">Check active text for grammar, terminology, and custom style rules.</p>
     </div>
     <div class="header-nav">
-      <button class="header-btn" onclick="backToHomepage()" title="Back to Homepage">
+      <select class="ui-lang-select" data-i18n-title="ui.language" title="Interface language" aria-label="Interface language"></select>
+      <button class="header-btn" onclick="backToHomepage()" data-i18n-title="ac.homeTitle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
-        <span>Home</span>
+        <span data-i18n="ac.home">Home</span>
       </button>
 
-      <button class="header-btn" id="rulesBtn" onclick="openRulesSettings()" title="Rules & Custom Prompts">
+      <button class="header-btn" id="rulesBtn" onclick="openRulesSettings()" data-i18n-title="ac.rulesTitle">
         <svg id="rulesBtnIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
         </svg>
         <span class="spinner" id="rulesBtnSpinner" style="display:none;"></span>
-        <span>Rules</span>
+        <span data-i18n="ac.rules">Rules</span>
       </button>
     </div>
   </div>
-  <div id="aiUnavailable" class="ai-disabled-note" style="display:none">
-    Author Check is not configured yet (Gemini API Key missing). Please contact an admin.
-  </div>
+  <div id="aiUnavailable" class="ai-disabled-note" style="display:none" data-i18n="ac.unavailable">Author Check is not configured yet (Gemini API Key missing). Please contact an admin.</div>
   <div id="mainWrap" style="display:none">
     <div class="control-row" style="margin-bottom:8px;">
-      <label style="margin-right:10px;">Scope</label>
-      <div style="display:flex; gap:12px; align-items:center;">
+      <label style="margin-right:10px;" data-i18n="ac.scope">Scope</label>
+      <div style="display:flex; gap:4px 12px; align-items:center; flex-wrap:wrap;">
         <label style="cursor:pointer; font-size:12px; font-weight:normal; text-transform:none; color:var(--ink);">
-          <input type="radio" name="checkScope" value="full" checked style="margin-right:4px;"> Entire Document
+          <input type="radio" name="checkScope" value="full" checked style="margin-right:4px;"> <span data-i18n="ac.scopeFull">Entire Document</span>
         </label>
         <label style="cursor:pointer; font-size:12px; font-weight:normal; text-transform:none; color:var(--ink);">
-          <input type="radio" name="checkScope" value="selection" style="margin-right:4px;"> Selection Only
+          <input type="radio" name="checkScope" value="selection" style="margin-right:4px;"> <span data-i18n="ac.scopeSelection">Selection Only</span>
         </label>
       </div>
     </div>
     <div class="control-row">
-      <label>Language</label>
-      <select id="lang-select">
+      <label data-i18n="ac.language">Language</label>
+      <select id="lang-select" class="content-lang-select">
         <option value="de" selected>German</option>
         <option value="en">English</option>
         <option value="es">Spanish</option>
@@ -332,11 +334,11 @@ body.popup-mode .modal-foot .btn-mini { font-size: 16px; padding: 10px 18px; }
     </div>
     <button class="btn-check" id="checkBtn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-      Check Document
+      <span data-i18n="ac.checkBtn">Check Document</span>
     </button>
        <p style="font-size:12px; color:var(--gray-500); text-align:center; margin:-8px 0 16px;">
-      Which rules and prompts apply here can be viewed and changed under
-      <a href="#" target="_self" onclick="openRulesSettings(); return false;" style="color:var(--ink); font-weight:600;">Rules</a>.
+      <span data-i18n="ac.rulesHintPre">Which rules and prompts apply here can be viewed and changed under</span>
+      <a href="#" target="_self" onclick="openRulesSettings(); return false;" style="color:var(--ink); font-weight:600;" data-i18n="ac.rules">Rules</a><span data-i18n="ac.rulesHintPost">.</span>
       </p>
     <div id="resultsWrap" aria-live="polite"></div>
   </div>
@@ -345,113 +347,102 @@ body.popup-mode .modal-foot .btn-mini { font-size: 16px; padding: 10px 18px; }
 <div class="modal-bg" id="rulesModal">
   <div class="modal">
     <div class="modal-head" style="display:flex; justify-content:space-between; align-items:center; padding:14px; border-bottom:1px solid var(--gray-150);">
-      <h2>Rules & Custom Prompts</h2>
+      <h2 data-i18n="ac.rulesTitle">Rules & Custom Prompts</h2>
       <div style="display:flex; align-items:center; gap:2px;">
-        <button class="modal-help-btn" onclick="openRulesHelp()" title="Help / How it works">
+        <select class="ui-lang-select" data-i18n-title="ui.language" title="Interface language" aria-label="Interface language" style="margin-right:6px;"></select>
+        <button class="modal-help-btn" onclick="openRulesHelp()" data-i18n-title="ac.helpTitle">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
             <circle cx="12" cy="12" r="10"/>
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/>
             <circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/>
           </svg>
         </button>
-        <button class="modal-close" onclick="closeRulesSettings()" title="Close Popup" style="background:none; border:none; cursor:pointer; padding:6px; color:var(--gray-600); display:flex; align-items:center; justify-content:center;">
+        <button class="modal-close" onclick="closeRulesSettings()" data-i18n-title="ac.close" style="background:none; border:none; cursor:pointer; padding:6px; color:var(--gray-600); display:flex; align-items:center; justify-content:center;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
     </div>
     <div class="modal-body" id="rulesModalBody">
       <div style="margin-bottom:12px; padding:10px 12px; background:var(--gray-50); border:1px solid var(--gray-200); font-size:12px; color:var(--gray-600); line-height:1.5;">
-        These settings are personal to you and are applied automatically across all Docs, Sheets, and Slides. They are not tied to a single document or format.
+        <span data-i18n="ac.personalNote">These settings are personal to you and are applied automatically across all Docs, Sheets, and Slides. They are not tied to a single document or format.</span>
       </div>
       <div class="control-row" style="margin-bottom:12px;">
-        <label style="margin-right:10px;">Rule Language</label>
-        <select id="rulesLangSelect" onchange="onRulesLangChange()" style="flex:1; padding:6px 8px; font-size:13px; border:1.5px solid var(--gray-300);">
+        <label style="margin-right:10px;" data-i18n="ac.ruleLanguage">Rule Language</label>
+        <select id="rulesLangSelect" class="content-lang-select" onchange="onRulesLangChange()" style="flex:1; padding:6px 8px; font-size:13px; border:1.5px solid var(--gray-300);">
           <option value="de" selected>German</option>
           <option value="en">English</option>
         </select>
       </div>
       <div class="control-row" style="margin-bottom:8px;">
-        <input type="text" id="rulesSearchInput" placeholder="Search rules..." oninput="filterRulesList()" style="flex:1; padding:8px 10px; font-size:13px; border:1.5px solid var(--gray-300);">
+        <input type="text" id="rulesSearchInput" data-i18n-placeholder="ac.searchRules" oninput="filterRulesList()" style="flex:1; padding:8px 10px; font-size:13px; border:1.5px solid var(--gray-300);">
       </div>
       <div id="rulesListContainer">
-        <div class="loading-state"><div class="loading-text">Loading rules...</div></div>
+        <div class="loading-state"><div class="loading-text" data-i18n="ac.loadingRules">Loading rules...</div></div>
       </div>
     </div>
     <div class="modal-foot">
       <div style="display:flex; gap:6px;">
-        <button class="btn-mini ghost" style="padding:6px 10px;" onclick="exportRulesOverview()" title="Show all rules as a filterable Google Sheet">Overview (Sheet)</button>
-        <button class="btn-mini ghost" id="exportAllToLogBtn" style="padding:6px 10px; display:none;" onclick="exportAllRulesToLogSheet()" title="One-time: export all currently loaded rules (default + your custom) to the central log sheet">Export All to Log</button>
-        <button class="btn-mini ghost" style="padding:6px 10px;" onclick="exportRulesToDrive()" title="Export active rules to Google Drive JSON">JSON Export</button>
-        <label class="btn-mini ghost" style="padding:6px 10px; cursor:pointer;" title="Upload JSON rule file">
-          JSON Import
+        <button class="btn-mini ghost" style="padding:6px 10px;" onclick="exportRulesOverview()" data-i18n-title="ac.overviewTitle"><span data-i18n="ac.overview">Overview (Sheet)</span></button>
+        <button class="btn-mini ghost" id="exportAllToLogBtn" style="padding:6px 10px; display:none;" onclick="exportAllRulesToLogSheet()" data-i18n-title="ac.exportAllLogTitle"><span data-i18n="ac.exportAllLog">Export All to Log</span></button>
+        <button class="btn-mini ghost" style="padding:6px 10px;" onclick="exportRulesToDrive()" data-i18n-title="ac.jsonExportTitle"><span data-i18n="ac.jsonExport">JSON Export</span></button>
+        <label class="btn-mini ghost" style="padding:6px 10px; cursor:pointer;" data-i18n-title="ac.jsonImportTitle">
+          <span data-i18n="ac.jsonImport">JSON Import</span>
           <input type="file" id="importRulesInput" accept=".json" style="display:none" onchange="importRulesFile(event)">
         </label>
       </div>
-      <button class="btn-check" style="margin:0; padding:8px 16px; width:auto;" onclick="saveRulesSettings()">Save Settings</button>
+      <button class="btn-check" style="margin:0; padding:8px 16px; width:auto;" onclick="saveRulesSettings()" data-i18n="ac.save">Save Settings</button>
     </div>
 
     <div class="move-dialog-overlay" id="moveRuleOverlay">
       <div class="move-dialog-box">
-        <h3>Move Rule</h3>
-        <label>Section</label>
+        <h3 data-i18n="ac.moveTitle">Move Rule</h3>
+        <label data-i18n="ac.section">Section</label>
         <select id="moveRuleSectionSelect" onchange="onMoveSectionChange()"></select>
-        <input type="text" id="moveRuleSectionCustom" placeholder="New section name" style="display:none;">
-        <label>Subsection</label>
+        <input type="text" id="moveRuleSectionCustom" data-i18n-placeholder="ac.newSectionPh" style="display:none;">
+        <label data-i18n="ac.subsection">Subsection</label>
         <select id="moveRuleSubsectionSelect" onchange="onMoveSubsectionChange()"></select>
-        <input type="text" id="moveRuleSubsectionCustom" placeholder="New subsection" style="display:none;">
+        <input type="text" id="moveRuleSubsectionCustom" data-i18n-placeholder="ac.newSubsectionPh" style="display:none;">
         <div class="move-dialog-actions">
-          <button class="btn-mini ghost" onclick="closeMoveRuleDialog()">Cancel</button>
-          <button class="btn-mini primary" onclick="confirmMoveRule()">Move</button>
+          <button class="btn-mini ghost" onclick="closeMoveRuleDialog()" data-i18n="ac.cancel">Cancel</button>
+          <button class="btn-mini primary" onclick="confirmMoveRule()" data-i18n="ac.move">Move</button>
         </div>
       </div>
     </div>
     <div class="help-overlay" id="rulesHelpOverlay">
       <div class="help-box" style="max-width:640px; max-height:80vh; overflow-y:auto;">
-        <h3>How Rules & Custom Prompts works</h3>
-        <ul class="help-list">
-          <li><b>+ Create New Rule / AI Prompt</b> creates a new rule or a custom AI prompt. Pick an existing category or create a new one, choose whether it's a strict "Rule" or a free-form "AI Prompt", give it a title and description, and (for AI Prompts) a detailed instruction that Gemini follows when checking a document.</li>
-          <li>The categories (Abbreviation, Grammar, ...) can be expanded. Each rule has a checkbox to turn it on or off. Only enabled rules are actually used the next time you run a check.</li>
-          <li><b>Save Settings</b> saves your changes permanently: it stores which rules are on/off for your account, and it writes the full rule set, including any custom rules, to a file called <b>active_rules.json</b> in a Google Drive folder named <b>"TermCheck Rules"</b> in your own Google Drive.</li>
-        </ul>
-        <h3 style="margin-top:16px;">Export, Import & sharing with a colleague</h3>
-        <ul class="help-list">
-          <li><b>JSON Export</b> writes your current rule set, exactly as shown right now in this popup, to that same <b>active_rules.json</b> file in the <b>"TermCheck Rules"</b> folder in your Drive. This folder is created automatically the first time you save or export, it is private to your own account, not shared automatically.</li>
-          <li><b>JSON Import</b> lets you pick a JSON file from your computer and load its rules into this popup. Rules with the same internal name overwrite the existing one, rules with a new name are added. Import only changes what you see here, nothing is saved yet at this point.</li>
-          <li>Important: an import only takes effect once you click <b>Save Settings</b> afterwards. If you close the popup without saving, the imported rules are discarded.</li>
-          <li><b>To share your rules with a colleague:</b>
-            <ol style="margin:6px 0 0 18px; padding:0;">
-              <li>Click <b>JSON Export</b> (or Save Settings) to make sure your Drive file is up to date.</li>
-              <li>Open Google Drive, find the <b>"TermCheck Rules"</b> folder in your My Drive, and either share the <b>active_rules.json</b> file directly with your colleague, or download it and send it however you like, e.g. email or Teams.</li>
-              <li>Your colleague opens their own Rules & Custom Prompts popup, clicks <b>JSON Import</b>, selects the file you sent, checks that it looks right, and clicks <b>Save Settings</b>. This saves it into their own account and their own Drive folder.</li>
-            </ol>
-          </li>
-          <li>This is a one-time snapshot, not a live sync. If you change your rules later, you need to export and share the file again for your colleague to get the update.</li>
-        </ul>
+        <div data-i18n-html="ac.help.html"></div>
         <label class="help-checkbox">
           <input type="checkbox" id="rulesHelpDontShow">
-          Don't show this automatically next time
+          <span data-i18n="ac.help.dontShow">Don't show this automatically next time</span>
         </label>
-        <button class="btn-check" style="margin-top:14px;" onclick="confirmRulesHelp()">Got it</button>
+        <button class="btn-check" style="margin-top:14px;" onclick="confirmRulesHelp()" data-i18n="ac.help.gotIt">Got it</button>
       </div>
     </div>
   </div>
 </div>
 <div id="toast"></div>
 <script>
-var STATUS_MSGS = [
-  "Juggling with commas and semicolons...",
-  "Cross-checking your terminology...",
-  "Comparing wording against the glossary...",
-  "Looking for grammar slip-ups...",
-  "Weighing your sentences against the style rules...",
-  "Double-checking the findings..."
-];
+// Vom Server gespeicherte UI-Sprache (pro Nutzer), siehe renderWithI18n_ in Code.gs.
+var I18N_INITIAL_LANG = <?!= JSON.stringify(uiLang) ?>;
+function I18N_PERSIST(lang){ google.script.run.apiSetUiLang(lang); }
+</script>
+<?!= include('I18n'); ?>
+<script>
 var _loadingInterval = null;
 var _currentIssues = [];
 var _currentRulesData = [];
 var _pendingNewCustomRules = [];
 
+// Sprachnamen in den Auswahllisten (Prüfsprache, Regelsprache) in der UI-Sprache anzeigen.
+function onUiLangChanged(){
+  document.querySelectorAll('.content-lang-select option').forEach(function(opt){
+    if (!opt.dataset.fallback) opt.dataset.fallback = opt.textContent;
+    opt.textContent = langName(opt.value, opt.dataset.fallback);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function(){
+  initUiLangSelects();
   google.script.run.withSuccessHandler(function(ctx){
     document.getElementById('aiUnavailable').style.display = ctx.aiEnabled ? 'none' : 'block';
     document.getElementById('mainWrap').style.display = ctx.aiEnabled ? 'block' : 'none';
@@ -488,20 +479,20 @@ function runCheck(){
     .withFailureHandler(function(err){
       btn.disabled = false;
       stopLoading();
-      showState($rw, 'error', 'Check Failed', (err && err.message) ? err.message : String(err));
+      showState($rw, 'error', { key:'ac.checkFailed' }, (err && err.message) ? err.message : String(err));
     })
     .apiRunAuthorCheck(lang, scope);
 }
 
 function exportAuditReport(){
   if (!_currentIssues || !_currentIssues.length) {
-    showToast('No issues to export.');
+    showToast(t('ac.noIssuesToExport'));
     return;
   }
-  showToast('Generating Audit Report...');
+  showToast(t('ac.generatingReport'));
   google.script.run
     .withSuccessHandler(function(url){
-      showToast('Opening Audit Report...');
+      showToast(t('ac.openingReport'));
       
       // Automatisches öffnen im neuen Tab
       var a = document.createElement('a');
@@ -513,16 +504,16 @@ function exportAuditReport(){
       document.body.removeChild(a);
     })
     .withFailureHandler(function(err){
-      showToast('Export error: ' + (err.message || err));
+      showToast(t('ac.exportError', { msg: err.message || err }));
     })
     .apiExportAuditReport(_currentIssues);
 }
 
 function startLoading(wrap){
   stopLoading();
-  var idx = 0;
+  var idx = 0, msgs = t('ac.load');
   function render(){
-    wrap.innerHTML = '<div class="loading-state"><div class="loading-text">'+esc(STATUS_MSGS[idx % STATUS_MSGS.length])+'</div></div>';
+    wrap.innerHTML = '<div class="loading-state"><div class="loading-text">'+esc(msgs[idx % msgs.length])+'</div></div>';
     idx++;
   }
   render();
@@ -536,27 +527,27 @@ function stopLoading(){ if (_loadingInterval) { clearInterval(_loadingInterval);
 // stillschweigend abgeschnitten.
 function checkNoticeHtml(res){
   var parts = [];
-  if (res && res.truncated) parts.push('This document is very long. Only the first ' + Number(res.maxChars || 0).toLocaleString() + ' characters were checked - please check the rest via a text selection.');
-  if (res && res.failedParts) parts.push(res.failedParts + ' of ' + res.parts + ' text sections could not be checked (AI error). Please run the check again.');
+  if (res && res.truncated) parts.push(tl('ac.truncated', { n: Number(res.maxChars || 0).toLocaleString(getUiLang()) }));
+  if (res && res.failedParts) parts.push(tl('ac.failedParts', { failed: res.failedParts, parts: res.parts }));
   if (!parts.length) return '';
-  return '<div class="check-notice">' + parts.map(esc).join('<br>') + '</div>';
+  return '<div class="check-notice">' + parts.join('<br>') + '</div>';
 }
 
 function renderIssues(wrap, res){
   _currentIssues = res.issues || [];
   if (!_currentIssues.length){
-    showState(wrap, 'empty', 'No issues found', 'Grammar, style, and terminology look clean for the selected language.');
+    showState(wrap, 'empty', { key:'ac.noIssuesTitle' }, { key:'ac.noIssuesSub' });
     var notice = checkNoticeHtml(res);
     if (notice) wrap.insertAdjacentHTML('afterbegin', notice);
     return;
   }
   var summary = '<div class="summary-bar">'+
-      '<span><b>'+_currentIssues.length+'</b> issue'+(_currentIssues.length!==1?'s':'')+'</span>'+
+      '<span>'+tln('ac.issues', _currentIssues.length)+'</span>'+
       '<div class="bulk-actions">'+
-        '<button class="btn-bulk" onclick="replaceAll()">Replace All</button>'+
-        '<button class="btn-bulk" onclick="noteAll()">Note All</button>'+
-        '<button class="btn-bulk" onclick="ignoreAll()">Ignore All</button>'+
-        '<button class="btn-bulk" style="background:var(--yellow); border-color:var(--yellow);" onclick="exportAuditReport()">Report</button>'+
+        '<button class="btn-bulk" onclick="replaceAll()">'+tl('ac.replaceAll')+'</button>'+
+        '<button class="btn-bulk" onclick="noteAll()">'+tl('ac.noteAll')+'</button>'+
+        '<button class="btn-bulk" onclick="ignoreAll()">'+tl('ac.ignoreAll')+'</button>'+
+        '<button class="btn-bulk" style="background:var(--yellow); border-color:var(--yellow);" onclick="exportAuditReport()">'+tl('ac.report')+'</button>'+
       '</div>'+
     '</div>';
   var cards = _currentIssues.map(function(issue, i){ return renderIssueCard(issue, i); }).join('');
@@ -564,12 +555,12 @@ function renderIssues(wrap, res){
 }
 
 function renderIssueCard(issue, idx){
-  var label = issue.type === 'terminology' ? 'Terminology' : (issue.type === 'style' ? 'Style / Rule' : 'Grammar');
+  var label = tl(issue.type === 'terminology' ? 'ac.typeTerminology' : (issue.type === 'style' ? 'ac.typeStyle' : 'ac.typeGrammar'));
   var delay = Math.min(idx * 30, 200);
   return '<div class="issue-card" id="'+issue.id+'" style="animation-delay:'+delay+'ms">'+
     '<div class="issue-head">'+
       '<span class="type-badge '+issue.type+'">'+label+'</span>'+
-      '<button class="issue-dismiss" title="Dismiss" onclick="dismissIssue(\''+issue.id+'\')">'+
+      '<button class="issue-dismiss"'+tAttrTitle('ac.ignoreTitle')+' onclick="dismissIssue(\''+issue.id+'\')">'+
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>'+
       '</button>'+
     '</div>'+
@@ -577,10 +568,10 @@ function renderIssueCard(issue, idx){
       '<div class="diff-line"><span class="diff-original">'+esc(issue.original)+'</span><span class="diff-arrow">→</span><span class="diff-suggestion">'+esc(issue.suggestion)+'</span></div>'+
       '<div class="issue-explanation">'+esc(issue.explanation||'')+'</div>'+
       '<div class="issue-actions">'+
-        '<button class="btn-mini primary" title="Replace directly" onclick="applyIssue(\''+issue.id+'\')">Replace</button>'+
-        '<button class="btn-mini ghost" title="Jump to text" onclick="jumpToIssue(\''+issue.id+'\')">Jump</button>'+
-        '<button class="btn-mini ghost" title="Add as note/comment" onclick="commentIssue(\''+issue.id+'\')">Note</button>'+
-        '<button class="btn-mini ghost" title="Dismiss issue" onclick="dismissIssue(\''+issue.id+'\')">Ignore</button>'+
+        '<button class="btn-mini primary"'+tAttrTitle('ac.replaceTitle')+' onclick="applyIssue(\''+issue.id+'\')">'+tl('ac.replace')+'</button>'+
+        '<button class="btn-mini ghost"'+tAttrTitle('ac.jumpTitle')+' onclick="jumpToIssue(\''+issue.id+'\')">'+tl('ac.jump')+'</button>'+
+        '<button class="btn-mini ghost"'+tAttrTitle('ac.noteTitle')+' onclick="commentIssue(\''+issue.id+'\')">'+tl('ac.note')+'</button>'+
+        '<button class="btn-mini ghost"'+tAttrTitle('ac.ignoreTitle')+' onclick="dismissIssue(\''+issue.id+'\')">'+tl('ac.ignore')+'</button>'+
       '</div>'+
     '</div>'+
   '</div>';
@@ -591,18 +582,18 @@ function applyIssue(id){
   if (!issue) return;
   var card = document.getElementById(id);
   var actions = card.querySelector('.issue-actions');
-  actions.innerHTML = '<span style="font-size:11px;color:#9A9A9A;">Replacing...</span>';
+  actions.innerHTML = '<span style="font-size:11px;color:#9A9A9A;">'+tl('ac.replacing')+'</span>';
   google.script.run
     .withSuccessHandler(function(r){
       card.classList.add('applied');
-      actions.innerHTML = '<span class="applied-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg> Replaced</span>' +
-        (r.remaining ? '<span class="remaining-hint">' + r.remaining + ' more occurrence' + (r.remaining !== 1 ? 's' : '') + ' in the document</span>' +
-          '<button class="btn-mini ghost" onclick="applyIssue(\''+id+'\')">Replace next</button>' : '');
-      showToast(r.remaining ? ('Replaced first occurrence (' + r.remaining + ' more)') : 'Correction applied');
+      actions.innerHTML = '<span class="applied-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg> '+tl('ac.replaced')+'</span>' +
+        (r.remaining ? '<span class="remaining-hint">' + tln('ac.remaining', r.remaining) + '</span>' +
+          '<button class="btn-mini ghost" onclick="applyIssue(\''+id+'\')">'+tl('ac.replaceNext')+'</button>' : '');
+      showToast(r.remaining ? t('ac.replacedFirst', { n: r.remaining }) : t('ac.correctionApplied'));
     })
     .withFailureHandler(function(err){
-      actions.innerHTML = '<button class="btn-mini primary" onclick="applyIssue(\''+id+'\')">Retry</button><button class="btn-mini ghost" onclick="dismissIssue(\''+id+'\')">Ignore</button>';
-      showToast('Error: ' + ((err && err.message) ? err.message : String(err)));
+      actions.innerHTML = '<button class="btn-mini primary" onclick="applyIssue(\''+id+'\')">'+tl('ac.retry')+'</button><button class="btn-mini ghost" onclick="dismissIssue(\''+id+'\')">'+tl('ac.ignore')+'</button>';
+      showToast(t('ac.error', { msg: (err && err.message) ? err.message : String(err) }));
     })
     .apiApplyAuthorCheckFix(issue.original, issue.suggestion);
 }
@@ -610,12 +601,12 @@ function applyIssue(id){
 function jumpToIssue(id) {
   var issue = _currentIssues.find(function(i){ return i.id === id; });
   if (!issue) return;
-  showToast('Jumping to text...');
+  showToast(t('ac.jumping'));
   google.script.run
     .withSuccessHandler(function(found) {
-      if (!found) showToast('Text location not found.');
+      if (!found) showToast(t('ac.locationNotFound'));
     })
-    .withFailureHandler(function(err){ showToast('Error: ' + err.message); })
+    .withFailureHandler(function(err){ showToast(t('ac.error', { msg: err.message })); })
     .apiJumpToIssue(issue.original);
 }
 
@@ -624,21 +615,21 @@ function commentIssue(id) {
   if (!issue) return;
   var card = document.getElementById(id);
   var actions = card.querySelector('.issue-actions');
-  actions.innerHTML = '<span style="font-size:11px;color:#9A9A9A;">Adding note...</span>';
+  actions.innerHTML = '<span style="font-size:11px;color:#9A9A9A;">'+tl('ac.addingNote')+'</span>';
   
   google.script.run
     .withSuccessHandler(function(found) {
       if (found) {
         card.classList.add('applied');
-        actions.innerHTML = '<span class="applied-tag">Note Added</span>';
-        showToast('Note inserted');
+        actions.innerHTML = '<span class="applied-tag">'+tl('ac.noteAdded')+'</span>';
+        showToast(t('ac.noteInserted'));
       } else {
-        actions.innerHTML = '<span style="font-size:11px;color:#D32F2F;">Text not found</span>';
+        actions.innerHTML = '<span style="font-size:11px;color:#D32F2F;">'+tl('ac.textNotFound')+'</span>';
       }
     })
     .withFailureHandler(function(err){
-      actions.innerHTML = '<button class="btn-mini ghost" onclick="commentIssue(\''+id+'\')">Retry note</button><button class="btn-mini ghost" onclick="dismissIssue(\''+id+'\')">Ignore</button>';
-      showToast('Error: ' + ((err && err.message) ? err.message : String(err)));
+      actions.innerHTML = '<button class="btn-mini ghost" onclick="commentIssue(\''+id+'\')">'+tl('ac.retryNote')+'</button><button class="btn-mini ghost" onclick="dismissIssue(\''+id+'\')">'+tl('ac.ignore')+'</button>';
+      showToast(t('ac.error', { msg: (err && err.message) ? err.message : String(err) }));
     })
     .apiCommentIssue(issue.original, issue.suggestion, issue.explanation);
 }
@@ -648,7 +639,7 @@ function dismissIssue(id){
   if (card) card.remove();
   _currentIssues = _currentIssues.filter(function(i){ return i.id !== id; });
   if (!_currentIssues.length) {
-    showState(document.getElementById('resultsWrap'), 'empty', 'No open issues', 'All items have been processed or dismissed.');
+    showState(document.getElementById('resultsWrap'), 'empty', { key:'ac.noOpenTitle' }, { key:'ac.noOpenSub' });
   }
 }
 
@@ -656,12 +647,12 @@ function dismissIssue(id){
 function replaceAll(){
   var pending = _currentIssues.slice();
   if (!pending.length) return;
-  if (!confirm('Replace ' + pending.length + ' passage' + (pending.length !== 1 ? 's' : '') + ' in the document with the suggestions?\n\nEach suggestion replaces the first matching occurrence. Previous versions can be restored via File > Version history.')) return;
-  showToast('Replacing all...');
+  if (!confirm(tn('ac.confirmReplaceAll', pending.length))) return;
+  showToast(t('ac.replacingAll'));
   var ok = 0, failed = 0;
   function next(i){
     if (i >= pending.length) {
-      showToast(failed ? (ok + ' replaced, ' + failed + ' failed (text not found)') : ('All ' + ok + ' replacements applied'));
+      showToast(failed ? t('ac.replaceAllPartial', { ok: ok, failed: failed }) : t('ac.replaceAllOk', { ok: ok }));
       return;
     }
     var issue = pending[i];
@@ -672,13 +663,13 @@ function replaceAll(){
         ok++;
         card.classList.add('applied');
         var actions = card.querySelector('.issue-actions');
-        if (actions) actions.innerHTML = '<span class="applied-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg> Replaced</span>';
+        if (actions) actions.innerHTML = '<span class="applied-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg> '+tl('ac.replaced')+'</span>';
         next(i+1);
       })
       .withFailureHandler(function(){
         failed++;
         var actions = card.querySelector('.issue-actions');
-        if (actions) actions.insertAdjacentHTML('afterbegin', '<span class="failed-tag">Not found</span>');
+        if (actions) actions.insertAdjacentHTML('afterbegin', '<span class="failed-tag">'+tl('ac.notFound')+'</span>');
         next(i+1);
       })
       .apiApplyAuthorCheckFix(issue.original, issue.suggestion);
@@ -689,11 +680,11 @@ function replaceAll(){
 function noteAll(){
   var pending = _currentIssues.slice();
   if (!pending.length) return;
-  showToast('Adding notes for all...');
+  showToast(t('ac.addingNotesAll'));
   var ok = 0, failed = 0;
   function next(i){
     if (i >= pending.length) {
-      showToast(failed ? (ok + ' notes added, ' + failed + ' failed') : ('All ' + ok + ' notes inserted'));
+      showToast(failed ? t('ac.noteAllPartial', { ok: ok, failed: failed }) : t('ac.noteAllOk', { ok: ok }));
       return;
     }
     var issue = pending[i];
@@ -705,7 +696,7 @@ function noteAll(){
           ok++;
           card.classList.add('applied');
           var actions = card.querySelector('.issue-actions');
-          if (actions) actions.innerHTML = '<span class="applied-tag">Note Added</span>';
+          if (actions) actions.innerHTML = '<span class="applied-tag">'+tl('ac.noteAdded')+'</span>';
         } else {
           failed++;
         }
@@ -721,23 +712,25 @@ function ignoreAll(){
   var cards = document.querySelectorAll('.issue-card');
   cards.forEach(function(c){ c.remove(); });
   _currentIssues = [];
-  showState(document.getElementById('resultsWrap'), 'empty', 'All items ignored', 'Cleared all detected issues.');
+  showState(document.getElementById('resultsWrap'), 'empty', { key:'ac.allIgnoredTitle' }, { key:'ac.allIgnoredSub' });
 }
 
+// title/sub: Rohtext (z.B. Server-Fehlermeldung) oder { key, vars } für i18n
 function showState(wrap, type, title, sub){
+  var part = function(x){ return (x && typeof x === 'object') ? tl(x.key, x.vars) : esc(x); };
   var icons = {
     empty: '<svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="24" stroke="#3A3A3A" stroke-width="2.5"/><path d="M22 33l7 7 15-15" stroke="#3A3A3A" stroke-width="2.5"/></svg>',
     error: '<svg viewBox="0 0 64 64" fill="none"><rect x="10" y="10" width="44" height="44" stroke="#D32F2F" stroke-width="2.5"/><path d="M22 22l20 20M42 22L22 42" stroke="#D32F2F" stroke-width="2.5"/></svg>'
   };
   wrap.innerHTML = '<div class="state-box"><div class="state-icon-wrap">'+(icons[type]||icons.empty)+'</div>'+
-    '<div class="state-title">'+esc(title)+'</div><div class="state-sub">'+esc(sub)+'</div></div>';
+    '<div class="state-title">'+part(title)+'</div><div class="state-sub">'+part(sub)+'</div></div>';
 }
 
 function showToast(msg){
-  var t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(t._t);
-  t._t = setTimeout(function(){ t.classList.remove('show'); }, 1800);
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove('show'); }, 1800);
 }
 
 function esc(str){ if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -792,7 +785,7 @@ function openRulesSettings() {
   // Ruft das große Popup im Backend auf, falls wir uns in der Seitenleiste befinden
   google.script.run
     .withSuccessHandler(function(){ clearTimeout(timeoutId); resetBtn(); })
-    .withFailureHandler(function(err){ clearTimeout(timeoutId); resetBtn(); showToast('Error: ' + err.message); })
+    .withFailureHandler(function(err){ clearTimeout(timeoutId); resetBtn(); showToast(t('ac.error', { msg: err.message })); })
     .apiOpenRulesModal();
 }
 
@@ -816,21 +809,21 @@ function onRulesLangChange() {
 }
 function loadRulesForLanguage(lang) {
   var listEl = document.getElementById('rulesListContainer');
-  listEl.innerHTML = '<div class="loading-state"><div class="loading-text">Loading rules...</div></div>';
+  listEl.innerHTML = '<div class="loading-state"><div class="loading-text">'+tl('ac.loadingRules')+'</div></div>';
   google.script.run
     .withSuccessHandler(function(rules) {
       _currentRulesData = rules;
       renderRulesUI(rules);
     })
     .withFailureHandler(function(err) {
-      listEl.innerHTML = '<div style="color:red; text-align:center; padding:20px;">Error: '+esc(err && err.message ? err.message : String(err))+'</div>';
+      listEl.innerHTML = '<div style="color:red; text-align:center; padding:20px;">'+tl('ac.error', { msg: err && err.message ? err.message : String(err) })+'</div>';
     })
     .apiGetRulesConfig(lang);
 }
 function renderRulesUI(rules) {
   var container = document.getElementById('rulesListContainer');
   if (!rules || rules.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:20px; color:#767676;">No rules configured.</div>';
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#767676;">'+tl('ac.noRules')+'</div>';
     return;
   }
   var existingTypes = {};
@@ -839,26 +832,26 @@ function renderRulesUI(rules) {
     return '<option value="' + esc(t) + '">' + esc(t) + '</option>';
   }).join('');
   var topAddHeader = '<div style="margin-bottom:12px; padding:10px; background:var(--gray-50); border:1px solid var(--gray-200);">' +
-    '<a href="https://gemini.google.com/gem/1U9keOE3XPTPG3QEq63ZCYZ-5EOTruqgC?usp=sharing" target="_blank" class="btn-mini ghost" style="width:100%; margin-bottom:8px; text-decoration:none; display:flex; align-items:center; justify-content:center;">Prepare a rule with Gemini</a>' +
-    '<button class="btn-mini primary" style="width:100%; font-weight:bold;" onclick="toggleAddCustomRuleForm()">+ Create New Rule / AI Prompt</button>' +
+    '<a href="https://gemini.google.com/gem/1U9keOE3XPTPG3QEq63ZCYZ-5EOTruqgC?usp=sharing" target="_blank" class="btn-mini ghost" style="width:100%; margin-bottom:8px; text-decoration:none; display:flex; align-items:center; justify-content:center;">'+tl('ac.prepareGemini')+'</a>' +
+    '<button class="btn-mini primary" style="width:100%; font-weight:bold;" onclick="toggleAddCustomRuleForm()">'+tl('ac.createRule')+'</button>' +
     '<div id="addCustomRuleForm" style="display:none; margin-top:10px; border-top:1px solid var(--gray-200); padding-top:10px;">' +
-      '<label style="font-size:10px; font-weight:bold; color:var(--gray-500);">CATEGORY / DROPDOWN</label>' +
+      '<label style="font-size:10px; font-weight:bold; color:var(--gray-500); text-transform:uppercase;">'+tl('ac.categoryLabel')+'</label>' +
       '<select id="newRuleGroupSelect" onchange="onCategorySelectChange(this)" style="width:100%; margin-bottom:6px; padding:5px; font-size:11px; border:1px solid var(--gray-300);">' +
-        '<option value="">-- Select Existing Group --</option>' +
+        '<option value="" data-i18n="ac.selectGroup">'+esc(t('ac.selectGroup'))+'</option>' +
         typeOptionsHtml +
-        '<option value="__NEW__">+ Create New Group/Dropdown...</option>' +
+        '<option value="__NEW__" data-i18n="ac.newGroupOpt">'+esc(t('ac.newGroupOpt'))+'</option>' +
       '</select>' +
-      '<input type="text" id="newRuleCustomGroup" placeholder="New Group Name (e.g., Style (Marketing), Compliance)" style="display:none; width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
-      '<label style="font-size:10px; font-weight:bold; color:var(--gray-500);">TYPE</label>' +
+      '<input type="text" id="newRuleCustomGroup"'+tAttrPh('ac.newGroupPh')+' style="display:none; width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
+      '<label style="font-size:10px; font-weight:bold; color:var(--gray-500); text-transform:uppercase;">'+tl('ac.typeLabel')+'</label>' +
       '<select id="newRuleKind" style="width:100%; margin-bottom:6px; padding:5px; font-size:11px; border:1px solid var(--gray-300);">' +
-        '<option value="PROMPT" selected>AI Prompt (Contextual Check)</option>' +
-        '<option value="RULE">Strict Rule (Instruction / Replacement)</option>' +
+        '<option value="PROMPT" selected data-i18n="ac.kindPrompt">'+esc(t('ac.kindPrompt'))+'</option>' +
+        '<option value="RULE" data-i18n="ac.kindRule">'+esc(t('ac.kindRule'))+'</option>' +
       '</select>' +
-      '<input type="text" id="newRuleName" placeholder="Title (e.g., Greenwashing Check)" style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
-      '<input type="text" id="newRuleDesc" placeholder="Short description for AI" style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
-      '<textarea id="newRulePrompt" placeholder="Detailed AI Prompt instruction..." style="width:100%; height:55px; margin-bottom:6px; padding:5px; font-size:11px; font-family:inherit;"></textarea>' +
-      '<input type="text" id="newRuleRefUrl" placeholder="Link zur Norm/Vorgabe (optional)" style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
-      '<button class="btn-mini primary" style="width:100%;" onclick="addNewCustomRule()">Add Rule</button>' +
+      '<input type="text" id="newRuleName"'+tAttrPh('ac.titlePh')+' style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
+      '<input type="text" id="newRuleDesc"'+tAttrPh('ac.descPh')+' style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
+      '<textarea id="newRulePrompt"'+tAttrPh('ac.promptPh')+' style="width:100%; height:55px; margin-bottom:6px; padding:5px; font-size:11px; font-family:inherit;"></textarea>' +
+      '<input type="text" id="newRuleRefUrl"'+tAttrPh('ac.refUrlPh')+' style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
+      '<button class="btn-mini primary" style="width:100%;" onclick="addNewCustomRule()">'+tl('ac.addRule')+'</button>' +
     '</div>' +
   '</div>';
     var sections = {};
@@ -904,7 +897,7 @@ function renderRulesUI(rules) {
         }
         var safeRefUrl = safeHref(r.ReferenceUrl);
         var refLinkHtml = safeRefUrl ? (
-          '<a href="'+esc(safeRefUrl)+'" target="_blank" class="btn-move" title="Open reference / standard" onclick="event.stopPropagation();">' +
+          '<a href="'+esc(safeRefUrl)+'" target="_blank" class="btn-move"'+tAttrTitle('ac.openReference')+' onclick="event.stopPropagation();">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>' +
           '</a>'
         ) : '';
@@ -912,7 +905,7 @@ function renderRulesUI(rules) {
                 '<label><input type="checkbox" class="rule-checkbox" data-name="'+esc(r.Name)+'" data-group="'+esc(section)+'" data-subgroup="'+esc(subId)+'" onchange="updateGroupSelectAllState(\''+escJsAttr(section)+'\'); updateSubgroupSelectAllState(\''+escJsAttr(subId)+'\')" '+checked+'> ' + esc(r.Description) + '</label>' +
                 inputHtml +
                 refLinkHtml +
-                '<button class="btn-move" title="In andere Section/Unterthema verschieben" onclick="openMoveRuleDialog(\''+escJsAttr(r.Name)+'\')">' +
+                '<button class="btn-move"'+tAttrTitle('ac.moveRuleTitle')+' onclick="openMoveRuleDialog(\''+escJsAttr(r.Name)+'\')">' +
                   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 6h18M3 12h18M3 18h18"/></svg>' +
                 '</button>' +
                 '</div>';
@@ -1011,7 +1004,7 @@ function openMoveRuleDialog(ruleName) {
   sectionSelect.innerHTML = Object.keys(existingSections).sort().map(function(s) {
     var sel = (s === rule.Section) ? 'selected' : '';
     return '<option value="'+esc(s)+'" '+sel+'>'+esc(s)+'</option>';
-  }).join('') + '<option value="__NEW__">+ New section...</option>';
+  }).join('') + '<option value="__NEW__">'+esc(t('ac.newSectionOpt'))+'</option>';
   document.getElementById('moveRuleSectionCustom').style.display = 'none';
   document.getElementById('moveRuleSectionCustom').value = '';
 
@@ -1027,7 +1020,7 @@ function populateSubsectionSelect(section, currentSub) {
   subSelect.innerHTML = Object.keys(existingSubs).sort().map(function(s) {
     var sel = (s === currentSub) ? 'selected' : '';
     return '<option value="'+esc(s)+'" '+sel+'>'+esc(s)+'</option>';
-  }).join('') + '<option value="__NEW__">+ New subsection...</option>';
+  }).join('') + '<option value="__NEW__">'+esc(t('ac.newSubsectionOpt'))+'</option>';
   document.getElementById('moveRuleSubsectionCustom').style.display = 'none';
   document.getElementById('moveRuleSubsectionCustom').value = '';
 }
@@ -1065,7 +1058,7 @@ function confirmMoveRule() {
   var sub = (subVal === '__NEW__') ? document.getElementById('moveRuleSubsectionCustom').value.trim() : subVal;
 
   if (!section || !sub) {
-    showToast('Please specify a section and subsection!');
+    showToast(t('ac.specifySection'));
     return;
   }
 
@@ -1077,7 +1070,7 @@ function confirmMoveRule() {
 
   closeMoveRuleDialog();
   renderRulesUI(_currentRulesData);
-  showToast('Rule moved. Click "Save Settings" to save.');
+  showToast(t('ac.ruleMoved'));
 }
 
 function toggleAddCustomRuleForm() {
@@ -1106,11 +1099,11 @@ function addNewCustomRule() {
   
   var finalGroup = (groupSelect === '__NEW__') ? customGroup : groupSelect;
   if (!finalGroup) {
-    showToast('Please select or create a group!');
+    showToast(t('ac.selectGroupToast'));
     return;
   }
   if (!name || !desc) {
-    showToast('Please enter title and description!');
+    showToast(t('ac.titleDescToast'));
     return;
   }
 
@@ -1129,7 +1122,7 @@ function addNewCustomRule() {
   _currentRulesData.push(newRule);
   _pendingNewCustomRules.push(newRule);
   renderRulesUI(_currentRulesData);
-  showToast('New rule added! Click "Save Settings".');
+  showToast(t('ac.ruleAdded'));
 }
 
 function saveRulesSettings() {
@@ -1142,60 +1135,60 @@ function saveRulesSettings() {
     return r;
   });
   var btn = document.querySelector('#rulesModal .modal-foot .btn-check');
-  btn.innerText = 'Saving...';
+  btn.innerText = t('ac.saving');
   btn.disabled = true;
   google.script.run
     .withSuccessHandler(function() {
-      btn.innerText = 'Save Settings';
+      btn.innerText = t('ac.save');
       btn.disabled = false;
       closeRulesSettings();
-      showToast('Settings & Drive JSON saved.');
+      showToast(t('ac.saved'));
       if (_pendingNewCustomRules.length) {
         google.script.run.apiLogNewCustomRules(_pendingNewCustomRules, _currentRulesLang);
         _pendingNewCustomRules = [];
       }
     })
     .withFailureHandler(function(err) {
-      btn.innerText = 'Save Settings';
+      btn.innerText = t('ac.save');
       btn.disabled = false;
-      showToast('Save error: ' + err.message);
+      showToast(t('ac.saveError', { msg: err.message }));
     })
     .apiSaveRulesConfig(updatedRules, _currentRulesLang);
 }
 function exportAllRulesToLogSheet() {
-  if (!confirm('Write all ' + _currentRulesData.length + ' currently loaded rules (default + your own custom rules) to the central log sheet, once?')) return;
-  showToast('Exporting all rules to the log sheet...');
+  if (!confirm(t('ac.confirmExportLog', { n: _currentRulesData.length }))) return;
+  showToast(t('ac.exportingLog'));
   google.script.run
     .withSuccessHandler(function(res) {
-      showToast(res.exported + ' rule(s) written to the log sheet.');
+      showToast(t('ac.exportedLog', { n: res.exported }));
     })
     .withFailureHandler(function(err) {
-      showToast('Error: ' + (err.message || err));
+      showToast(t('ac.error', { msg: err.message || err }));
     })
     .apiExportAllRulesToLogSheet(_currentRulesData, _currentRulesLang);
 }
 
 function exportRulesOverview() {
-  showToast('Building overview...');
+  showToast(t('ac.buildingOverview'));
   google.script.run
     .withSuccessHandler(function(url) {
-      showToast('Overview ready, opening...');
+      showToast(t('ac.overviewReady'));
       window.open(url, '_blank');
     })
     .withFailureHandler(function(err) {
-      showToast('Error: ' + (err.message || err));
+      showToast(t('ac.error', { msg: err.message || err }));
     })
     .apiExportRulesOverview(_currentRulesData);
 }
 
 function exportRulesToDrive() {
-  showToast('Exporting to Google Drive...');
+  showToast(t('ac.exportingDrive'));
   google.script.run
     .withSuccessHandler(function() {
-      showToast('Updated "TermCheck Rules" folder!');
+      showToast(t('ac.driveUpdated'));
     })
     .withFailureHandler(function(err) {
-      showToast('Export error: ' + err.message);
+      showToast(t('ac.exportError', { msg: err.message }));
     })
     .apiExportRulesToDrive(_currentRulesData, _currentRulesLang);
 }
@@ -1226,16 +1219,16 @@ function importRulesFile(event) {
         }
       });
       renderRulesUI(_currentRulesData);
-      showToast(skipped ? ('Imported (skipped ' + skipped + ' invalid entr' + (skipped===1?'y':'ies') + ')') : 'Rules imported successfully!');
+      showToast(skipped ? t('ac.importedSkipped', { n: skipped }) : t('ac.imported'));
     } catch(err) {
-      showToast('Invalid JSON file!');
+      showToast(t('ac.invalidJson'));
     }
   };
   reader.readAsText(file);
 }
 
 function toggleViewMode() {
-  showToast('Switching view mode...');
+  showToast(t('ac.switchingView'));
   google.script.run
     .withSuccessHandler(function(res) {
       // Wenn vom Modal in die Seitenleiste gewechselt wurde, schließen wir das Dialogfenster automatisch

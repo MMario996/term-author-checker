@@ -24,7 +24,7 @@ function onHomepage(e) {
   return card.build();
 }
 function apiShowHomeChooser(e) {
-  var ui = HtmlService.createHtmlOutputFromFile('HomeChooser')
+  var ui = renderWithI18n_('HomeChooser')
     .setTitle('Kärcher TermCheck')
     .setWidth(300);
   _getUiSafe_(e).showSidebar(ui);

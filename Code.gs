@@ -19,6 +19,30 @@ function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
+// ─── UI-SPRACHE (Add-on-Oberflächen) ──────────────────────────────────────
+// Sidebar, AuthorCheck und HomeChooser laufen als der jeweilige Nutzer; die
+// gewählte Oberflächensprache wird deshalb pro Nutzer gespeichert und gilt in
+// allen Docs/Sheets/Slides. Die Texte selbst stehen in I18n.html.
+var UI_LANG_CODES = ['en','de','fr','es','it','pt','zh','ja','no','sv','fi','tr','hu','hr','el'];
+
+function getUiLangPref_() {
+  var l = PropertiesService.getUserProperties().getProperty('UI_LANG') || 'en';
+  return UI_LANG_CODES.indexOf(l) !== -1 ? l : 'en';
+}
+
+function apiSetUiLang(lang) {
+  if (UI_LANG_CODES.indexOf(lang) === -1) throw new Error('Unsupported UI language.');
+  PropertiesService.getUserProperties().setProperty('UI_LANG', lang);
+  return lang;
+}
+
+// Liefert eine Add-on-Seite als Template aus, mit der gespeicherten UI-Sprache.
+function renderWithI18n_(filename) {
+  var tpl = HtmlService.createTemplateFromFile(filename);
+  tpl.uiLang = getUiLangPref_();
+  return tpl.evaluate();
+}
+
 function apiGetContext() {
   var caller = getUserEmail_();
   var props = PropertiesService.getScriptProperties();
@@ -28,7 +52,11 @@ function apiGetContext() {
   var role = getUserRole_(caller);
     var isRulesOnly = userProps.getProperty('AUTHORCHECK_IS_RULES_ONLY') === 'true';
   var rulesHelpSeen = userProps.getProperty('AUTHORCHECK_RULES_HELP_SEEN') === 'true';
+  // Basis-URL der Web-App für teilbare Such-Links (?q=...); leer, wenn nicht als Web-App bereitgestellt.
+  var webAppUrl = '';
+  try { webAppUrl = ScriptApp.getService().getUrl() || ''; } catch (e) {}
   return {
+    webAppUrl:       webAppUrl,
     email:           caller,
     role:            role,
     isAdmin:         role === 'ADMIN',
@@ -884,7 +912,7 @@ function onOpen(e) {
 }
 
 function showSidebar() {
-  var ui = HtmlService.createHtmlOutputFromFile('Sidebar')
+  var ui = renderWithI18n_('Sidebar')
     .setTitle('Kärcher TermCheck')
     .setWidth(300);
     

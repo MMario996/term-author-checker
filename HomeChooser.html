@@ -28,29 +28,42 @@ p{ font-size:14px; color:var(--gray-500); margin-bottom:22px; line-height:1.4; }
 .choice-btn svg{ width:26px; height:26px; flex-shrink:0; }
 .choice-title{ font-family:var(--ff-head); font-size:15px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
 .choice-sub{ font-size:12.5px; color:var(--gray-500); margin-top:2px; }
+.top-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.ui-lang-select{ border:1px solid #DDDDDD; background:var(--white); color:var(--gray-500); padding:3px 4px; font-size:12px; cursor:pointer; outline:none; max-width:110px; }
+.ui-lang-select:hover, .ui-lang-select:focus{ border-color:var(--ink); color:var(--ink); }
 </style>
 </head>
 <body>
-  <h1>Kärcher TermCheck</h1>
-  <p>Choose a tool to get started.</p>
+  <div class="top-row">
+    <h1>Kärcher TermCheck</h1>
+    <select class="ui-lang-select" data-i18n-title="ui.language" title="Interface language" aria-label="Interface language"></select>
+  </div>
+  <p data-i18n="home.choose">Choose a tool to get started.</p>
 
   <button class="choice-btn" onclick="openTermSearch()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
     <div>
-      <div class="choice-title">Terminology Search</div>
-      <div class="choice-sub">Browse and search the Kärcher termbases</div>
+      <div class="choice-title" data-i18n="sb.title">Terminology Search</div>
+      <div class="choice-sub" data-i18n="home.tsSub">Browse and search the Kärcher termbases</div>
     </div>
   </button>
 
   <button class="choice-btn" onclick="openAuthorCheck()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
     <div>
-      <div class="choice-title">Author Check</div>
-      <div class="choice-sub">Check grammar, terminology, and style rules</div>
+      <div class="choice-title" data-i18n="ac.title">Author Check</div>
+      <div class="choice-sub" data-i18n="home.acSub">Check grammar, terminology, and style rules</div>
     </div>
   </button>
 
 <script>
+// Vom Server gespeicherte UI-Sprache (pro Nutzer), siehe renderWithI18n_ in Code.gs.
+var I18N_INITIAL_LANG = <?!= JSON.stringify(uiLang) ?>;
+function I18N_PERSIST(lang){ google.script.run.apiSetUiLang(lang); }
+</script>
+<?!= include('I18n'); ?>
+<script>
+document.addEventListener('DOMContentLoaded', initUiLangSelects);
 function openTermSearch() {
   google.script.run.showSidebar();
 }

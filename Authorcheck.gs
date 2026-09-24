@@ -23,7 +23,7 @@ const AUTHORCHECK_DEFAULT_PROMPT =
 // ─── ANSICHTEN: CHECKS IN DER SEITENLEISTE / RULES IM POPUP ───────────────
 function showAuthorCheckSidebar(e) {
   PropertiesService.getUserProperties().deleteProperty('AUTHORCHECK_IS_RULES_ONLY');
-  var ui = HtmlService.createHtmlOutputFromFile('AuthorCheck')
+  var ui = renderWithI18n_('AuthorCheck')
     .setTitle('Kärcher Author Check')
     .setWidth(350);
 
@@ -32,7 +32,7 @@ function showAuthorCheckSidebar(e) {
 
 function apiOpenRulesModal(e) {
   PropertiesService.getUserProperties().setProperty('AUTHORCHECK_IS_RULES_ONLY', 'true');
-  var ui = HtmlService.createHtmlOutputFromFile('AuthorCheck')
+  var ui = renderWithI18n_('AuthorCheck')
     .setTitle('Rules & Custom Prompts')
     .setWidth(1350)
     .setHeight(900);

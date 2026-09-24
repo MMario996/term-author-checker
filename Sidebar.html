@@ -30,7 +30,9 @@ button, input, select{ font-family:inherit; }
 
 #app{ padding:14px; }
 
-.header{ margin-bottom:12px; }
+.header{ margin-bottom:12px; display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.ui-lang-select{ border:1px solid var(--gray-200); background:var(--white); color:var(--gray-600); padding:3px 4px; font-size:11px; cursor:pointer; outline:none; max-width:96px; flex-shrink:0; }
+.ui-lang-select:hover, .ui-lang-select:focus{ border-color:var(--ink); color:var(--ink); }
 .header h1{ font-family:var(--ff-head); font-size:15px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--ink); }
 .header p{ font-size:11.5px; color:var(--gray-500); margin-top:3px; line-height:1.4; }
 
@@ -132,14 +134,17 @@ button, input, select{ font-family:inherit; }
 
 <div id="app">
   <div class="header">
-    <h1>Terminology Search</h1>
-    <p>Look up Kärcher terminology directly within your document.</p>
+    <div>
+      <h1 data-i18n="sb.title">Terminology Search</h1>
+      <p data-i18n="sb.subtitle">Look up Kärcher terminology directly within your document.</p>
+    </div>
+    <select class="ui-lang-select" data-i18n-title="ui.language" title="Interface language" aria-label="Interface language"></select>
   </div>
 
   <div class="search-bar" id="searchBar">
-    <input type="text" id="query" placeholder="Search term..." autocomplete="off" autocorrect="off" spellcheck="false">
+    <input type="text" id="query" data-i18n-placeholder="search.placeholder" autocomplete="off" autocorrect="off" spellcheck="false">
     <div class="search-divider"></div>
-    <select id="lang-select" title="Source language">
+    <select id="lang-select" data-i18n-title="sb.sourceLang">
       <option value="de" selected>DE</option>
       <option value="en">EN</option>
       <option value="fr">FR</option>
@@ -149,9 +154,9 @@ button, input, select{ font-family:inherit; }
   </div>
   <button class="btn-search" id="searchBtn">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-    Search
+    <span data-i18n="search.button">Search</span>
   </button>
-  <p class="search-hint">Wildcards: * at the start/end is supported</p>
+  <p class="search-hint" data-i18n="sb.hint">Wildcards: * at the start/end is supported</p>
 
   <div class="recent" id="recentWrap"></div>
   <div id="resultsWrap" aria-live="polite"></div>
@@ -160,13 +165,13 @@ button, input, select{ font-family:inherit; }
 <div id="toast"></div>
 
 <script>
+// Vom Server gespeicherte UI-Sprache (pro Nutzer), siehe renderWithI18n_ in Code.gs.
+var I18N_INITIAL_LANG = <?!= JSON.stringify(uiLang) ?>;
+function I18N_PERSIST(lang){ google.script.run.apiSetUiLang(lang); }
+</script>
+<?!= include('I18n'); ?>
+<script>
 var RECENTS_KEY = 'termcheck_sidebar_recent_v1', MAX_RECENTS = 5;
-var STATUS_MSGS = [
-  "Searching termbases...",
-  "Matching results...",
-  "Loading translations...",
-  "Almost done..."
-];
 var _loadingInterval = null;
 var _debounceTimer = null, _requestToken = 0;
 
@@ -176,6 +181,7 @@ var $bar = document.getElementById('searchBar');
 var $recent = document.getElementById('recentWrap');
 
 document.addEventListener('DOMContentLoaded', function(){
+  initUiLangSelects();
   renderRecents();
   $query.focus();
 });
@@ -217,7 +223,7 @@ function triggerSearch(){
   if (!q) return;
   var core = q.replace(/\*/g, '').trim();
   var $rw = document.getElementById('resultsWrap');
-  if (core.length < 1) { showState($rw, 'warn', 'Search term too short', 'Please enter at least one character.'); return; }
+  if (core.length < 1) { showState($rw, 'warn', { key:'search.tooShortTitle' }, { key:'search.tooShortSub' }); return; }
 
   var myToken = ++_requestToken;
   startLoading($rw);
@@ -232,16 +238,16 @@ function triggerSearch(){
     .withFailureHandler(function(err){
       if (myToken !== _requestToken) return;
       stopLoading();
-      showState($rw, 'error', 'Error', (err && err.message) ? err.message : String(err));
+      showState($rw, 'error', { key:'err.generic' }, (err && err.message) ? err.message : String(err));
     })
     .apiSearchTerms(q, src);
 }
 
 function startLoading(wrap){
   stopLoading();
-  var idx = 0;
+  var idx = 0, msgs = t('load.search');
   function render(){
-    wrap.innerHTML = '<div class="loading-state"><div class="loading-text">'+esc(STATUS_MSGS[idx % STATUS_MSGS.length])+'</div></div>';
+    wrap.innerHTML = '<div class="loading-state"><div class="loading-text">'+esc(msgs[idx % msgs.length])+'</div></div>';
     idx++;
   }
   render();
@@ -251,11 +257,11 @@ function stopLoading(){ if (_loadingInterval) { clearInterval(_loadingInterval);
 
 function renderResults(wrap, concepts, query){
   if (!concepts || concepts.length === 0){
-    showState(wrap, 'empty', 'No results', 'No terms were found for "'+esc(query)+'".');
+    showState(wrap, 'empty', { key:'results.noResults' }, { key:'results.noTermsFor', vars:{ q: query } });
     return;
   }
   var n = concepts.length;
-  var meta = '<div class="results-meta"><b>'+n+'</b> result'+(n!==1?'s':'')+' for "'+esc(query)+'"</div>';
+  var meta = '<div class="results-meta">'+tln('results.found', n, { n: n })+' · '+tl('results.for', { q: query })+'</div>';
   var cards = concepts.map(function(c, i){ return renderCard(c, query, i); }).join('');
   wrap.innerHTML = meta + cards;
 }
@@ -264,28 +270,29 @@ function renderCard(c, query, idx){
   var src = c.sourceTerm;
   if (!src) return '';
   var delay = Math.min(idx * 30, 200);
-  var statusClass = src.forbidden ? 'status-forbidden' : (src.status === 'APPROVED' ? 'status-approved' : 'status-new');
+  var status = src.forbidden ? 'FORBIDDEN' : (src.status === 'APPROVED' ? 'APPROVED' : 'NEW');
+  var statusClass = 'status-' + status.toLowerCase();
 
   var header =
     '<div class="card-header" onclick="toggleCard(this)">'+
       '<span class="lang-badge">'+getFlagHtml(src.lang)+esc((src.lang||'').toUpperCase())+'</span>'+
       '<span class="source-term">'+highlight(src.term, query)+'</span>'+
-      '<span class="status-dot '+statusClass+'"></span>'+
+      '<span class="status-dot '+statusClass+'"'+tAttrTitle('status.'+status)+'></span>'+
     '</div>';
 
   var tlHtml;
   if (c.translations && c.translations.length){
-    var rows = c.translations.map(function(t){
-      return '<div class="tl-row'+(t.forbidden?' tl-forbidden':'')+'">'+
-        '<span class="tl-lang">'+getFlagHtml(t.lang)+esc((t.lang||'').toUpperCase())+'</span>'+
-        '<span class="tl-term">'+highlight(t.term, query)+'</span>'+
-        '<button class="copy-btn-mini" title="Copy" onclick="event.stopPropagation();copyTerm(\''+escJs(t.term)+'\')">'+
+    var rows = c.translations.map(function(tr){
+      return '<div class="tl-row'+(tr.forbidden?' tl-forbidden':'')+'">'+
+        '<span class="tl-lang">'+getFlagHtml(tr.lang)+esc((tr.lang||'').toUpperCase())+'</span>'+
+        '<span class="tl-term">'+highlight(tr.term, query)+'</span>'+
+        '<button class="copy-btn-mini"'+tAttrTitle('card.copy')+' onclick="event.stopPropagation();copyTerm(\''+escJs(tr.term)+'\')">'+
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="1"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>'+
         '</button></div>';
     }).join('');
     tlHtml = '<div class="translations">'+rows+'</div>';
   } else {
-    tlHtml = '<div class="no-translations">No translations available</div>';
+    tlHtml = '<div class="no-translations">'+tl('results.noTranslations')+'</div>';
   }
 
   return '<div class="concept-card expanded" style="animation-delay:'+delay+'ms">'+header+'<div class="card-body">'+tlHtml+'</div></div>';
@@ -299,23 +306,25 @@ function copyTerm(text){
   document.body.appendChild(ta); ta.select();
   try { document.execCommand('copy'); } catch(e){}
   document.body.removeChild(ta);
-  showToast('"'+text+'" copied');
+  showToast(t('toast.copied', { term: text }));
 }
 
+// title/sub: Rohtext (z.B. Server-Fehlermeldung) oder { key, vars } für i18n
 function showState(wrap, type, title, sub){
+  var part = function(x){ return (x && typeof x === 'object') ? tl(x.key, x.vars) : esc(x); };
   var icons = {
     empty: '<svg viewBox="0 0 64 64" fill="none"><rect x="8" y="8" width="48" height="48" stroke="#3A3A3A" stroke-width="2.5"/><circle cx="27" cy="27" r="10" stroke="#3A3A3A" stroke-width="2.5" fill="none"/><path d="M35 35l12 12" stroke="#3A3A3A" stroke-width="2.5"/></svg>',
     warn: '<svg viewBox="0 0 64 64" fill="none"><polygon points="32,10 58,54 6,54" stroke="#3A3A3A" stroke-width="2.5" fill="#FFED00"/><line x1="32" y1="24" x2="32" y2="38" stroke="#3A3A3A" stroke-width="3"/><circle cx="32" cy="45" r="2" fill="#3A3A3A"/></svg>',
     error: '<svg viewBox="0 0 64 64" fill="none"><rect x="10" y="10" width="44" height="44" stroke="#D32F2F" stroke-width="2.5"/><path d="M22 22l20 20M42 22L22 42" stroke="#D32F2F" stroke-width="2.5"/></svg>'
   };
   wrap.innerHTML = '<div class="state-box"><div class="state-icon-wrap">'+(icons[type]||icons.empty)+'</div>'+
-    '<div class="state-title">'+esc(title)+'</div><div class="state-sub">'+esc(sub)+'</div></div>';
+    '<div class="state-title">'+part(title)+'</div><div class="state-sub">'+part(sub)+'</div></div>';
 }
 function showToast(msg){
-  var t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(t._t);
-  t._t = setTimeout(function(){ t.classList.remove('show'); }, 1600);
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove('show'); }, 1600);
 }
 
 function getFlagHtml(lang){
