@@ -37,8 +37,14 @@ button, input, select, textarea{ font-family:inherit; }
 
 #app{ flex: 1; max-width:1100px; width:100%; margin:0 auto; padding:clamp(48px, 13vh, 150px) 20px 50px; }
 
+#topbar{ position:fixed; top:14px; right:14px; z-index:50; display:flex; align-items:center; gap:8px; }
+#uiLangSelect{
+  height:36px; border:1.5px solid var(--gray-200); background:var(--white); color:var(--gray-600);
+  padding:0 8px; font-size:12px; cursor:pointer; outline:none; transition:border-color .15s;
+}
+#uiLangSelect:hover, #uiLangSelect:focus{ border-color:var(--ink); color:var(--ink); }
 #adminGear{
-  position:fixed; top:14px; right:14px; z-index:50; display:none;
+  display:none;
   width:36px; height:36px; align-items:center; justify-content:center;
   background:var(--white); border:1.5px solid var(--gray-200); cursor:pointer;
   color:var(--gray-500); transition:border-color .15s, color .15s;
@@ -329,6 +335,16 @@ button, input, select, textarea{ font-family:inherit; }
 .table-term-row .term-text { flex: 1; min-width: 0; word-break: break-word; }
 .table-term-row .copy-btn-mini { margin-top: 2px; }
 .db-table tr:hover .copy-btn-mini { opacity: 1; }
+.table-summary { display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; color:var(--gray-600); }
+.db-table tr:hover .table-summary { color:var(--ink); }
+.db-table .status-icon .label { font-size:10px; }
+
+/* ── BROWSE META (count + status filter) ─────────────────────────────── */
+.browse-meta{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:14px; padding-bottom:8px; border-bottom:1px solid var(--gray-150); }
+.browse-count{ font-family:var(--ff-head); font-size:11.5px; font-weight:600; letter-spacing:.6px; text-transform:uppercase; color:var(--gray-500); }
+.browse-count b{ color:var(--ink); }
+.status-filter{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.status-filter .sm-btn{ display:flex; align-items:center; gap:6px; }
 
 .state-box{ text-align:center; padding:44px 24px 32px; }
 .state-icon-wrap{ display:flex; justify-content:center; margin-bottom:14px; }
@@ -390,7 +406,7 @@ button, input, select, textarea{ font-family:inherit; }
 .test-result.fail{ border-color:var(--red); background:#FDECEC; }
 
 @media (max-width:600px){
-  #app{ padding-top:32px; padding-left:14px; padding-right:14px; }
+  #app{ padding-top:64px; padding-left:14px; padding-right:14px; }
   .search-bar{ border-width:1.6px; }
   #query{ font-size:15px; padding:12px 4px; }
   #lang-select{ padding:0 8px; min-width:52px; }
@@ -405,24 +421,27 @@ button, input, select, textarea{ font-family:inherit; }
 </head>
 <body>
 
-<button id="adminGear" title="Admin settings" onclick="openAdmin()">
+<div id="topbar">
+<select id="uiLangSelect" data-i18n-title="ui.language" title="Interface language" aria-label="Interface language"></select>
+<button id="adminGear" data-i18n-title="admin.gear" title="Admin settings" onclick="openAdmin()">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
 </button>
+</div>
 
 <div id="app">
 
   <div class="mode-tabs">
     <div class="mode-tab active" data-mode="search" onclick="switchMode('search')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      <span>Search</span>
+      <span data-i18n="tabs.search">Search</span>
     </div>
     <div class="mode-tab" data-mode="ai" onclick="switchMode('ai')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.8 5.5L19 9l-5.2 1.5L12 16l-1.8-5.5L5 9l5.2-1.5z"/></svg>
-      <span>AI Search</span>
+      <span data-i18n="tabs.ai">AI Search</span>
     </div>
     <div class="mode-tab" data-mode="browse" onclick="switchMode('browse')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-      <span>Database</span>
+      <span data-i18n="tabs.browse">Database</span>
     </div>
   </div>
 
@@ -431,15 +450,15 @@ button, input, select, textarea{ font-family:inherit; }
     <div class="search-shell">
       <div class="search-bar" id="searchBarHero">
         <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
-        <input type="text" id="query" placeholder="Search for a term ?" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Search term">
-        <button class="clear-btn" id="clearBtn" title="Clear search" aria-label="Clear search">
+        <input type="text" id="query" placeholder="Search for a term…" data-i18n-placeholder="search.placeholder" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Search term">
+        <button class="clear-btn" id="clearBtn" title="Clear search" aria-label="Clear search" data-i18n-title="search.clear">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
-        <button class="btn-search" id="searchBtn"><span>Search</span>
+        <button class="btn-search" id="searchBtn"><span data-i18n="search.button">Search</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
       </div>
-      <p class="search-hint">Wildcards: <kbd>Term*</kbd> · <kbd>*Term</kbd> · <kbd>*Term*</kbd></p>
+      <p class="search-hint"><span data-i18n="search.wildcards">Wildcards:</span> <kbd>Term*</kbd> · <kbd>*Term</kbd> · <kbd>*Term*</kbd></p>
     </div>
     <div class="recent" id="recentWrap"></div>
     <div id="results-wrap-search" aria-live="polite"></div>
@@ -447,56 +466,54 @@ button, input, select, textarea{ font-family:inherit; }
 
   <!-- ── AI SEARCH PANEL ──────────────────────────────────────── -->
   <div class="panel" id="panel-ai">
-    <div id="aiUnavailable" class="ai-disabled-note" style="display:none">
-      AI Search hasn't been set up yet. An admin can enable it under the gear icon in the top right (Gemini API Key).
-    </div>
+    <div id="aiUnavailable" class="ai-disabled-note" style="display:none" data-i18n="ai.unavailable">AI Search hasn't been set up yet. An admin can enable it under the gear icon in the top right (Gemini API Key).</div>
     <div id="aiAvailableWrap">
       <div class="ai-box" id="aiBox">
-        <textarea id="aiQuery" placeholder="Describe what you're looking for in your own words – e.g. &quot;device that removes dirt using hot water vapour&quot;. Or attach a photo of the item below."></textarea>
+        <textarea id="aiQuery" data-i18n-placeholder="ai.placeholder"></textarea>
         <div class="ai-image-row">
           <label class="ai-image-attach">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            Attach image
+            <span data-i18n="ai.attachImage">Attach image</span>
             <input type="file" id="aiImageInput" accept="image/*">
           </label>
           <div class="ai-image-preview" id="aiImagePreview">
             <img id="aiImagePreviewThumb" alt="">
             <span class="ai-image-name" id="aiImageName"></span>
-            <button class="ai-image-remove" id="aiImageRemove" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            <button class="ai-image-remove" id="aiImageRemove" title="Remove" data-i18n-title="ai.removeImage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
           </div>
         </div>
       <div class="ai-bar-bottom" style="justify-content:flex-end;">
           <button class="btn-ai" id="aiBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.8 5.5L19 9l-5.2 1.5L12 16l-1.8-5.5L5 9l5.2-1.5z"/></svg>
-            Ask Gemini
+            <span data-i18n="ai.ask">Ask Gemini</span>
           </button>
         </div>
       </div>
       <div class="ai-thread-export-bar" id="aiThreadExportBar">
         <button class="action-btn" id="aiThreadExportBtn" onclick="exportAiThreadResults(event)" style="background:var(--yellow); border-color:var(--yellow); color:var(--ink);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          <span id="aiThreadExportLabel">Export entire thread (G-Sheet)</span>
+          <span id="aiThreadExportLabel"></span>
         </button>
       </div>
       <div id="results-wrap-ai" aria-live="polite"></div>
       <div class="ai-box" id="aiRefineWrap" style="display:none; margin-top:14px;">
-        <textarea id="aiRefineQuery" placeholder="Ask a follow-up, e.g. 'only for Home and Garden' or 'show me matching accessories too'..." style="min-height:60px;"></textarea>
+        <textarea id="aiRefineQuery" data-i18n-placeholder="ai.refinePlaceholder" style="min-height:60px;"></textarea>
         <div class="ai-image-row">
           <label class="ai-image-attach">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            Attach image
+            <span data-i18n="ai.attachImage">Attach image</span>
             <input type="file" id="aiRefineImageInput" accept="image/*">
           </label>
           <div class="ai-image-preview" id="aiRefineImagePreview">
             <img id="aiRefineImagePreviewThumb" alt="">
             <span class="ai-image-name" id="aiRefineImageName"></span>
-            <button class="ai-image-remove" id="aiRefineImageRemove" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            <button class="ai-image-remove" id="aiRefineImageRemove" title="Remove" data-i18n-title="ai.removeImage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
           </div>
         </div>
         <div class="ai-bar-bottom" style="justify-content:flex-end;">
           <button class="btn-ai" id="aiRefineBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.8 5.5L19 9l-5.2 1.5L12 16l-1.8-5.5L5 9l5.2-1.5z"/></svg>
-            Nachfragen
+            <span data-i18n="ai.refineButton">Follow up</span>
           </button>
         </div>
       </div>
@@ -505,21 +522,11 @@ button, input, select, textarea{ font-family:inherit; }
   <!-- ── BROWSE PANEL ─────────────────────────────────────────── -->
   <div class="panel" id="panel-browse">
     <div class="browse-controls">
-      <select id="browse-tb-select"><option value="">Select area…</option></select>
-      <select id="browse-lang-select">
-        <option value="">All languages</option>
-        <option value="de">DE</option>
-        <option value="en">EN</option>
-        <option value="fr">FR</option>
-        <option value="es">ES</option>
-        <option value="it">IT</option>
-        <option value="pt">PT</option>
-        <option value="nl">NL</option>
-        <option value="pl">PL</option>
-      </select>
-      <input type="text" id="browse-search-input" placeholder="Search entire database...">
-      <button id="browse-search-btn" class="btn-search" style="padding:0 15px;">Search</button>
-      <button id="browse-sort-toggle" class="page-btn" type="button" title="Sortierung umkehren">
+      <select id="browse-tb-select"><option value="" data-i18n="browse.selectArea">Select area…</option></select>
+      <select id="browse-lang-select"></select>
+      <input type="text" id="browse-search-input" data-i18n-placeholder="browse.searchPlaceholder">
+      <button id="browse-search-btn" class="btn-search" style="padding:0 15px;"><span data-i18n="search.button">Search</span></button>
+      <button id="browse-sort-toggle" class="page-btn" type="button" data-i18n-title="browse.sortTitle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7h13M3 12h9M3 17h5"/><path d="M18 6v13M18 6l-4 4M18 6l4 4"/></svg>
         <span id="browse-sort-label">A → Z</span>
       </button>
@@ -527,11 +534,11 @@ button, input, select, textarea{ font-family:inherit; }
     <div id="results-wrap-browse" aria-live="polite"></div>
     <div class="browse-pagination" id="browsePagination" style="display:none">
       <button class="page-btn" id="browsePrev">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg> Back
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg> <span data-i18n="browse.back">Back</span>
       </button>
-      <span class="page-label" id="browsePageLabel">Page 1</span>
+      <span class="page-label" id="browsePageLabel"></span>
       <button class="page-btn" id="browseNext">
-        Next <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 18l6-6-6-6"/></svg>
+        <span data-i18n="browse.next">Next</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 18l6-6-6-6"/></svg>
       </button>
     </div>
   </div>
@@ -541,14 +548,14 @@ button, input, select, textarea{ font-family:inherit; }
     <div class="support-btn-group">
       <a href="https://taskbox.karcher.com/plugins/servlet/desk/portal/97/create/4030" target="_blank" class="support-btn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
-        CONSULTING
+        <span data-i18n="footer.consulting">Consulting</span>
       </a>
       <a href="https://taskbox.karcher.com/plugins/servlet/desk/portal/97/create/4019" target="_blank" class="support-btn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01"/></svg>
-        REPORT A BUG
+        <span data-i18n="footer.bug">Report a bug</span>
       </a>
     </div>
-    <span class="support-note">Please choose "Phrase" as Appication</span>
+    <span class="support-note" data-i18n="footer.note">Please choose "PHRASE" as Application</span>
   </div>
 
 </div>
@@ -567,7 +574,7 @@ button, input, select, textarea{ font-family:inherit; }
     </div>
     <div class="modal-body">
       <div class="modal-panel active" id="adminpanel-settings">
-        <div class="form-row"><label>Phrase API Token</label><input type="password" id="set-token" placeholder="Leave unchanged if already set"></div>
+        <div class="form-row"><label>PHRASE API Token</label><input type="password" id="set-token" placeholder="Leave unchanged if already set"></div>
         <div class="form-row"><label>Admin Emails</label><input type="text" id="set-admins" placeholder="a@karcher.com, b@karcher.com"></div>
         <div class="form-row"><label>Allowed Termbase UIDs (comma-separated, optional)</label><input type="text" id="set-allowed-tb"></div>
         <div class="form-row"><label>Custom Rules Log Sheet ID (optional)</label><input type="text" id="set-custom-rules-log-sheet" placeholder="Sheet ID from the URL"><div class="hint">Central Google Sheet that newly created Author Check rules from all users are logged to. Must already be shared with edit access for all affected users.</div></div>
@@ -597,64 +604,15 @@ button, input, select, textarea{ font-family:inherit; }
   </div>
 </div>
 
+<?!= include('I18n'); ?>
 <script>
 // ─── GLOBAL STATE ─────────────────────────────────────────────────────────
 var _ctx = null;
 var _debounceTimer = null, _requestToken = 0;
 var RECENTS_KEY = 'termsearch_recent_v1', MAX_RECENTS = 6;
-var _browseState = { tbUid:'', lang:'', page:0, hasMore:false, query:'', sortDir:'asc' };
+var _browseState = { tbUid:'', lang:'', page:0, hasMore:false, query:'', sortDir:'asc', status:'ALL', total:null, totalPages:null };
+var _browseConcepts = [];
 var _currentResults = []; // Saved state for Exports
-
-var SEARCH_STATUS_MSGS = [
-  "Scanning termbases...",
-  "Searching for matches...",
-  "Filtering translations...",
-  "Checking exact hits...",
-  "Compiling results...",
-  "Looking up terminology...",
-  "Chasing down every language...",
-  "Dusting off the dictionaries...",
-  "Politely asking Phrase for terms...",
-  "Herding stray translations into place...",
-  "Making sure nothing hides behind a wildcard...",
-  "Almost done..."
-];
-var AI_STATUS_MSGS_TEXT = [
-  "Consulting Gemini...",
-  "Reading between the lines...",
-  "Turning your description into terminology...",
-  "Thinking in Kärcher vocabulary...",
-  "Cross-checking candidate terms...",
-  "Letting the AI do some detective work...",
-  "Matching meaning to the right term...",
-  "Double-checking with the termbase...",
-  "Translating your words into Kärcher-speak...",
-  "Gemini is putting on its thinking cap...",
-  "Brewing up some vocabulary...",
-  "Almost there..."
-];
-var AI_STATUS_MSGS_IMAGE = [
-  "Taking a good look at your image...",
-  "Letting Gemini study the photo...",
-  "Spotting the important bits in the picture...",
-  "Matching pixels to Kärcher parts...",
-  "Turning what it sees into search terms...",
-  "Squinting at the details...",
-  "Comparing image to termbase...",
-  "Almost there..."
-];
-var DB_STATUS_MSGS = [
-  "Browsing database...",
-  "Loading termbase pages...",
-  "Retrieving terminology...",
-  "Fetching language details...",
-  "Organizing terms...",
-  "Sorting translations...",
-  "Flipping through the glossary...",
-  "Counting all the umlauts...",
-  "Lining everything up alphabetically...",
-  "Almost there..."
-];
 
 var _loadingInterval = null;
 var $query   = document.getElementById('query');
@@ -663,6 +621,7 @@ var $bar     = document.getElementById('searchBarHero');
 var $recent  = document.getElementById('recentWrap');
 var $toast   = document.getElementById('toast');
 document.addEventListener('DOMContentLoaded', function(){
+  initUiLangSelect();
   renderRecents();
   populateLangSelect(document.getElementById('browse-lang-select'), { includeAll: true });
   google.script.run.withSuccessHandler(function(ctx){
@@ -674,13 +633,27 @@ document.addEventListener('DOMContentLoaded', function(){
   $query.focus();
 });
 
+// ─── UI LANGUAGE (Texte in I18n.html) ────────────────────────────────────
+function initUiLangSelect(){
+  var sel = document.getElementById('uiLangSelect');
+  sel.innerHTML = UI_LANGS.map(function(p){ return '<option value="'+p[0]+'">'+esc(p[1])+'</option>'; }).join('');
+  sel.value = getUiLang();
+  sel.addEventListener('change', function(){ setUiLang(this.value); });
+  setUiLang(getUiLang());
+}
+function onUiLangChanged(){
+  updateAiExportLabel();
+  updateBrowsePageLabel();
+  if (_browseConcepts.length) renderBrowseResults(); // Zahlenformat der Gesamtzahl
+}
+
 // ─── LANGUAGE SELECT HELPER ───────────────────────────────────────────────
 function populateLangSelect(selectEl, opts){
   if (!selectEl) return;
   opts = opts || {};
   var list = [['de','DE'],['en','EN'],['fr','FR'],['es','ES'],['it','IT'],['pt','PT'],['nl','NL'],
     ['pl','PL'],['cs','CS'],['ru','RU'],['zh','ZH'],['ja','JA'],['ko','KO'],['tr','TR'],['ar','AR']];
-  var html = opts.includeAll ? '<option value="">? All languages</option>' : '';
+  var html = opts.includeAll ? '<option value="" data-i18n="browse.allLanguages">'+esc(t('browse.allLanguages'))+'</option>' : '';
   html += list.map(function(pair){ return '<option value="'+pair[0]+'">'+pair[1]+'</option>'; }).join('');
   selectEl.innerHTML = html;
   selectEl.value = opts.selected || (opts.includeAll ? '' : 'de');
@@ -708,9 +681,9 @@ function getFlagHtml(lang) {
 // ─── ACTION BAR (Expand/Collapse/Export) ─────────────────────────────────
 function getActionBarHtml() {
     return '<div class="action-bar">' +
-        '<button class="action-btn" onclick="toggleAllCards(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Expand All</button>' +
-        '<button class="action-btn" onclick="toggleAllCards(false)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg> Collapse All</button>' +
-        '<button class="action-btn" onclick="exportCurrentResults(event)" style="background:var(--yellow); border-color:var(--yellow); color:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Export (G-Sheet)</button>' +
+        '<button class="action-btn" onclick="toggleAllCards(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> '+tl('actions.expandAll')+'</button>' +
+        '<button class="action-btn" onclick="toggleAllCards(false)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg> '+tl('actions.collapseAll')+'</button>' +
+        '<button class="action-btn" onclick="exportCurrentResults(event)" style="background:var(--yellow); border-color:var(--yellow); color:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> '+tl('actions.export')+'</button>' +
         '</div>';
 }
 
@@ -734,43 +707,48 @@ function toggleAllCards(expand) {
 }
 
 function exportCurrentResults(event) {
-    if (!_currentResults || _currentResults.length === 0) {
-        showToast("Nothing to export");
+    runSheetExport(event.currentTarget, _currentResults);
+}
+
+// Gemeinsamer Export für Suche/Datenbank und den KI-Verlauf. Spaltenköpfe und
+// Status-Werte folgen der aktuellen UI-Sprache.
+function runSheetExport(btn, concepts) {
+    if (!concepts || concepts.length === 0) {
+        showToast(t('toast.nothingToExport'));
         return;
     }
-    var btn = event.currentTarget;
-    var origText = btn.innerHTML;
-    btn.innerHTML = 'Exporting...';
+    var origHtml = btn.innerHTML;
+    btn.innerHTML = esc(t('actions.exporting'));
     btn.disabled = true;
 
     var rows = [];
-    rows.push(['Category', 'Source Term', 'Source Lang', 'Status', 'Definition', 'Note', 'Translations']);
-    _currentResults.forEach(function(c) {
+    rows.push([t('export.category'), t('export.sourceTerm'), t('export.sourceLang'), t('export.status'), t('export.definition'), t('export.note'), t('export.translations')]);
+    concepts.forEach(function(c) {
         if(!c.sourceTerm) return;
         var cat = c.categoryLabel || c.category || '';
         var sTerm = c.sourceTerm.term || '';
         var sLang = (c.sourceTerm.lang || '').toUpperCase();
-        var status = c.sourceTerm.forbidden ? 'Forbidden' : (c.sourceTerm.status === 'APPROVED' ? 'Approved' : 'New');
+        var status = t('status.' + termStatus(c.sourceTerm));
         var def = c.sourceTerm.definition || '';
         var note = c.sourceTerm.note || '';
-        var translationsText = (c.translations || []).map(function(t) {
-            var tStatus = t.forbidden ? ' [Forbidden]' : '';
-            return (t.lang || '').toUpperCase() + ': ' + (t.term || '') + tStatus;
+        var translationsText = (c.translations || []).map(function(tr) {
+            var tStatus = tr.forbidden ? ' [' + t('status.FORBIDDEN') + ']' : '';
+            return (tr.lang || '').toUpperCase() + ': ' + (tr.term || '') + tStatus;
         }).join('\n');
         rows.push([ cat, sTerm, sLang, status, def, note, translationsText ]);
     });
 
     google.script.run
         .withSuccessHandler(function(url) {
-            btn.innerHTML = origText;
+            btn.innerHTML = origHtml;
             btn.disabled = false;
-            showToast("Export successful!");
+            showToast(t('toast.exportOk'));
             window.open(url, '_blank');
         })
         .withFailureHandler(function(err) {
-            btn.innerHTML = origText;
+            btn.innerHTML = origHtml;
             btn.disabled = false;
-            showToast("Export failed: " + err.message);
+            showToast(t('toast.exportFailed', { msg: (err && err.message) ? err.message : String(err) }));
         })
         .apiExportToSheet(rows);
 }
@@ -785,7 +763,7 @@ function switchMode(mode){
 // ─── LOADING STATE (Text only, NO spinner) ─────────────────────────────
 function startLoading(wrap, messages){
   if (typeof wrap === 'string') wrap = document.getElementById(wrap);
-  var msgs = messages || SEARCH_STATUS_MSGS;
+  var msgs = messages || t('load.search');
   stopLoading();
   var idx = 0;
   function render(){
@@ -852,10 +830,10 @@ function triggerSearch(){
   if (!q) return;
   var $rw = document.getElementById('results-wrap-search');
   var core = q.replace(/\*/g, '').trim();
-  if (core.length < 1) { showStateIn($rw, 'warn', 'Search query too short', 'Please enter at least one character.'); return; }
+  if (core.length < 1) { showStateIn($rw, 'warn', { key:'search.tooShortTitle' }, { key:'search.tooShortSub' }); return; }
 
   var myToken = ++_requestToken;
-  startLoading($rw, SEARCH_STATUS_MSGS);
+  startLoading($rw, t('load.search'));
   google.script.run
     .withSuccessHandler(function(concepts){
       if (myToken !== _requestToken) return;
@@ -866,13 +844,10 @@ function triggerSearch(){
     .withFailureHandler(function(err){
       if (myToken !== _requestToken) return;
       stopLoading();
-      showStateIn($rw, 'error', 'Connection error', (err && err.message) ? err.message : String(err));
+      showStateIn($rw, 'error', { key:'err.connection' }, (err && err.message) ? err.message : String(err));
     })
     .apiSearchTerms(q);
 }
-
-// Hinweis: der Aufruf renderResultsInto($rw, concepts, q) in .withSuccessHandler
-// weiter oben in dieser Funktion muss noch um ", true" ergänzt werden, siehe Schritt 4.
 
 // ─── AI SEARCH ──────────────────────────────────────────────────────────
 var $aiQuery = document.getElementById('aiQuery');
@@ -903,7 +878,7 @@ function setupImageAttach(inputId, previewId, thumbId, nameId, removeId, onChang
   input.addEventListener('change', function(){
     var file = input.files && input.files[0];
     if (!file) return;
-    nameEl.textContent = file.name + ' (resizing…)';
+    nameEl.textContent = file.name + ' (' + t('ai.resizing') + ')';
     preview.classList.add('show');
     resizeImageFile(file, 1280, 0.82, function(result){
       thumb.src = result.dataUrl;
@@ -969,36 +944,23 @@ function triggerAiSearch(){
   btn.disabled = true;
   $rw.innerHTML = '';
   var img = _aiPendingImage;
-  startLoading($rw, img ? AI_STATUS_MSGS_IMAGE : AI_STATUS_MSGS_TEXT);
+  startLoading($rw, t(img ? 'load.aiImage' : 'load.aiText'));
   google.script.run
     .withSuccessHandler(function(res){
       btn.disabled = false;
       stopLoading();
       $rw.innerHTML = '';
       _aiConversation = res.history || [];
-      appendAiResultBlock($rw, res, text || '(Bild)', null);
+      appendAiResultBlock($rw, res, null);
       document.getElementById('aiRefineWrap').style.display = 'block';
     })
     .withFailureHandler(function(err){
       btn.disabled = false;
       stopLoading();
-      showStateIn($rw, 'error', 'AI search failed', (err && err.message) ? err.message : String(err));
+      showStateIn($rw, 'error', { key:'ai.failed' }, (err && err.message) ? err.message : String(err));
     })
-    .apiAiAssistedSearch(text, [], img);
+    .apiAiAssistedSearch(text, [], img, getUiLang());
 }
-var AI_REFINE_STATUS_MSGS_TEXT = [
-  "Refining the search...",
-  "Thinking it through again...",
-  "Narrowing down the selection...",
-  "Gemini is polishing the answer...",
-  "Almost there..."
-];
-var AI_REFINE_STATUS_MSGS_IMAGE = [
-  "Looking at the new image...",
-  "Comparing the image with the current results...",
-  "Gemini is double-checking the details...",
-  "Almost there..."
-];
 function triggerAiRefine(){
   var text = $aiRefineQuery.value.trim();
   if (!text && !_aiRefinePendingImage) return;
@@ -1006,7 +968,7 @@ function triggerAiRefine(){
   var btn = document.getElementById('aiRefineBtn');
   btn.disabled = true;
   var img = _aiRefinePendingImage;
-  var refineMsgs = img ? AI_REFINE_STATUS_MSGS_IMAGE : AI_REFINE_STATUS_MSGS_TEXT;
+  var refineMsgs = t(img ? 'load.refineImage' : 'load.refineText');
   var pending = document.createElement('div');
   pending.className = 'loading-state';
   var refineIdx = 0;
@@ -1018,14 +980,13 @@ function triggerAiRefine(){
   }, 1300);
   pending._interval = refineInterval;
   $rw.appendChild(pending);
-  var labelText = text || '(Bild)';
   google.script.run
     .withSuccessHandler(function(res){
       btn.disabled = false;
       clearInterval(pending._interval);
       pending.remove();
       _aiConversation = res.history || _aiConversation;
-      appendAiResultBlock($rw, res, labelText, labelText);
+      appendAiResultBlock($rw, res, { q: text });
       $aiRefineQuery.value = '';
       document.getElementById('aiRefineImageRemove').click();
     })
@@ -1033,16 +994,18 @@ function triggerAiRefine(){
       btn.disabled = false;
       clearInterval(pending._interval);
       pending.remove();
-      showToast('Nachfrage fehlgeschlagen: ' + ((err && err.message) ? err.message : String(err)));
+      showToast(t('ai.refineFailed', { msg: (err && err.message) ? err.message : String(err) }));
     })
-    .apiAiAssistedSearch(text, _aiConversation, img);
+    .apiAiAssistedSearch(text, _aiConversation, img, getUiLang());
 }
-function appendAiResultBlock($rw, res, query, followupQuestion){
+// followup: null für die Ausgangssuche, sonst { q: 'Text der Nachfrage' } ('' = nur Bild)
+function appendAiResultBlock($rw, res, followup){
   mergeIntoAiAllResults(res.results);
   document.querySelectorAll('.ai-thread-block').forEach(function(b){ b.classList.add('collapsed'); });
   var wrap = document.createElement('div');
   wrap.className = 'ai-thread-block';
-  var headerLabel = followupQuestion ? ('Nachfrage: "'+esc(followupQuestion)+'"') : 'Ausgangssuche';
+  var headerLabel = !followup ? tl('ai.initialSearch')
+    : (followup.q ? tl('ai.followup', { q: followup.q }) : tl('ai.imageOnly'));
   var header = '<div class="ai-thread-header" onclick="this.closest(\'.ai-thread-block\').classList.toggle(\'collapsed\')">'+
       '<span class="ai-thread-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M6 9l6 6 6-6"/></svg></span>'+
       '<span>'+headerLabel+'</span>'+
@@ -1071,58 +1034,28 @@ function mergeIntoAiAllResults(newResults){
     var key = c.category + '_' + (c.conceptId || c.sourceTerm.term);
     if (!seen[key]) { seen[key] = true; _aiAllResults.push(c); }
   });
-  var label = document.getElementById('aiThreadExportLabel');
-  if (label) label.textContent = 'Export gesamten Thread (' + _aiAllResults.length + ', G-Sheet)';
+  updateAiExportLabel();
   var bar = document.getElementById('aiThreadExportBar');
   if (bar && _aiAllResults.length) bar.classList.add('show');
 }
+function updateAiExportLabel(){
+  var label = document.getElementById('aiThreadExportLabel');
+  if (label) label.textContent = t('ai.exportThread', { n: _aiAllResults.length });
+}
 function exportAiThreadResults(event){
-  if (!_aiAllResults || _aiAllResults.length === 0) { showToast("Nothing to export"); return; }
-  var btn = event.currentTarget;
-  var origHtml = btn.innerHTML;
-  btn.innerHTML = 'Exporting...';
-  btn.disabled = true;
-  var rows = [];
-  rows.push(['Category', 'Source Term', 'Source Lang', 'Status', 'Definition', 'Note', 'Translations']);
-  _aiAllResults.forEach(function(c) {
-    if(!c.sourceTerm) return;
-    var cat = c.categoryLabel || c.category || '';
-    var sTerm = c.sourceTerm.term || '';
-    var sLang = (c.sourceTerm.lang || '').toUpperCase();
-    var status = c.sourceTerm.forbidden ? 'Forbidden' : (c.sourceTerm.status === 'APPROVED' ? 'Approved' : 'New');
-    var def = c.sourceTerm.definition || '';
-    var note = c.sourceTerm.note || '';
-    var translationsText = (c.translations || []).map(function(t) {
-      var tStatus = t.forbidden ? ' [Forbidden]' : '';
-      return (t.lang || '').toUpperCase() + ': ' + (t.term || '') + tStatus;
-    }).join('\n');
-    rows.push([ cat, sTerm, sLang, status, def, note, translationsText ]);
-  });
-  google.script.run
-    .withSuccessHandler(function(url) {
-      btn.innerHTML = origHtml;
-      btn.disabled = false;
-      showToast("Export successful!");
-      window.open(url, '_blank');
-    })
-    .withFailureHandler(function(err) {
-      btn.innerHTML = origHtml;
-      btn.disabled = false;
-      showToast("Export failed: " + (err && err.message ? err.message : err));
-    })
-    .apiExportToSheet(rows);
+  runSheetExport(event.currentTarget, _aiAllResults);
 }
 // ─── BROWSE (DATABASE) ──────────────────────────────────────────────────
 function loadBrowseTermbases(){
   google.script.run.withSuccessHandler(function(list){
     var sel = document.getElementById('browse-tb-select');
-    sel.innerHTML = '<option value="">Select area…</option>' +
+    sel.innerHTML = '<option value="" data-i18n="browse.selectArea">'+esc(t('browse.selectArea'))+'</option>' +
       (list||[]).map(function(tb){ return '<option value="'+esc(tb.uid)+'">'+esc(tb.label || tb.category)+'</option>'; }).join('');
   }).apiListBrowseTermbases();
 }
 document.getElementById('browse-tb-select').addEventListener('change', function(){
   _browseState.tbUid = this.value; _browseState.page = 0;
-  if (this.value) loadBrowsePage(); else { document.getElementById('results-wrap-browse').innerHTML=''; document.getElementById('browsePagination').style.display='none'; }
+  if (this.value) loadBrowsePage(); else { _browseConcepts = []; document.getElementById('results-wrap-browse').innerHTML=''; document.getElementById('browsePagination').style.display='none'; }
 });
 document.getElementById('browse-lang-select').addEventListener('change', function(){
   _browseState.lang = this.value; _browseState.page = 0;
@@ -1133,13 +1066,15 @@ document.getElementById('browse-sort-toggle').addEventListener('click', function
   document.getElementById('browse-sort-label').textContent = _browseState.sortDir === 'asc' ? 'A → Z' : 'Z → A';
   if (_browseState.tbUid) loadBrowsePage();
 });
+function triggerBrowseSearch(){
+  _browseState.query = document.getElementById('browse-search-input').value.trim();
+  _browseState.page = 0;
+  if (_browseState.tbUid) loadBrowsePage();
+}
 document.getElementById('browse-search-input').addEventListener('keydown', function(e){
-  if (e.key === 'Enter') {
-    _browseState.query = this.value.trim();
-    _browseState.page = 0;
-    if (_browseState.tbUid) loadBrowsePage();
-  }
+  if (e.key === 'Enter') triggerBrowseSearch();
 });
+document.getElementById('browse-search-btn').addEventListener('click', triggerBrowseSearch);
 
 document.getElementById('browsePrev').addEventListener('click', function(){
   if (_browseState.page > 0) { _browseState.page--; loadBrowsePage(); }
@@ -1150,19 +1085,59 @@ document.getElementById('browseNext').addEventListener('click', function(){
 
 function loadBrowsePage(){
   var $rw = document.getElementById('results-wrap-browse');
-  startLoading($rw, DB_STATUS_MSGS);
+  startLoading($rw, t('load.db'));
   google.script.run
     .withSuccessHandler(function(res){
       stopLoading();
       _browseState.hasMore = res.hasMore;
-      renderTableInto($rw, res.concepts);
+      _browseState.total = (typeof res.total === 'number') ? res.total : null;
+      _browseState.totalPages = (typeof res.totalPages === 'number') ? res.totalPages : null;
+      _browseConcepts = res.concepts || [];
+      renderBrowseResults();
       document.getElementById('browsePagination').style.display = 'flex';
-      document.getElementById('browsePageLabel').textContent = 'Page ' + (_browseState.page + 1);
+      updateBrowsePageLabel();
       document.getElementById('browsePrev').disabled = _browseState.page === 0;
       document.getElementById('browseNext').disabled = !res.hasMore;
     })
-    .withFailureHandler(function(err){ stopLoading(); showStateIn($rw, 'error', 'Error', err.message || String(err)); })
+    .withFailureHandler(function(err){ stopLoading(); showStateIn($rw, 'error', { key:'err.generic' }, err.message || String(err)); })
     .apiBrowseTermbase(_browseState.tbUid, _browseState.page, _browseState.lang, _browseState.query, _browseState.sortDir);
+}
+
+function updateBrowsePageLabel(){
+  var el = document.getElementById('browsePageLabel');
+  if (!el) return;
+  var page = _browseState.page + 1;
+  el.innerHTML = _browseState.totalPages ? tl('browse.pageOf', { page: page, pages: _browseState.totalPages }) : tl('browse.page', { page: page });
+}
+
+// Status-Filter (Datenbank): filtert die geladene Seite clientseitig.
+var BROWSE_STATUSES = ['APPROVED', 'NEW', 'FORBIDDEN'];
+function setBrowseStatusFilter(status){
+  _browseState.status = status;
+  renderBrowseResults();
+}
+function renderBrowseResults(){
+  var $rw = document.getElementById('results-wrap-browse');
+  var st = _browseState.status;
+  var visible = st === 'ALL' ? _browseConcepts : _browseConcepts.filter(function(c){ return c.sourceTerm && termStatus(c.sourceTerm) === st; });
+
+  var n = _browseConcepts.length;
+  var fmtN = function(x){ return Number(x).toLocaleString(getUiLang()); };
+  var countHtml = (_browseState.total !== null)
+    ? tln('browse.total', _browseState.total, { n: fmtN(_browseState.total) })
+    : tln('browse.onPage', n, { n: fmtN(n) });
+  var chips = ['ALL'].concat(BROWSE_STATUSES).map(function(s){
+    var active = s === st ? ' active' : '';
+    var inner = s === 'ALL' ? tl('results.all') : statusBadgeHtml(s) + tl('status.' + s);
+    return '<button type="button" class="sm-btn'+active+'" onclick="setBrowseStatusFilter(\''+s+'\')">'+inner+'</button>';
+  }).join('');
+  var metaHtml = '<div class="browse-meta">'+
+      '<span class="browse-count">'+countHtml+'</span>'+
+      '<div class="status-filter"><span class="sm-label">'+tl('browse.statusFilter')+'</span>'+chips+'</div>'+
+    '</div>';
+
+  renderTableInto($rw, visible);
+  $rw.insertAdjacentHTML('afterbegin', metaHtml);
 }
 
 function applyShowMeFilter(cat, btn) {
@@ -1200,7 +1175,7 @@ function buildLangFilterBarHtml(langs, selected){
       '</button>';
   }).join('');
   return '<div class="lang-filter-bar" id="langFilterBar">'+
-      '<span class="lf-label">LANGUAGES:</span>'+
+      '<span class="lf-label">'+tl('results.languages')+'</span>'+
       chips+
     '</div>';
 }
@@ -1226,14 +1201,41 @@ function renderSearchResultsBody(){
   var visible = _searchLangConcepts.map(function(c){ return reshapeConceptForDisplayLang(c, _searchDisplayLang); });
   _currentResults = visible;
   var n = visible.length;
-  var filterHtml = _searchLangQuery ? '<div class="show-me-filter"><span class="sm-label">SHOW ME:</span><button class="sm-btn active" onclick="applyShowMeFilter(\'ALL\', this)">ALL</button><button class="sm-btn" onclick="applyShowMeFilter(\'HNG\', this)">HOME AND GARDEN</button><button class="sm-btn" onclick="applyShowMeFilter(\'PROF\', this)">PROFESSIONAL</button></div>' : '';
-  var meta = '<div class="results-meta">'+
-      '<span><b>'+n+'</b> result'+(n!==1?'s':'')+' found</span>'+
-      (_searchLangQuery ? '<span>for "'+esc(_searchLangQuery)+'"</span>' : '')+
-    '</div>';
+  var filterHtml = _searchLangQuery ? showMeFilterHtml() : '';
+  var meta = resultsMetaHtml(n, _searchLangQuery);
   var actionBar = getActionBarHtml();
   var cards = visible.map(function(c, i){ return renderConceptCard(c, _searchLangQuery, i); }).join('');
   body.innerHTML = filterHtml + meta + actionBar + cards;
+}
+
+function showMeFilterHtml(){
+  return '<div class="show-me-filter"><span class="sm-label">'+tl('results.showMe')+'</span>'+
+    '<button class="sm-btn active" onclick="applyShowMeFilter(\'ALL\', this)">'+tl('results.all')+'</button>'+
+    '<button class="sm-btn" onclick="applyShowMeFilter(\'HNG\', this)">Home and Garden</button>'+
+    '<button class="sm-btn" onclick="applyShowMeFilter(\'PROF\', this)">Professional</button></div>';
+}
+function resultsMetaHtml(n, query){
+  return '<div class="results-meta">'+
+      '<span>'+tln('results.found', n, { n: n })+'</span>'+
+      (query ? '<span>'+tl('results.for', { q: query })+'</span>' : '')+
+    '</div>';
+}
+
+// ─── STATUS HELPERS ─────────────────────────────────────────────────────
+function termStatus(term){
+  return term.forbidden ? 'FORBIDDEN' : (term.status === 'APPROVED' ? 'APPROVED' : 'NEW');
+}
+function statusGlyph(status){
+  return status === 'APPROVED'
+    ? '<span class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="#3A3A3A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span>'
+    : '<span class="glyph"></span>';
+}
+function statusBadgeHtml(status){
+  return '<span class="status-icon status-'+status.toLowerCase()+'">'+statusGlyph(status)+'</span>';
+}
+function statusHtml(term){
+  var s = termStatus(term);
+  return '<span class="status-icon status-'+s.toLowerCase()+'">'+statusGlyph(s)+'<span class="label">'+tl('status.'+s)+'</span></span>';
 }
 
 // ─── RENDER RESULTS (Search / AI) ───────────────────────────────────────
@@ -1242,7 +1244,7 @@ function renderResultsInto(target, concepts, query, showLangFilter){
   _currentResults = concepts; // Save for export
 
   if (!concepts || concepts.length === 0){
-    showStateIn(wrap, 'empty', 'No results', query ? 'No terms were found for "'+esc(query)+'".' : 'No entries in this selection.');
+    showStateIn(wrap, 'empty', { key:'results.noResults' }, query ? { key:'results.noTermsFor', vars:{ q: query } } : { key:'results.noEntries' });
     return;
   }
 
@@ -1258,12 +1260,9 @@ function renderResultsInto(target, concepts, query, showLangFilter){
 
   var n = concepts.length;
   
-  var filterHtml = query ? '<div class="show-me-filter"><span class="sm-label">SHOW ME:</span><button class="sm-btn active" onclick="applyShowMeFilter(\'ALL\', this)">ALL</button><button class="sm-btn" onclick="applyShowMeFilter(\'HNG\', this)">HOME AND GARDEN</button><button class="sm-btn" onclick="applyShowMeFilter(\'PROF\', this)">PROFESSIONAL</button></div>' : '';
+  var filterHtml = query ? showMeFilterHtml() : '';
   
-  var meta = '<div class="results-meta">'+
-      '<span><b>'+n+'</b> result'+(n!==1?'s':'')+' found</span>'+
-      (query ? '<span>for "'+esc(query)+'"</span>' : '')+
-    '</div>';
+  var meta = resultsMetaHtml(n, query);
     
   var actionBar = getActionBarHtml();
   var cards = concepts.map(function(c, i){ return renderConceptCard(c, query, i); }).join('');
@@ -1275,11 +1274,6 @@ function renderConceptCard(c, query, idx){
   if (!src) return '';
   var delay = Math.min(idx * 35, 250);
 
-  var statusClass = src.forbidden ? 'forbidden' : (src.status === 'APPROVED' ? 'approved' : 'new');
-  var statusLabel = src.forbidden ? 'Forbidden' : (src.status === 'APPROVED' ? 'Approved' : 'New');
-  var statusIcon =
-    statusClass === 'approved' ? '<span class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="#3A3A3A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span>' :
-    '<span class="glyph"></span>';
 
   var catBadge = c.categoryLabel ? '<span class="cat-badge">'+esc(c.categoryLabel)+'</span>' : '';
 
@@ -1288,13 +1282,13 @@ function renderConceptCard(c, query, idx){
       '<span class="lang-badge">'+getFlagHtml(src.lang)+' '+esc((src.lang||'').toUpperCase())+'</span>'+
       catBadge+
       '<span class="source-term">'+highlight(src.term, query)+'</span>'+
-      '<span class="status-icon status-'+statusClass+'">'+statusIcon+'<span class="label">'+statusLabel+'</span></span>'+
+      statusHtml(src)+
       '<span class="chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M6 9l6 6 6-6"/></svg></span>'+
     '</div>';
 
   var metaParts = [];
-  if (src.definition)  metaParts.push('<span class="meta-item"><span class="meta-label">Def.</span>'+esc(src.definition)+'</span>');
-  if (src.note)        metaParts.push('<span class="meta-item"><span class="meta-label">Note</span>'+esc(src.note)+'</span>');
+  if (src.definition)  metaParts.push('<span class="meta-item"><span class="meta-label">'+tl('card.def')+'</span>'+esc(src.definition)+'</span>');
+  if (src.note)        metaParts.push('<span class="meta-item"><span class="meta-label">'+tl('card.note')+'</span>'+esc(src.note)+'</span>');
   var meta = metaParts.length ? '<div class="card-meta">'+metaParts.join('')+'</div>' : '';
 
   var tlHtml;
@@ -1303,18 +1297,18 @@ function renderConceptCard(c, query, idx){
       var titleParts = [];
       if (t.definition) titleParts.push(t.definition);
       if (t.note) titleParts.push(t.note);
-      var titleAttr = titleParts.length ? ' title="'+esc(titleParts.join(' ? '))+'"' : '';
+      var titleAttr = titleParts.length ? ' title="'+esc(titleParts.join(' · '))+'"' : '';
       return '<span class="tl-chip'+(t.forbidden?' tl-forbidden':'')+'"'+titleAttr+'>'+
         (t.preferred ? '<span class="tl-chip-dot"></span>' : '') +
         '<span class="tl-chip-lang">'+getFlagHtml(t.lang)+' '+esc((t.lang||'').toUpperCase())+'</span>'+
         '<span class="tl-chip-term">'+highlight(t.term, query)+'</span>'+
-        '<button class="copy-btn-mini" title="Copy" onclick="event.stopPropagation();copyTerm(this,\''+escJs(t.term)+'\')">'+
+        '<button class="copy-btn-mini"'+tAttrTitle('card.copy')+' onclick="event.stopPropagation();copyTerm(this,\''+escJs(t.term)+'\')">'+
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="1"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>'+
         '</button></span>';
     }).join('');
     tlHtml = '<div class="translations">'+chips+'</div>';
   } else {
-    tlHtml = '<div class="no-translations">No translations available</div>';
+    tlHtml = '<div class="no-translations">'+tl('results.noTranslations')+'</div>';
   }
   
   // Wrap meta and translations in card-body so they can be toggled
@@ -1327,7 +1321,7 @@ function renderTableInto(target, concepts) {
   _currentResults = concepts; // Save for export
 
   if (!concepts || concepts.length === 0){
-    showStateIn(wrap, 'empty', 'No results', 'No entries in this selection.');
+    showStateIn(wrap, 'empty', { key:'results.noResults' }, { key:'results.noEntries' });
     return;
   }
   
@@ -1341,24 +1335,24 @@ function renderTableInto(target, concepts) {
       var copySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="1"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>';
 
       var src = '<div class="table-term-row"><span class="lang-col">'+getFlagHtml(c.sourceTerm.lang)+' '+esc((c.sourceTerm.lang||'').toUpperCase())+'</span> <span class="term-text">'+esc(c.sourceTerm.term)+'</span>'+
-                '<button class="copy-btn-mini table-copy" title="Copy" onclick="event.stopPropagation(); copyTerm(this,\''+escJs(c.sourceTerm.term)+'\')">'+copySvg+'</button></div>';
+                '<button class="copy-btn-mini table-copy" '+tAttrTitle('card.copy')+' onclick="event.stopPropagation(); copyTerm(this,\''+escJs(c.sourceTerm.term)+'\')">'+copySvg+'</button></div>';
       
       var tgt = (c.translations||[]).map(function(t){ 
         return '<div class="table-term-row"><span class="lang-col">'+getFlagHtml(t.lang)+' '+esc((t.lang||'').toUpperCase())+'</span> <span class="term-text">'+esc(t.term)+'</span>'+
-               '<button class="copy-btn-mini table-copy" title="Copy" onclick="event.stopPropagation(); copyTerm(this,\''+escJs(t.term)+'\')">'+copySvg+'</button></div>'; 
+               '<button class="copy-btn-mini table-copy" '+tAttrTitle('card.copy')+' onclick="event.stopPropagation(); copyTerm(this,\''+escJs(t.term)+'\')">'+copySvg+'</button></div>'; 
       }).join('');
 
-      var stat = c.sourceTerm.forbidden ? 'Forbidden' : (c.sourceTerm.status === 'APPROVED' ? 'Approved' : 'New');
+      var nTl = (c.translations || []).length;
       
       tableHtml += '<tr onclick="toggleCard(this)"><td style="width:160px;">'+
         '<span class="row-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M6 9l6 6 6-6"/></svg></span> '+
         esc(cat)+'</td>'+
         '<td style="width:40%;">'+src+'</td>'+
         '<td>'+
-          '<div class="table-summary" style="font-size:11px; color:#999;">'+ (c.translations.length) +' translations (Click to view)</div>'+
+          '<div class="table-summary">'+tln('browse.translations', nTl, { n: nTl })+'</div>'+
           '<div class="table-translations">'+tgt+'</div>'+
         '</td>'+
-        '<td style="width:80px;">'+stat+'</td></tr>';
+        '<td style="width:110px;">'+statusHtml(c.sourceTerm)+'</td></tr>';
   });
   tableHtml += '</tbody></table></div>';
   wrap.innerHTML = actionBar + tableHtml;
@@ -1370,10 +1364,12 @@ function copyTerm(btn, text){
   document.body.appendChild(ta); ta.select();
   try { document.execCommand('copy'); } catch(e){}
   document.body.removeChild(ta);
-  showToast('"'+text+'" copied');
+  showToast(t('toast.copied', { term: text }));
 }
 
+// title/sub: entweder Rohtext (z.B. Server-Fehlermeldung) oder { key, vars } für i18n
 function showStateIn(wrap, type, title, sub){
+  var part = function(x){ return (x && typeof x === 'object') ? tl(x.key, x.vars) : esc(x); };
   if (typeof wrap === 'string') wrap = document.getElementById(wrap);
   var icons = {
     empty: '<svg viewBox="0 0 64 64" fill="none"><rect x="8" y="8" width="48" height="48" stroke="#3A3A3A" stroke-width="2.5"/><circle cx="27" cy="27" r="10" stroke="#3A3A3A" stroke-width="2.5" fill="none"/><path d="M35 35l12 12" stroke="#3A3A3A" stroke-width="2.5"/></svg>',
@@ -1383,8 +1379,8 @@ function showStateIn(wrap, type, title, sub){
   wrap.innerHTML =
     '<div class="state-box">'+
       '<div class="state-icon-wrap">'+ (icons[type] || icons.empty) +'</div>'+
-      '<div class="state-title">'+esc(title)+'</div>'+
-      '<div class="state-sub">'+esc(sub)+'</div>'+
+      '<div class="state-title">'+part(title)+'</div>'+
+      '<div class="state-sub">'+part(sub)+'</div>'+
     '</div>';
 }
 function showToast(msg){
