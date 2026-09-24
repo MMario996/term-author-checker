@@ -49,17 +49,18 @@ function apiGetSettings() {
   var cleanUrl = rawUrl.split(']')[0].replace('[', '').trim();
 
   return {
-    PHRASE_API_TOKEN: token ? '????????????????????????????' : '',
+    PHRASE_API_TOKEN: token ? '••••••••••••••••' : '',
     ADMIN_EMAILS: props.getProperty('ADMIN_EMAILS') || '',
     TEMPLATE_LLM: props.getProperty('TEMPLATE_LLM') || 'pNoERiZ1YTileyUe4Za1j6',
     TEMPLATE_ALG: props.getProperty('TEMPLATE_ALG') || 'arpmvYCEAqGl0OmKV9f3s3',
      ALLOWED_TB_UIDS: props.getProperty('ALLOWED_TB_UIDS') || '',
     CUSTOM_RULES_LOG_SHEET_ID: props.getProperty('CUSTOM_RULES_LOG_SHEET_ID') || '',
-    GEMINI_API_KEY: geminiKey ? '????????????????????????????' : '',
+    GEMINI_API_KEY: geminiKey ? '••••••••••••••••' : '',
     GEMINI_API_URL: cleanUrl,
     AI_MODEL: props.getProperty('AI_MODEL') || 'gemini-3.6-flash',
     AI_TEMPERATURE: props.getProperty('AI_TEMPERATURE') || '0.2',
-    AI_PROMPT: props.getProperty('AI_PROMPT') || DEFAULT_AI_PROMPT
+    AI_PROMPT: props.getProperty('AI_PROMPT') || DEFAULT_AI_PROMPT,
+    AUTHORCHECK_PROMPT: props.getProperty('AUTHORCHECK_PROMPT') || AUTHORCHECK_DEFAULT_PROMPT
   };
 }
 
@@ -68,10 +69,10 @@ function apiSaveSettings(data) {
   if (getUserRole_(caller) !== 'ADMIN') throw new Error("Unauthorized: only admins can save settings.");
   var props = PropertiesService.getScriptProperties();
   
-  if (data.PHRASE_API_TOKEN && !data.PHRASE_API_TOKEN.includes('????')) {
+  if (data.PHRASE_API_TOKEN && !data.PHRASE_API_TOKEN.includes('••••') && !data.PHRASE_API_TOKEN.includes('????')) {
     props.setProperty('PHRASE_API_TOKEN', data.PHRASE_API_TOKEN.trim());
   }
-  if (data.GEMINI_API_KEY && !data.GEMINI_API_KEY.includes('????')) {
+  if (data.GEMINI_API_KEY && !data.GEMINI_API_KEY.includes('••••') && !data.GEMINI_API_KEY.includes('????')) {
     props.setProperty('GEMINI_API_KEY', data.GEMINI_API_KEY.trim());
   }
   
@@ -80,7 +81,12 @@ function apiSaveSettings(data) {
     props.setProperty('GEMINI_API_URL', cleanUrl);
   }
 
-  props.setProperty('ADMIN_EMAILS', (data.ADMIN_EMAILS || '').trim());
+  var newAdmins = _parseAdminEmails_(data.ADMIN_EMAILS);
+  if (!newAdmins.length) throw new Error('Admin Emails must not be empty.');
+  if (newAdmins.indexOf(String(caller).toLowerCase()) === -1) {
+    throw new Error('You cannot remove yourself from the admin list (' + caller + ').');
+  }
+  props.setProperty('ADMIN_EMAILS', newAdmins.join(', '));
   props.setProperty('TEMPLATE_LLM', (data.TEMPLATE_LLM || '').trim());
   props.setProperty('TEMPLATE_ALG', (data.TEMPLATE_ALG || '').trim());
   props.setProperty('ALLOWED_TB_UIDS', (data.ALLOWED_TB_UIDS || '').trim());
@@ -93,6 +99,14 @@ function apiSaveSettings(data) {
   } else {
     props.deleteProperty('AI_PROMPT'); // Fallback zu default
   }
+
+  var acPrompt = String(data.AUTHORCHECK_PROMPT || '').trim();
+  if (acPrompt && acPrompt !== AUTHORCHECK_DEFAULT_PROMPT.trim()) {
+    if (acPrompt.indexOf('{text}') === -1) throw new Error('The Author Check prompt must contain the {text} placeholder.');
+    props.setProperty('AUTHORCHECK_PROMPT', acPrompt);
+  } else {
+    props.deleteProperty('AUTHORCHECK_PROMPT'); // Fallback zu default
+  }
   
   try { CacheService.getScriptCache().remove(TERMSEARCH_TB_CACHE_KEY); } catch(e) {}
   logAuditEvent_(caller, 'SETTINGS_UPDATED', 'System settings were modified via UI');
@@ -100,6 +114,7 @@ function apiSaveSettings(data) {
 }
 
 function apiGetTemplateLanguages(templateUid) {
+  _requireAdmin_('read project templates');
   if (!templateUid) throw new Error('templateUid is required.');
   var url = 'https://cloud.memsource.com/web/api2/v1/projectTemplates/' + encodeURIComponent(templateUid);
   var res = UrlFetchApp.fetch(url, { method: 'get', headers: { Authorization: _phraseAuth_() }, muteHttpExceptions: true });
@@ -122,26 +137,39 @@ function getUserEmail_() {
   } catch(e) { 
     console.warn("Konnte User-Email nicht via Session abrufen: " + e.message);
   }
-  
-  if (email === '') {
-    var props = PropertiesService.getScriptProperties();
-    var fallback = props.getProperty('ADMIN_EMAILS');
-    if (fallback) {
-      email = fallback.split(',')[0].trim();
-    }
-  }
-  return email;
+  // Bewusst KEIN Fallback auf eine Admin-Adresse mehr: frueher wurde bei leerer
+  // E-Mail (externe Nutzer, eingeschraenkte Add-on-Kontexte) die erste Adresse aus
+  // ADMIN_EMAILS als Identitaet genommen - damit wurde jeder unbekannte Nutzer Admin.
+  return String(email || '').trim();
+}
+
+function _parseAdminEmails_(raw) {
+  return String(raw || '').split(',').map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
 }
 
 function getUserRole_(email) {
   var props = PropertiesService.getScriptProperties();
-  var admins = String(props.getProperty('ADMIN_EMAILS') || '').split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean);
-  var user = (email || '').toLowerCase();
-  
-  if (admins.length === 0 || admins.indexOf(user) > -1) {
+  var admins = _parseAdminEmails_(props.getProperty('ADMIN_EMAILS'));
+  var user = String(email || '').trim().toLowerCase();
+  // Leere E-Mail oder leere Admin-Liste => niemals Admin (frueher: jeder war Admin,
+  // sobald ADMIN_EMAILS leer war). Erst-Einrichtung: ADMIN_EMAILS im Script-Editor
+  // unter Projekteinstellungen > Skripteigenschaften setzen.
+  if (user && admins.indexOf(user) > -1) {
     return 'ADMIN';
   }
   return 'GUEST';
+}
+
+// Wirft, wenn der aktuelle Nutzer kein Admin ist. Fuer alle serverseitigen
+// Funktionen, die schreibend auf Phrase/Settings zugreifen oder Interna preisgeben -
+// jede nicht mit "_" endende Funktion ist per google.script.run aus der
+// Browser-Konsole aufrufbar, auch ohne Button in der Oberflaeche.
+function _requireAdmin_(what) {
+  var caller = getUserEmail_();
+  if (getUserRole_(caller) !== 'ADMIN') {
+    throw new Error('Unauthorized: only admins can ' + (what || 'do this') + '.');
+  }
+  return caller;
 }
 
 function logAuditEvent_(user, action, details) {
@@ -188,15 +216,15 @@ function apiDebugConnection() {
   var result = { ok: false, httpStatus: null, totalItems: null, errorMsg: null, tokenPrefix: null };
   try {
     var auth = _phraseAuth_();
-    result.tokenPrefix = auth.substring(0, 12) + '?';
+    result.tokenPrefix = auth.substring(0, 12) + '…';
     var res  = UrlFetchApp.fetch('https://cloud.memsource.com/web/api2/v1/termBases?pageNumber=0&pageSize=1', { method: 'get', headers: { Authorization: auth }, muteHttpExceptions: true });
     result.httpStatus = res.getResponseCode();
     if (result.httpStatus === 200) {
       var data = JSON.parse(res.getContentText());
       result.totalItems = data.totalElements || 0;
       result.ok = true;
-    } else if (result.httpStatus === 401) { result.errorMsg = 'Unauthorized (401) ? token is invalid or expired.';
-    } else if (result.httpStatus === 403) { result.errorMsg = 'Forbidden (403) ? token valid but no access to term bases.';
+    } else if (result.httpStatus === 401) { result.errorMsg = 'Unauthorized (401) – token is invalid or expired.';
+    } else if (result.httpStatus === 403) { result.errorMsg = 'Forbidden (403) – token valid but no access to term bases.';
     } else { result.errorMsg = 'HTTP ' + result.httpStatus + ': ' + res.getContentText().slice(0, 200); }
   } catch(e) { result.errorMsg = e.message; }
   return result;
@@ -226,6 +254,11 @@ function _phraseFetch_(url, options) {
 }
 
 function apiListTermbases() {
+  _requireAdmin_('list all termbases');
+  return _listAllTermbases_();
+}
+
+function _listAllTermbases_() {
   var termbases = [];
   var pageNumber = 0;
   while (true) {
@@ -286,11 +319,18 @@ function _getTargetTermbases_() {
   var cached = cache.get(TERMSEARCH_TB_CACHE_KEY);
   if (cached) { try { return JSON.parse(cached); } catch(e) {} }
 
-  var all = apiListTermbases();
+  var all = _listAllTermbases_();
   var filtered = all.filter(function(tb) {
     var n = String(tb.name || '').toUpperCase();
     return n.indexOf('DO NOT USE') === -1 && n.indexOf('SANDBOX') === -1 && n.indexOf('QC') === -1;
   });
+  // Optionale Admin-Einstellung "Allowed Termbase UIDs": wenn gesetzt, nur diese
+  // Termbases verwenden (wurde bisher gespeichert, aber nirgends ausgewertet).
+  var allowed = String(PropertiesService.getScriptProperties().getProperty('ALLOWED_TB_UIDS') || '')
+    .split(',').map(function(u) { return u.trim(); }).filter(Boolean);
+  if (allowed.length) {
+    filtered = filtered.filter(function(tb) { return allowed.indexOf(tb.uid) !== -1; });
+  }
 
   var result = [];
   Object.keys(TERMSEARCH_CATEGORY_PATTERNS).forEach(function(cat) {
@@ -476,9 +516,11 @@ function _searchCore_(query, sourceLang, searchLang) {
   return grouped;
 }
 
-function apiSearchTerms(query) {
-  var results = _searchCore_(query);
-  return results;
+function apiSearchTerms(query, sourceLang) {
+  // sourceLang (optional, z.B. aus dem Sprach-Dropdown der Editor-Sidebar):
+  // in dieser Sprache suchen und sie als Referenzsprache oben anzeigen.
+  var lang = sourceLang ? String(sourceLang).toLowerCase().slice(0, 5) : '';
+  return lang ? _searchCore_(query, lang, lang) : _searchCore_(query);
 }
 
 function _buildGeminiRequest_(apiUrl, model, apiKey, requestBody) {
@@ -503,10 +545,24 @@ function _fetchGeminiWithRetry_(url, options, maxAttempts) {
   return res;
 }
 
+var AI_HISTORY_MAX_MESSAGES = 10;             // 5 Frage/Antwort-Runden
+var AI_IMAGE_MAX_BASE64_CHARS = 10 * 1024 * 1024; // ~7,5 MB Binärdaten
+
 function apiAiAssistedSearch(freeText, history, imageData) {
   freeText = String(freeText || '').trim();
   history = Array.isArray(history) ? history : [];
+  // Nur die letzten Gesprächsrunden mitschicken, sonst wächst jede Anfrage
+  // (inkl. vollem Prompt pro Runde) unbegrenzt.
+  if (history.length > AI_HISTORY_MAX_MESSAGES) history = history.slice(-AI_HISTORY_MAX_MESSAGES);
   var hasImage = !!(imageData && imageData.data && imageData.mimeType);
+  if (hasImage) {
+    if (!/^image\/(png|jpe?g|gif|webp|heic|heif)$/i.test(String(imageData.mimeType))) {
+      throw new Error('Unsupported image type. Please upload a PNG, JPEG, GIF or WebP image.');
+    }
+    if (String(imageData.data).length > AI_IMAGE_MAX_BASE64_CHARS) {
+      throw new Error('The image is too large. Please use an image under ~7 MB.');
+    }
+  }
   if (!freeText && !hasImage) throw new Error('Please enter a description or upload an image.');
   var props = PropertiesService.getScriptProperties();
   var apiKey = (props.getProperty('GEMINI_API_KEY') || '').trim();
@@ -588,6 +644,7 @@ function apiAiAssistedSearch(freeText, history, imageData) {
 }
 
 function apiAddTerm(payload) {
+  _requireAdmin_('add terms');
   var uid  = String(payload.termibaseUid || '').trim();
   var text = String(payload.term || '').trim();
   var lang = String(payload.lang || '').trim();
@@ -602,6 +659,7 @@ function apiAddTerm(payload) {
 }
 
 function apiUpdateTerm(payload) {
+  _requireAdmin_('update terms');
   var uid    = String(payload.termibaseUid || '').trim();
   var termId = String(payload.id || '').trim();
   var text   = String(payload.term || '').trim();
@@ -616,6 +674,7 @@ function apiUpdateTerm(payload) {
 }
 
 function apiDeleteTerm(termId, termBaseUid) {
+  _requireAdmin_('delete terms');
   var tid = String(termId || '').trim();
   var uid = String(termBaseUid || '').trim();
   if (!tid || !uid) throw new Error('termId and termBaseUid are required.');
@@ -627,6 +686,7 @@ function apiDeleteTerm(termId, termBaseUid) {
 }
 
 function apiBatchImportTerms(termBaseUid, rows) {
+  _requireAdmin_('import terms');
   var uid = String(termBaseUid || '').trim();
   if (!uid) throw new Error('termBaseUid is required.');
   if (!Array.isArray(rows) || !rows.length) throw new Error('No rows to import.');
@@ -669,7 +729,20 @@ function _getOrCreateExportFolder_() {
   if (existing.hasNext()) return existing.next();
   return root.createFolder('Terminology');
 }
+// Schutz vor Formel-Injection: Sheets wertet Text, der mit = + - @ beginnt, beim
+// Schreiben per setValues/appendRow als Formel aus (z.B. =IMPORTDATA("https://...")
+// koennte Daten aus dem Sheet nach aussen schicken). Solche Texte werden daher mit
+// einem Apostroph als reiner Text markiert. Zahlen/Datumswerte bleiben unveraendert.
+function _sheetSafe_(v) {
+  if (typeof v !== 'string') return v;
+  return /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
+}
+function _sheetSafeRows_(rows) {
+  return (rows || []).map(function(row) { return (row || []).map(_sheetSafe_); });
+}
+
 function apiExportToSheet(rows) {
+  rows = _sheetSafeRows_(rows);
   try {
     var ss = SpreadsheetApp.create('Karcher_TermSearch_Export_' + new Date().toISOString().slice(0,10));
     var file = DriveApp.getFileById(ss.getId());
@@ -752,7 +825,7 @@ function _normStatus_(uiStatus) {
 }
 
 function printAllTermbaseUIDs() {
-  var termbases = apiListTermbases();
+  var termbases = apiListTermbases(); // Admin-Check steckt in apiListTermbases
   Logger.log("=== VERFÜGBARE TERMBASES ===");
   termbases.forEach(function(tb){ Logger.log("Name: " + tb.name + " | UID: " + tb.uid); });
   Logger.log("============================");
@@ -791,25 +864,78 @@ function showSidebar() {
   else if (SlidesApp.getActivePresentation()) SlidesApp.getUi().showSidebar(ui);
 }
 
-function apiExtractTextFromCurrentApp(scope) {
+// Sammelt alle Textbereiche einer Liste von Folienelementen: Formen jeder Art
+// (nicht nur TEXT_BOX, sondern auch Platzhalter wie Titel/Textkoerper, Rechtecke,
+// Pfeile ...), Tabellenzellen und - rekursiv - gruppierte Elemente. Wird von der
+// Textextraktion UND von Ersetzen/Springen/Notiz genutzt, damit alles, was geprueft
+// wird, auch wiedergefunden werden kann.
+function _slidesTextTargets_(pageElements, slideIndex, out) {
+  out = out || [];
+  (pageElements || []).forEach(function(pe) {
+    try {
+      var type = pe.getPageElementType();
+      if (type === SlidesApp.PageElementType.SHAPE) {
+        out.push({ slideIndex: slideIndex, element: pe, textRange: pe.asShape().getText() });
+      } else if (type === SlidesApp.PageElementType.TABLE) {
+        var table = pe.asTable();
+        for (var r = 0; r < table.getNumRows(); r++) {
+          for (var c = 0; c < table.getNumColumns(); c++) {
+            var cell = table.getCell(r, c);
+            if (cell.getMergeState() === SlidesApp.CellMergeState.MERGED) continue; // Text liegt in der HEAD-Zelle
+            out.push({ slideIndex: slideIndex, element: pe, textRange: cell.getText() });
+          }
+        }
+      } else if (type === SlidesApp.PageElementType.GROUP) {
+        _slidesTextTargets_(pe.asGroup().getChildren(), slideIndex, out);
+      }
+    } catch (e) {
+      Logger.log('_slidesTextTargets_: Element uebersprungen: ' + e);
+    }
+  });
+  return out;
+}
+
+function _slidesAllTextTargets_(pres) {
+  var out = [];
+  pres.getSlides().forEach(function(slide, i) { _slidesTextTargets_(slide.getPageElements(), i, out); });
+  return out;
+}
+
+// Alle sichtbaren Tabellenblaetter (fuer "gesamtes Dokument" in Sheets). Frueher
+// wurde nur das gerade aktive Blatt geprueft.
+function _sheetsVisibleSheets_(ss) {
+  return ss.getSheets().filter(function(sh) { return !sh.isSheetHidden(); });
+}
+
+function _sheetsRangeToText_(range) {
+  return range.getDisplayValues().map(function(row) {
+    return row.filter(function(v) { return String(v).trim() !== ''; }).join(' ');
+  }).filter(function(line) { return line.trim() !== ''; }).join('\n');
+}
+
+var EXTRACT_DEFAULT_MAX_CHARS = 15000;
+
+/**
+ * Liest den Text des aktiven Docs/Sheets/Slides (Auswahl oder gesamt).
+ * maxChars (optional): Obergrenze, Standard 15000 (Abwaertskompatibilitaet).
+ */
+function apiExtractTextFromCurrentApp(scope, maxChars) {
   var text = "";
   var isSelection = (scope === 'selection');
+  var limit = maxChars || EXTRACT_DEFAULT_MAX_CHARS;
 
   if (DocumentApp.getActiveDocument()) {
     var doc = DocumentApp.getActiveDocument();
     if (isSelection) {
       var selection = doc.getSelection();
-      Logger.log('apiExtractTextFromCurrentApp: selection=' + (selection ? 'vorhanden' : 'null'));
       if (selection) {
-        var elements = selection.getRangeElements();
-        Logger.log('apiExtractTextFromCurrentApp: ' + elements.length + ' RangeElement(s) gefunden');
-        elements.forEach(function(el) {
-          if (el.getElement().asText) {
+        selection.getRangeElements().forEach(function(el) {
+          if (el.getElement().editAsText) {
             var txt = el.getElement().asText().getText();
             if (el.isPartial()) {
-              text += txt.substring(el.getStartOffset(), el.getEndOffsetInclusive() + 1) + " ";
+              text += txt.substring(el.getStartOffset(), el.getEndOffsetInclusive() + 1) + "\n";
             } else {
-              text += txt + " ";
+              text += txt + "\n";
             }
           }
         });
@@ -819,68 +945,49 @@ function apiExtractTextFromCurrentApp(scope) {
     }
   } 
   else if (SpreadsheetApp.getActiveSpreadsheet()) {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
     if (isSelection) {
-      var range = sheet.getActiveRange();
-      if (range) {
-        var values = range.getValues();
-        text = values.map(function(row) { return row.join(" "); }).join("\n");
-      }
+      var range = ss.getActiveRange();
+      if (range) text = _sheetsRangeToText_(range);
     } else {
-      var data = sheet.getDataRange().getValues();
-      text = data.map(function(row) { return row.join(" "); }).join("\n");
+      text = _sheetsVisibleSheets_(ss).map(function(sh) {
+        return _sheetsRangeToText_(sh.getDataRange());
+      }).filter(Boolean).join("\n\n");
     }
   } 
   else if (SlidesApp.getActivePresentation()) {
     var pres = SlidesApp.getActivePresentation();
+    var targets = [];
     if (isSelection) {
       var selection = pres.getSelection();
       var selType = selection.getSelectionType();
 
       if (selType === SlidesApp.SelectionType.TEXT) {
-        // Text innerhalb einer Textbox ist markiert (Cursor im Text oder Text hervorgehoben)
+        // Text innerhalb einer Form ist markiert (Cursor im Text oder Text hervorgehoben)
         var textRange = selection.getTextRange();
-        if (textRange) {
-          text += textRange.asString() + "\n";
-        }
+        if (textRange) text += textRange.asString() + "\n";
       } else if (selType === SlidesApp.SelectionType.PAGE_ELEMENT) {
-        // Eine Form/Textbox ist als Objekt markiert (z.B. per Klick auf den Rahmen)
+        // Form/Tabelle/Gruppe ist als Objekt markiert (z.B. per Klick auf den Rahmen)
         var pageElementRange = selection.getPageElementRange();
-        if (pageElementRange) {
-          pageElementRange.getPageElements().forEach(function(pe) {
-            if (pe.getPageElementType() === SlidesApp.PageElementType.SHAPE) {
-              text += pe.asShape().getText().asString() + "\n";
-            }
-          });
-        }
+        if (pageElementRange) targets = _slidesTextTargets_(pageElementRange.getPageElements(), -1);
       } else if (selType === SlidesApp.SelectionType.PAGE) {
         // Ganze Folie(n) links im Filmstreifen markiert
         var pageRange = selection.getPageRange();
         if (pageRange) {
-          var pages = pageRange.getPages();
-          pages.forEach(function(page) {
-            page.getShapes().forEach(function(shape) {
-              if (shape.getShapeType() === SlidesApp.ShapeType.TEXT_BOX) {
-                text += shape.getText().asString() + "\n";
-              }
-            });
-          });
+          pageRange.getPages().forEach(function(page) { _slidesTextTargets_(page.getPageElements(), -1, targets); });
         }
       }
     } else {
-      var slides = pres.getSlides();
-      slides.forEach(function(slide) {
-        slide.getShapes().forEach(function(shape) {
-          if (shape.getShapeType() === SlidesApp.ShapeType.TEXT_BOX) {
-            text += shape.getText().asString() + "\n";
-          }
-        });
-      });
+      targets = _slidesAllTextTargets_(pres);
     }
+    targets.forEach(function(t) {
+      var str = t.textRange.asString();
+      if (str.trim()) text += str + "\n";
+    });
   }
   
   if (text) {
     text = text.replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
   }
-  return text.substring(0, 15000); 
+  return text.substring(0, limit); 
 }

@@ -119,7 +119,7 @@ button, input, select, textarea{ font-family:inherit; }
 .recent-chip .rc-remove:hover{ color:var(--red); }
 .recent-chip .rc-remove svg{ width:10px; height:10px; }
 
-/* ?? AI SEARCH PANEL ?????????????????????????????????????????????????????? */
+/* ── AI SEARCH PANEL ────────────────────────────────────────────────────── */
 .ai-box{ border:2px solid var(--gray-300); background:var(--white); max-width:800px; margin:0 auto;}
 .ai-box.focused{ border-color:var(--ink); box-shadow:3px 3px 0 var(--yellow); }
 #aiQuery, #aiRefineQuery{
@@ -172,7 +172,7 @@ button, input, select, textarea{ font-family:inherit; }
 .ai-thread-export-bar{ display:none; max-width:800px; margin:14px auto 0; justify-content:flex-end; }
 .ai-thread-export-bar.show{ display:flex; }
 
-/* ?? BROWSE PANEL ????????????????????????????????????????????????????????? */
+/* ── BROWSE PANEL ───────────────────────────────────────────────────────── */
 .browse-controls{ display:flex; gap:10px; flex-wrap:wrap; }
 .browse-controls select, .browse-controls input{
   flex:1; min-width:150px; border:1.5px solid var(--gray-300); background:var(--white);
@@ -192,11 +192,11 @@ button, input, select, textarea{ font-family:inherit; }
 .page-btn svg{ width:13px; height:13px; }
 .page-label{ font-size:11.5px; color:var(--gray-500); font-family:var(--ff-head); letter-spacing:.5px; }
 
-/* ?? LOADING STATE ???????????????????????????????????????????????????????? */
+/* ── LOADING STATE ──────────────────────────────────────────────────────── */
 .loading-state{ display:flex; flex-direction:column; align-items:center; justify-content:center; padding:44px 20px; gap:12px; }
 .loading-text{ font-family:var(--ff-head); font-size:12.5px; font-weight:600; letter-spacing:.4px; color:var(--gray-500); text-align:center; min-height:16px; transition:opacity .15s; }
 
-/* ?? FLAG ICONS ??????????????????????????????????????????????????????????? */
+/* ── FLAG ICONS ─────────────────────────────────────────────────────────── */
 .flag-icon-custom {
   margin-right: 5px;
   border-radius: 1px;
@@ -205,27 +205,27 @@ button, input, select, textarea{ font-family:inherit; }
   line-height: 1em;
 }
 
-/* ?? ACTION BAR (Collapse/Export) ????????????????????????????????????????? */
+/* ── ACTION BAR (Collapse/Export) ───────────────────────────────────────── */
 .action-bar { display: flex; gap: 8px; margin: 10px auto; max-width:800px; flex-wrap: wrap; align-items: center; justify-content: flex-end;}
 .action-btn { background: var(--gray-50); border: 1px solid var(--gray-200); padding: 5px 12px; font-size: 11px; font-family: var(--ff-head); font-weight: 600; text-transform: uppercase; cursor: pointer; color: var(--gray-500); transition: all 0.15s; display:flex; align-items:center; gap:6px;}
 .action-btn:hover { border-color: var(--gray-400); color: var(--ink); }
 .action-btn svg { width: 13px; height: 13px; }
 
-/* ?? SHOW ME FILTER ??????????????????????????????????????????????????????? */
+/* ── SHOW ME FILTER ─────────────────────────────────────────────────────── */
 .show-me-filter { display:flex; align-items:center; gap:10px; margin: 14px auto 6px; max-width:800px; border-bottom: 1px solid var(--gray-150); padding-bottom: 10px; flex-wrap: wrap;}
 .sm-label { font-family:var(--ff-head); font-size:11px; font-weight:700; color:var(--gray-400); letter-spacing:0.5px;}
 .sm-btn { background:var(--gray-50); border:1px solid var(--gray-200); padding:4px 10px; font-size:11px; font-family:var(--ff-head); font-weight:600; text-transform:uppercase; cursor:pointer; color:var(--gray-500); transition:all 0.15s;}
 .sm-btn:hover { border-color:var(--gray-400); color:var(--ink); }
 .sm-btn.active { background:var(--yellow); border-color:var(--yellow); color:var(--ink); }
 
-/* ?? DISPLAY LANGUAGE PICKER (Search tab, single-select) ???????????????????? */
+/* ── DISPLAY LANGUAGE PICKER (Search tab, single-select) ──────────────────── */
 .lang-filter-bar { display:flex; align-items:center; gap:8px; margin: 14px auto 6px; max-width:800px; border-bottom: 1px solid var(--gray-150); padding-bottom: 10px; flex-wrap: wrap;}
 .lf-label { font-family:var(--ff-head); font-size:11px; font-weight:700; color:var(--gray-400); letter-spacing:0.5px; margin-right:2px;}
 .lf-chip { display:flex; align-items:center; gap:5px; background:var(--gray-50); border:1px solid var(--gray-200); padding:4px 9px 4px 7px; font-size:11px; font-family:var(--ff-head); font-weight:600; letter-spacing:.3px; cursor:pointer; color:var(--gray-400); transition:all .15s;}
 .lf-chip:hover { border-color:var(--gray-400); }
 .lf-chip.active { background:var(--yellow); border-color:var(--yellow); color:var(--ink);}
 
-/* ?? RESULTS & CARDS ?????????????????????????????????????????????????????? */
+/* ── RESULTS & CARDS ────────────────────────────────────────────────────── */
 #results-wrap{ margin-top:6px; }
 .results-meta{
   display:flex; align-items:baseline; justify-content:space-between; gap:12px;
@@ -307,7 +307,7 @@ button, input, select, textarea{ font-family:inherit; }
 
 .no-translations{ padding:10px 12px; color:var(--gray-400); font-size:12px; }
 
-/* ?? TABLE VIEW FOR DATABASE ?????????????????????????????????????????????? */
+/* ── TABLE VIEW FOR DATABASE ────────────────────────────────────────────── */
 .db-table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--gray-200); margin-top:12px; }
 .db-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
 .db-table th { background: var(--gray-50); padding: 10px; font-family: var(--ff-head); font-weight: 600; color: var(--gray-600); text-transform: uppercase; border-bottom: 2px solid var(--gray-200); white-space:nowrap;}
@@ -344,7 +344,7 @@ button, input, select, textarea{ font-family:inherit; }
 }
 #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
-/* ?? FOOTER LINKS (Buttons) ??????????????????????????????????????????????? */
+/* ── FOOTER LINKS (Buttons) ─────────────────────────────────────────────── */
 .support-footer {
   text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--gray-150); margin-bottom: 20px;
 }
@@ -359,7 +359,7 @@ button, input, select, textarea{ font-family:inherit; }
 .support-btn:hover { border-color: var(--ink); background: var(--gray-50); }
 .support-note { font-size: 11.5px; color: var(--gray-500); font-family:var(--ff-body); }
 
-/* ?? ADMIN MODAL ?????????????????????????????????????????????????????????? */
+/* ── ADMIN MODAL ────────────────────────────────────────────────────────── */
 .modal-bg{ display:none; position:fixed; inset:0; background:rgba(58,58,58,.45); z-index:200; align-items:center; justify-content:center; padding:20px; }
 .modal-bg.open{ display:flex; }
 .modal{ background:var(--white); width:640px; max-width:100%; max-height:88vh; display:flex; flex-direction:column; border:1px solid var(--gray-200); }
@@ -426,7 +426,7 @@ button, input, select, textarea{ font-family:inherit; }
     </div>
   </div>
 
-  <!-- ?? SEARCH PANEL ??????????????????????????????????????????? -->
+  <!-- ── SEARCH PANEL ─────────────────────────────────────────── -->
   <div class="panel active" id="panel-search">
     <div class="search-shell">
       <div class="search-bar" id="searchBarHero">
@@ -439,20 +439,20 @@ button, input, select, textarea{ font-family:inherit; }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
       </div>
-      <p class="search-hint">Wildcards: <kbd>Term*</kbd> ? <kbd>*Term</kbd> ? <kbd>*Term*</kbd></p>
+      <p class="search-hint">Wildcards: <kbd>Term*</kbd> · <kbd>*Term</kbd> · <kbd>*Term*</kbd></p>
     </div>
     <div class="recent" id="recentWrap"></div>
     <div id="results-wrap-search" aria-live="polite"></div>
   </div>
 
-  <!-- ?? AI SEARCH PANEL ???????????????????????????????????????? -->
+  <!-- ── AI SEARCH PANEL ──────────────────────────────────────── -->
   <div class="panel" id="panel-ai">
     <div id="aiUnavailable" class="ai-disabled-note" style="display:none">
       AI Search hasn't been set up yet. An admin can enable it under the gear icon in the top right (Gemini API Key).
     </div>
     <div id="aiAvailableWrap">
       <div class="ai-box" id="aiBox">
-        <textarea id="aiQuery" placeholder="Describe what you're looking for in your own words ? e.g. &quot;device that removes dirt using hot water vapour&quot;? Or attach a photo of the item below."></textarea>
+        <textarea id="aiQuery" placeholder="Describe what you're looking for in your own words – e.g. &quot;device that removes dirt using hot water vapour&quot;. Or attach a photo of the item below."></textarea>
         <div class="ai-image-row">
           <label class="ai-image-attach">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
@@ -502,10 +502,10 @@ button, input, select, textarea{ font-family:inherit; }
       </div>
     </div>
   </div>
-  <!-- ?? BROWSE PANEL ??????????????????????????????????????????? -->
+  <!-- ── BROWSE PANEL ─────────────────────────────────────────── -->
   <div class="panel" id="panel-browse">
     <div class="browse-controls">
-      <select id="browse-tb-select"><option value="">Select area ?</option></select>
+      <select id="browse-tb-select"><option value="">Select area…</option></select>
       <select id="browse-lang-select">
         <option value="">All languages</option>
         <option value="de">DE</option>
@@ -521,7 +521,7 @@ button, input, select, textarea{ font-family:inherit; }
       <button id="browse-search-btn" class="btn-search" style="padding:0 15px;">Search</button>
       <button id="browse-sort-toggle" class="page-btn" type="button" title="Sortierung umkehren">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7h13M3 12h9M3 17h5"/><path d="M18 6v13M18 6l-4 4M18 6l4 4"/></svg>
-        <span id="browse-sort-label">A ? Z</span>
+        <span id="browse-sort-label">A → Z</span>
       </button>
     </div>
     <div id="results-wrap-browse" aria-live="polite"></div>
@@ -536,7 +536,7 @@ button, input, select, textarea{ font-family:inherit; }
     </div>
   </div>
 
-  <!-- ?? FOOTER LINKS (Buttons) ??????????????????????????????????????????? -->
+  <!-- ── FOOTER LINKS (Buttons) ─────────────────────────────────────────── -->
   <div class="support-footer">
     <div class="support-btn-group">
       <a href="https://taskbox.karcher.com/plugins/servlet/desk/portal/97/create/4030" target="_blank" class="support-btn">
@@ -555,7 +555,7 @@ button, input, select, textarea{ font-family:inherit; }
 
 <div id="toast"></div>
 
-<!-- ?? ADMIN MODAL ?????????????????????????????????????????????? -->
+<!-- ── ADMIN MODAL ────────────────────────────────────────────── -->
 <div class="modal-bg" id="adminModal">
   <div class="modal">
     <div class="modal-head">
@@ -582,6 +582,11 @@ button, input, select, textarea{ font-family:inherit; }
           <textarea id="set-ai-prompt" style="width:100%; height:150px; font-family:monospace; resize:vertical; line-height:1.4;"></textarea>
           <div class="hint"><strong>IMPORTANT:</strong> Use <code>{freeText}</code> as the placeholder. The language is detected automatically (the <code>lang</code> field in the JSON response) and used for both the terms and the explanation. The JSON structure at the end must be kept exactly as is!</div>
         </div>
+        <div class="form-row">
+          <label>Author Check Prompt</label>
+          <textarea id="set-ac-prompt" style="width:100%; height:150px; font-family:monospace; resize:vertical; line-height:1.4;"></textarea>
+          <div class="hint">Used by Author Check in Docs/Sheets/Slides. Placeholders: <code>{text}</code> (required), <code>{sourceLang}</code>, <code>{termList}</code>, <code>{styleRules}</code>. The JSON structure (<code>{"issues":[...]}</code>) must be kept. Clear the field to restore the default.</div>
+        </div>
         <button class="btn-test" onclick="testGeminiConnection(this)">Test Gemini connection</button>
         <div class="test-result" id="geminiTestResult"></div>
       </div>
@@ -593,7 +598,7 @@ button, input, select, textarea{ font-family:inherit; }
 </div>
 
 <script>
-// ??? GLOBAL STATE ?????????????????????????????????????????????????????????
+// ─── GLOBAL STATE ─────────────────────────────────────────────────────────
 var _ctx = null;
 var _debounceTimer = null, _requestToken = 0;
 var RECENTS_KEY = 'termsearch_recent_v1', MAX_RECENTS = 6;
@@ -669,7 +674,7 @@ document.addEventListener('DOMContentLoaded', function(){
   $query.focus();
 });
 
-// ??? LANGUAGE SELECT HELPER ???????????????????????????????????????????????
+// ─── LANGUAGE SELECT HELPER ───────────────────────────────────────────────
 function populateLangSelect(selectEl, opts){
   if (!selectEl) return;
   opts = opts || {};
@@ -680,7 +685,7 @@ function populateLangSelect(selectEl, opts){
   selectEl.innerHTML = html;
   selectEl.value = opts.selected || (opts.includeAll ? '' : 'de');
 }
-// ??? HELPER: GET FLAG HTML ??????????????????????????????????????????????
+// ─── HELPER: GET FLAG HTML ──────────────────────────────────────────────
 function getFlagHtml(lang) {
   var l = String(lang||'').toLowerCase().replace('_', '-');
   var map = {
@@ -700,7 +705,7 @@ function getFlagHtml(lang) {
   return '<span class="fi fi-' + country + ' flag-icon-custom"></span>';
 }
 
-// ??? ACTION BAR (Expand/Collapse/Export) ?????????????????????????????????
+// ─── ACTION BAR (Expand/Collapse/Export) ─────────────────────────────────
 function getActionBarHtml() {
     return '<div class="action-bar">' +
         '<button class="action-btn" onclick="toggleAllCards(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Expand All</button>' +
@@ -770,14 +775,14 @@ function exportCurrentResults(event) {
         .apiExportToSheet(rows);
 }
 
-// ??? MODE SWITCHING ?????????????????????????????????????????????????????
+// ─── MODE SWITCHING ─────────────────────────────────────────────────────
 function switchMode(mode){
   document.querySelectorAll('.mode-tab').forEach(function(t){ t.classList.toggle('active', t.dataset.mode === mode); });
   document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
   document.getElementById('panel-' + mode).classList.add('active');
 }
 
-// ??? LOADING STATE (Text only, NO spinner) ?????????????????????????????
+// ─── LOADING STATE (Text only, NO spinner) ─────────────────────────────
 function startLoading(wrap, messages){
   if (typeof wrap === 'string') wrap = document.getElementById(wrap);
   var msgs = messages || SEARCH_STATUS_MSGS;
@@ -797,7 +802,7 @@ function stopLoading(){
   if (_loadingInterval) { clearInterval(_loadingInterval); _loadingInterval = null; }
 }
 
-// ??? DIRECT SEARCH ??????????????????????????????????????????????????????
+// ─── DIRECT SEARCH ──────────────────────────────────────────────────────
 document.getElementById('searchBtn').addEventListener('click', function(){ triggerSearch(); });
 $query.addEventListener('input', function(){
   toggleClearBtn();
@@ -869,7 +874,7 @@ function triggerSearch(){
 // Hinweis: der Aufruf renderResultsInto($rw, concepts, q) in .withSuccessHandler
 // weiter oben in dieser Funktion muss noch um ", true" ergänzt werden, siehe Schritt 4.
 
-// ??? AI SEARCH ??????????????????????????????????????????????????????????
+// ─── AI SEARCH ──────────────────────────────────────────────────────────
 var $aiQuery = document.getElementById('aiQuery');
 var $aiBox   = document.getElementById('aiBox');
 var $aiRefineQuery = document.getElementById('aiRefineQuery');
@@ -898,7 +903,7 @@ function setupImageAttach(inputId, previewId, thumbId, nameId, removeId, onChang
   input.addEventListener('change', function(){
     var file = input.files && input.files[0];
     if (!file) return;
-    nameEl.textContent = file.name + ' (wird verkleinert...)';
+    nameEl.textContent = file.name + ' (resizing…)';
     preview.classList.add('show');
     resizeImageFile(file, 1280, 0.82, function(result){
       thumb.src = result.dataUrl;
@@ -1107,11 +1112,11 @@ function exportAiThreadResults(event){
     })
     .apiExportToSheet(rows);
 }
-// ??? BROWSE (DATABASE) ??????????????????????????????????????????????????
+// ─── BROWSE (DATABASE) ──────────────────────────────────────────────────
 function loadBrowseTermbases(){
   google.script.run.withSuccessHandler(function(list){
     var sel = document.getElementById('browse-tb-select');
-    sel.innerHTML = '<option value="">Select area ?</option>' +
+    sel.innerHTML = '<option value="">Select area…</option>' +
       (list||[]).map(function(tb){ return '<option value="'+esc(tb.uid)+'">'+esc(tb.label || tb.category)+'</option>'; }).join('');
   }).apiListBrowseTermbases();
 }
@@ -1125,7 +1130,7 @@ document.getElementById('browse-lang-select').addEventListener('change', functio
 });
 document.getElementById('browse-sort-toggle').addEventListener('click', function(){
   _browseState.sortDir = _browseState.sortDir === 'asc' ? 'desc' : 'asc';
-  document.getElementById('browse-sort-label').textContent = _browseState.sortDir === 'asc' ? 'A ? Z' : 'Z ? A';
+  document.getElementById('browse-sort-label').textContent = _browseState.sortDir === 'asc' ? 'A → Z' : 'Z → A';
   if (_browseState.tbUid) loadBrowsePage();
 });
 document.getElementById('browse-search-input').addEventListener('keydown', function(e){
@@ -1174,7 +1179,7 @@ function applyShowMeFilter(cat, btn) {
   });
 }
 
-// ??? DISPLAY LANGUAGE PICKER (Search tab only, single-select) ???????????
+// ─── DISPLAY LANGUAGE PICKER (Search tab only, single-select) ───────────
 var _searchLangConcepts = [];
 var _searchDisplayLang = 'de';
 var _searchLangQuery = '';
@@ -1231,7 +1236,7 @@ function renderSearchResultsBody(){
   body.innerHTML = filterHtml + meta + actionBar + cards;
 }
 
-// ??? RENDER RESULTS (Search / AI) ???????????????????????????????????????
+// ─── RENDER RESULTS (Search / AI) ───────────────────────────────────────
 function renderResultsInto(target, concepts, query, showLangFilter){
   var wrap = (typeof target === 'string') ? document.getElementById(target) : target;
   _currentResults = concepts; // Save for export
@@ -1282,7 +1287,7 @@ function renderConceptCard(c, query, idx){
     '<div class="card-header" onclick="toggleCard(this)">'+
       '<span class="lang-badge">'+getFlagHtml(src.lang)+' '+esc((src.lang||'').toUpperCase())+'</span>'+
       catBadge+
-      '<span class="source-term">'+highlight(esc(src.term), query)+'</span>'+
+      '<span class="source-term">'+highlight(src.term, query)+'</span>'+
       '<span class="status-icon status-'+statusClass+'">'+statusIcon+'<span class="label">'+statusLabel+'</span></span>'+
       '<span class="chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M6 9l6 6 6-6"/></svg></span>'+
     '</div>';
@@ -1302,7 +1307,7 @@ function renderConceptCard(c, query, idx){
       return '<span class="tl-chip'+(t.forbidden?' tl-forbidden':'')+'"'+titleAttr+'>'+
         (t.preferred ? '<span class="tl-chip-dot"></span>' : '') +
         '<span class="tl-chip-lang">'+getFlagHtml(t.lang)+' '+esc((t.lang||'').toUpperCase())+'</span>'+
-        '<span class="tl-chip-term">'+highlight(esc(t.term), query)+'</span>'+
+        '<span class="tl-chip-term">'+highlight(t.term, query)+'</span>'+
         '<button class="copy-btn-mini" title="Copy" onclick="event.stopPropagation();copyTerm(this,\''+escJs(t.term)+'\')">'+
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="1"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>'+
         '</button></span>';
@@ -1316,7 +1321,7 @@ function renderConceptCard(c, query, idx){
   return '<div class="concept-card" data-category="'+(c.category||'').toUpperCase()+'" style="animation-delay:'+delay+'ms">'+header+'<div class="card-body">'+meta+tlHtml+'</div></div>';
 }
 
-// ??? RENDER TABLE (Browse Tab) ???????????????????????????????????????????
+// ─── RENDER TABLE (Browse Tab) ───────────────────────────────────────────
 function renderTableInto(target, concepts) {
   var wrap = (typeof target === 'string') ? document.getElementById(target) : target;
   _currentResults = concepts; // Save for export
@@ -1388,7 +1393,7 @@ function showToast(msg){
   $toast._t = setTimeout(function(){ $toast.classList.remove('show'); }, 1700);
 }
 
-// ??? ADMIN MODAL ????????????????????????????????????????????????????????
+// ─── ADMIN MODAL ────────────────────────────────────────────────────────
 function openAdmin(){
   document.getElementById('adminModal').classList.add('open');
   switchAdminTab('settings');
@@ -1405,6 +1410,7 @@ function openAdmin(){
     document.getElementById('set-ai-model').value = s.AI_MODEL || '';
     document.getElementById('set-ai-temp').value = s.AI_TEMPERATURE || '';
     document.getElementById('set-ai-prompt').value = s.AI_PROMPT || '';
+    document.getElementById('set-ac-prompt').value = s.AUTHORCHECK_PROMPT || '';
   }).apiGetSettings();
 }
 function closeAdmin(){ document.getElementById('adminModal').classList.remove('open'); }
@@ -1416,7 +1422,7 @@ function switchAdminTab(tab){
 }
 function testGeminiConnection(btn){
   var origText = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Testing?';
+  btn.disabled = true; btn.textContent = 'Testing…';
   var resEl = document.getElementById('geminiTestResult');
   resEl.classList.remove('show','ok','fail');
   google.script.run
@@ -1424,12 +1430,12 @@ function testGeminiConnection(btn){
       btn.disabled = false; btn.textContent = origText;
       resEl.classList.add('show', r.ok ? 'ok' : 'fail');
       if (r.ok) {
-        resEl.innerHTML = '? Connection successful (HTTP ' + r.httpStatus + ').<br>' +
-          '<span style="opacity:.7">Key used: ' + esc(r.keyPreview) + ' ? Model: ' + esc(r.modelUsed) + '<br>Auth method: ' + esc(r.authMethod) + '</span>';
+        resEl.innerHTML = '✓ Connection successful (HTTP ' + r.httpStatus + ').<br>' +
+          '<span style="opacity:.7">Key used: ' + esc(r.keyPreview) + ' · Model: ' + esc(r.modelUsed) + '<br>Auth method: ' + esc(r.authMethod) + '</span>';
       } else if (!r.keyConfigured) {
-        resEl.textContent = '? No Gemini API Key saved yet. Enter one above and click "Save" first, then test.';
+        resEl.textContent = '✗ No Gemini API Key saved yet. Enter one above and click "Save" first, then test.';
       } else {
-        resEl.innerHTML = '? Failed (HTTP ' + (r.httpStatus||'?') + '): ' + esc(r.errorMsg || 'Unknown error') +
+        resEl.innerHTML = '✗ Failed (HTTP ' + (r.httpStatus||'?') + '): ' + esc(r.errorMsg || 'Unknown error') +
           '<br><span style="opacity:.7">Key used: ' + esc(r.keyPreview) + '<br>Model: ' + esc(r.modelUsed) +
           '<br>Auth method: ' + esc(r.authMethod) + '<br>URL called: ' + esc(r.urlCalled) + '</span>';
       }
@@ -1437,7 +1443,7 @@ function testGeminiConnection(btn){
     .withFailureHandler(function(err){
       btn.disabled = false; btn.textContent = origText;
       resEl.classList.add('show','fail');
-      resEl.textContent = '? ' + (err.message || err);
+      resEl.textContent = '✗ ' + (err.message || err);
     })
     .apiDebugGeminiConnection();
 }
@@ -1451,7 +1457,8 @@ function saveAdminSettings(){
     GEMINI_API_URL: document.getElementById('set-gemini-url').value,
     AI_MODEL: document.getElementById('set-ai-model').value,
     AI_TEMPERATURE: document.getElementById('set-ai-temp').value,
-    AI_PROMPT: document.getElementById('set-ai-prompt').value
+    AI_PROMPT: document.getElementById('set-ai-prompt').value,
+    AUTHORCHECK_PROMPT: document.getElementById('set-ac-prompt').value
   };
   google.script.run
     .withSuccessHandler(function(){ showToast('Settings saved'); closeAdmin(); setTimeout(function(){ location.reload(); }, 600); })
@@ -1459,7 +1466,7 @@ function saveAdminSettings(){
     .apiSaveSettings(data);
 }
 
-// ??? UTIL ???????????????????????????????????????????????????????????????
+// ─── UTIL ───────────────────────────────────────────────────────────────
 function esc(str){ if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 // Für Werte, die in ein einfach-gequotetes onclick="...('...')"-JS-Literal eingebettet
 // werden: erst als JS-String escapen (\ und '), danach zusätzlich als HTML-Attribut
@@ -1475,13 +1482,23 @@ function escJs(str){
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;');
 }
-function highlight(escapedText, rawQuery){
+// Markiert die Suchanfrage im ROHEN Text und escaped erst danach die Teilstücke.
+// Frueher wurde im bereits escapten HTML gesucht - eine Suche nach "amp", "gt"
+// oder "quot" traf dann die Entities selbst (sichtbar: "&<mark>amp</mark>;").
+function highlight(rawText, rawQuery){
+  var text = String(rawText || '');
   var core = String(rawQuery||'').replace(/\*/g,'').trim();
-  if (!core) return escapedText;
-  var escCore = esc(core).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  if (!escCore) return escapedText;
-  try { var re = new RegExp('('+escCore+')', 'ig'); return escapedText.replace(re, '<mark>$1</mark>'); }
-  catch(e){ return escapedText; }
+  if (!core) return esc(text);
+  var reCore = core.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  var re;
+  try { re = new RegExp(reCore, 'ig'); } catch(e){ return esc(text); }
+  var out = '', last = 0, m;
+  while ((m = re.exec(text)) !== null) {
+    if (!m[0].length) { re.lastIndex++; continue; }
+    out += esc(text.slice(last, m.index)) + '<mark>' + esc(m[0]) + '</mark>';
+    last = m.index + m[0].length;
+  }
+  return out + esc(text.slice(last));
 }
 </script>
 </body>

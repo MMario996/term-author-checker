@@ -5768,7 +5768,9 @@
  * Hilfsfunktion: Holt oder erstellt den Ordner "TermCheck Rules" in Google Drive.
  */
 function _getOrCreateRulesFolder_() {
-  var folders = DriveApp.getFoldersByName("TermCheck Rules");
+  // Nur eigene Ordner: getFoldersByName() fand auch fremde, mit einem geteilte
+  // Ordner gleichen Namens - deren Custom-Prompts landeten dann im KI-Prompt.
+  var folders = DriveApp.searchFolders('title = "TermCheck Rules" and "me" in owners and trashed = false');
   if (folders.hasNext()) {
     return folders.next();
   } else {
@@ -5962,14 +5964,90 @@ var DEFAULT_RULES_CONFIG_EN = [
   { "Description": "Detects and removes spaces before or after a slash in compound terms (e.g. only \"plug/unplug\" is allowed).", "Information": null, "ConflictsWith": [], "IsConfigurable": false, "DefaultParameter": "-1", "AllowedParameterValues": [], "Name": "NEU21", "Type": "Style", "Parameter": null, "IsEnabled": true }
 ];
 
+// Regelwerke existieren nur fuer DE und EN (siehe _buildAuthorCheckPromptParts_).
+function _rulesLanguageSupported_(language) {
+  return language === "de" || language === "en";
+}
+
+// Im deutschen Regelwerk tragen 8 unterschiedliche Regeln denselben "Name"
+// (z.B. 611de = "Nebensatz an das Satzende stellen" UND "Fehlendes Leerzeichen
+// nach Satzzeichen ergaenzen"). Da Overrides ueber den Namen gespeichert werden,
+// schaltete man damit immer beide gleichzeitig um. Ab dem 2. Vorkommen bekommt
+// eine Regel daher einen eindeutigen Namen ("611de#2"); BaseName bleibt fuer
+// die Section-Zuordnung erhalten.
+var _uniqueDefaultRules_ = {};
 function _getDefaultRulesForLanguage_(language) {
-  return language === "en" ? DEFAULT_RULES_CONFIG_EN : DEFAULT_RULES_CONFIG;
+  var key = language === "en" ? "en" : "de";
+  if (_uniqueDefaultRules_[key]) return _uniqueDefaultRules_[key];
+  var seen = {};
+  _uniqueDefaultRules_[key] = (key === "en" ? DEFAULT_RULES_CONFIG_EN : DEFAULT_RULES_CONFIG).map(function(rule) {
+    var n = rule.Name;
+    seen[n] = (seen[n] || 0) + 1;
+    if (seen[n] === 1) return rule;
+    var r = Object.assign({}, rule);
+    r.Name = n + "#" + seen[n];
+    r.BaseName = n;
+    return r;
+  });
+  return _uniqueDefaultRules_[key];
+}
+function _ruleForMapping_(rule) {
+  return rule.BaseName ? { Type: rule.Type, Name: rule.BaseName } : rule;
 }
 function _getOverridesPropertyKey_(language) {
   return language === "en" ? "AUTHORCHECK_RULES_EN" : "AUTHORCHECK_RULES_DE";
 }
 function _getActiveRulesFileName_(language) {
   return language === "en" ? "active_rules_en.json" : "active_rules_de.json";
+}
+
+// ─── USER-PROPERTIES IN STUECKEN SPEICHERN ──────────────────────────────────
+// Eine einzelne UserProperty darf max. 9 KB gross sein. Die Overrides fuer ~480
+// deutsche Regeln waren ~53 KB -> apiSaveRulesConfig schlug fehl. Jetzt werden
+// nur noch Abweichungen vom Standard gespeichert und, falls noetig, auf mehrere
+// Properties verteilt (2500 Zeichen * max. 3 Byte UTF-8 < 9 KB).
+var USERPROP_CHUNK_CHARS = 2500;
+var USERPROP_CHUNK_MARKER = "__CHUNKED__:";
+
+function _writeChunkedUserProp_(props, key, str) {
+  var n = Math.max(1, Math.ceil(str.length / USERPROP_CHUNK_CHARS));
+  var all = {};
+  for (var i = 0; i < n; i++) all[key + "__" + i] = str.substr(i * USERPROP_CHUNK_CHARS, USERPROP_CHUNK_CHARS);
+  all[key] = USERPROP_CHUNK_MARKER + n;
+  props.setProperties(all);
+  for (var j = n; props.getProperty(key + "__" + j) !== null; j++) props.deleteProperty(key + "__" + j);
+}
+
+function _readChunkedUserProp_(props, key) {
+  var head = props.getProperty(key);
+  if (!head) return null;
+  if (head.indexOf(USERPROP_CHUNK_MARKER) !== 0) return head; // altes Format: ein einzelner Wert
+  var n = parseInt(head.slice(USERPROP_CHUNK_MARKER.length), 10) || 0;
+  var parts = [];
+  for (var i = 0; i < n; i++) parts.push(props.getProperty(key + "__" + i) || "");
+  return parts.join("");
+}
+
+// ─── KOMPRIMIERTER CACHE ────────────────────────────────────────────────────
+// CacheService erlaubt max. 100 KB pro Eintrag; die deutsche Regelkonfiguration
+// ist ~160 KB JSON -> der Cache griff nie, jeder Check las Drive neu.
+// Gzip+Base64 bringt sie auf einen Bruchteil.
+function _cachePutCompressed_(cache, key, obj, ttl) {
+  try {
+    var gz = Utilities.gzip(Utilities.newBlob(JSON.stringify(obj), "application/json"));
+    var b64 = Utilities.base64Encode(gz.getBytes());
+    if (b64.length < 100000) cache.put(key, b64, ttl);
+  } catch (e) {}
+}
+function _cacheGetCompressed_(cache, key) {
+  try {
+    var b64 = cache.get(key);
+    if (!b64) return null;
+    var blob = Utilities.newBlob(Utilities.base64Decode(b64), "application/x-gzip");
+    return JSON.parse(Utilities.ungzip(blob).getDataAsString("UTF-8"));
+  } catch (e) {
+    return null;
+  }
 }
 
 // ============================================================================
@@ -5980,7 +6058,7 @@ function _getActiveRulesFileName_(language) {
 // Ergebnis daher pro Nutzer cachen (UserCache, da Overrides userspezifisch sind).
 var AUTHORCHECK_RULES_CACHE_TTL = 3600;
 function _rulesConfigCacheKey_(language) {
-  return 'AUTHORCHECK_RULES_CONFIG_' + language;
+  return 'AUTHORCHECK_RULES_CONFIG_GZ_' + language;
 }
 
 function apiGetRulesConfig(language) {
@@ -5988,26 +6066,26 @@ function apiGetRulesConfig(language) {
 
   var cache = CacheService.getUserCache();
   var cacheKey = _rulesConfigCacheKey_(language);
-  try {
-    var cached = cache.get(cacheKey);
-    if (cached) return JSON.parse(cached);
-  } catch (e) {}
+  var cached = _cacheGetCompressed_(cache, cacheKey);
+  if (cached) return cached;
 
   var defaults = _getDefaultRulesForLanguage_(language);
 
   var props = PropertiesService.getUserProperties();
-  var overridesStr = props.getProperty(_getOverridesPropertyKey_(language));
-  var overrides = overridesStr ? JSON.parse(overridesStr) : {};
+  var overridesStr = _readChunkedUserProp_(props, _getOverridesPropertyKey_(language));
+  var overrides = {};
+  try { overrides = overridesStr ? JSON.parse(overridesStr) : {}; } catch (e) { console.warn("Rule overrides unreadable: " + e.message); }
 
   var config = defaults.map(function(rule) {
     var r = Object.assign({}, rule);
+    var o = overrides[r.Name];
     r.Language = language;
-    r.Section = (overrides[r.Name] && overrides[r.Name].Section) || _getSectionForRule_(r);
-    r.Subsection = (overrides[r.Name] && overrides[r.Name].Subsection) || _getSubsectionForRule_(r);
-    if (overrides[r.Name]) {
-      r.IsEnabled = overrides[r.Name].IsEnabled;
-      if (r.IsConfigurable && overrides[r.Name].Parameter) {
-        r.Parameter = overrides[r.Name].Parameter;
+    r.Section = (o && o.Section) || _getSectionForRule_(_ruleForMapping_(r));
+    r.Subsection = (o && o.Subsection) || _getSubsectionForRule_(_ruleForMapping_(r));
+    if (o) {
+      if (typeof o.IsEnabled === "boolean") r.IsEnabled = o.IsEnabled;
+      if (r.IsConfigurable && o.Parameter) {
+        r.Parameter = o.Parameter;
       }
     }
     return r;
@@ -6034,25 +6112,32 @@ function apiGetRulesConfig(language) {
     console.warn("Could not read Drive rules: " + e.message);
   }
 
-  try { cache.put(cacheKey, JSON.stringify(config), AUTHORCHECK_RULES_CACHE_TTL); } catch (e) {}
+  _cachePutCompressed_(cache, cacheKey, config, AUTHORCHECK_RULES_CACHE_TTL);
   return config;
 }
 
 function apiSaveRulesConfig(updatedRules, language) {
   language = language || "de";
+  if (!Array.isArray(updatedRules)) throw new Error("No rules to save.");
   var props = PropertiesService.getUserProperties();
-  var overrides = {};
 
+  var defaultsByName = {};
+  _getDefaultRulesForLanguage_(language).forEach(function(d) { defaultsByName[d.Name] = d; });
+
+  // Nur Abweichungen vom Standard speichern (haelt die Properties klein).
+  var overrides = {};
   updatedRules.forEach(function(rule) {
-    overrides[rule.Name] = {
-      IsEnabled: rule.IsEnabled,
-      Parameter: rule.Parameter,
-      Section: rule.Section,
-      Subsection: rule.Subsection
-    };
+    var d = defaultsByName[rule.Name];
+    if (!d) return; // Custom-Regeln liegen komplett in der Drive-JSON
+    var o = {};
+    if (!!rule.IsEnabled !== !!d.IsEnabled) o.IsEnabled = !!rule.IsEnabled;
+    if (d.IsConfigurable && rule.Parameter != null && String(rule.Parameter) !== String(d.Parameter)) o.Parameter = rule.Parameter;
+    if (rule.Section && rule.Section !== _getSectionForRule_(_ruleForMapping_(d))) o.Section = rule.Section;
+    if (rule.Subsection && rule.Subsection !== _getSubsectionForRule_(_ruleForMapping_(d))) o.Subsection = rule.Subsection;
+    if (Object.keys(o).length) overrides[rule.Name] = o;
   });
 
-  props.setProperty(_getOverridesPropertyKey_(language), JSON.stringify(overrides));
+  _writeChunkedUserProp_(props, _getOverridesPropertyKey_(language), JSON.stringify(overrides));
   apiExportRulesToDrive(updatedRules, language);
   try { CacheService.getUserCache().remove(_rulesConfigCacheKey_(language)); } catch (e) {}
   return { success: true };
@@ -6110,9 +6195,18 @@ function _ensureLogSheetHeaders_(sheet) {
  * (nur anhängen, nie löschen) + Mail an Admins, damit Admins mitbekommen, wenn
  * irgendwer im Team eine neue Regel anlegt.
  */
+var CUSTOM_RULES_LOG_MAX_PER_CALL = 50;
+var CUSTOM_RULES_MAIL_MAX_PER_HOUR = 5;
+
 function apiLogNewCustomRules(newRules, language) {
-  if (!newRules || !newRules.length) return { success: true, logged: 0 };
+  if (!Array.isArray(newRules) || !newRules.length) return { success: true, logged: 0 };
   language = language || "de";
+  // Nur echte Custom-Regeln und nur eine begrenzte Anzahl pro Aufruf - die Funktion
+  // ist fuer jeden Nutzer aufrufbar (auch direkt aus der Browser-Konsole).
+  newRules = newRules.filter(function(r) {
+    return r && typeof r.Name === "string" && r.Name.indexOf("CUSTOM_") === 0;
+  }).slice(0, CUSTOM_RULES_LOG_MAX_PER_CALL);
+  if (!newRules.length) return { success: true, logged: 0 };
 
   var props = PropertiesService.getScriptProperties();
   var sheetId = (props.getProperty('CUSTOM_RULES_LOG_SHEET_ID') || '').trim();
@@ -6124,28 +6218,34 @@ function apiLogNewCustomRules(newRules, language) {
       var ss = SpreadsheetApp.openById(sheetId);
       var sheet = _getOrCreateNamedSheet_(ss, 'Custom');
       _ensureLogSheetHeaders_(sheet);
-      newRules.forEach(function(r) {
-        sheet.appendRow([
+      var rows = newRules.map(function(r) {
+        return [
           timestamp, caller, language, "Custom", r.Section || '', r.Subsection || '',
           r.Type || '', r.Name || '', r.Description || '', r.CustomPrompt || '', r.ReferenceUrl || ''
-        ]);
+        ].map(_sheetSafe_); // Schutz vor Formel-Injection im zentralen Log-Sheet
       });
+      sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, CUSTOM_RULES_LOG_HEADERS.length).setValues(rows);
     } catch(e) {
       console.warn("Could not write to the central rules log: " + e.message);
     }
   }
 
   try {
-    var admins = String(props.getProperty('ADMIN_EMAILS') || '').split(',').map(function(s){return s.trim();}).filter(Boolean);
-    if (admins.length) {
+    var admins = _parseAdminEmails_(props.getProperty('ADMIN_EMAILS'));
+    // Rate-Limit pro Nutzer, damit niemand die Admins mit Mails fluten kann.
+    var userCache = CacheService.getUserCache();
+    var mailCountKey = 'CUSTOM_RULES_MAIL_COUNT';
+    var sent = parseInt(userCache.get(mailCountKey) || '0', 10) || 0;
+    if (admins.length && sent < CUSTOM_RULES_MAIL_MAX_PER_HOUR) {
       var lines = newRules.map(function(r) {
         return '- [' + (r.Section || r.Type) + ' / ' + (r.Subsection || '-') + '] ' + r.Description;
       }).join('\n');
       MailApp.sendEmail({
         to: admins.join(','),
-        subject: 'New Author Check rule(s) from ' + caller,
-        body: caller + ' created ' + newRules.length + ' new rule(s) (language: ' + language + '):\n\n' + lines
+        subject: 'New Author Check rule(s) from ' + (caller || 'unknown user'),
+        body: (caller || 'An unknown user') + ' created ' + newRules.length + ' new rule(s) (language: ' + language + '):\n\n' + lines
       });
+      userCache.put(mailCountKey, String(sent + 1), 3600);
     }
   } catch(e) {
     console.warn("Could not send admin notification: " + e.message);
@@ -6200,7 +6300,7 @@ function apiExportAllRulesToLogSheet(rules, language) {
     ];
   });
 
-  sheet.getRange(2, 1, rows.length, CUSTOM_RULES_LOG_HEADERS.length).setValues(rows);
+  if (rows.length) sheet.getRange(2, 1, rows.length, CUSTOM_RULES_LOG_HEADERS.length).setValues(_sheetSafeRows_(rows));
 
   return { success: true, exported: rows.length };
 }

@@ -269,7 +269,7 @@ function renderCard(c, query, idx){
   var header =
     '<div class="card-header" onclick="toggleCard(this)">'+
       '<span class="lang-badge">'+getFlagHtml(src.lang)+esc((src.lang||'').toUpperCase())+'</span>'+
-      '<span class="source-term">'+highlight(esc(src.term), query)+'</span>'+
+      '<span class="source-term">'+highlight(src.term, query)+'</span>'+
       '<span class="status-dot '+statusClass+'"></span>'+
     '</div>';
 
@@ -278,8 +278,8 @@ function renderCard(c, query, idx){
     var rows = c.translations.map(function(t){
       return '<div class="tl-row'+(t.forbidden?' tl-forbidden':'')+'">'+
         '<span class="tl-lang">'+getFlagHtml(t.lang)+esc((t.lang||'').toUpperCase())+'</span>'+
-        '<span class="tl-term">'+highlight(esc(t.term), query)+'</span>'+
-        '<button class="copy-btn-mini" title="Kopieren" onclick="event.stopPropagation();copyTerm(\''+escJs(t.term)+'\')">'+
+        '<span class="tl-term">'+highlight(t.term, query)+'</span>'+
+        '<button class="copy-btn-mini" title="Copy" onclick="event.stopPropagation();copyTerm(\''+escJs(t.term)+'\')">'+
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="1"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>'+
         '</button></div>';
     }).join('');
@@ -341,13 +341,23 @@ function escJs(str){
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;');
 }
-function highlight(escapedText, rawQuery){
+// Markiert die Suchanfrage im ROHEN Text und escaped erst danach die Teilstücke.
+// Frueher wurde im bereits escapten HTML gesucht - eine Suche nach "amp", "gt"
+// oder "quot" traf dann die Entities selbst (sichtbar: "&<mark>amp</mark>;").
+function highlight(rawText, rawQuery){
+  var text = String(rawText || '');
   var core = String(rawQuery||'').replace(/\*/g,'').trim();
-  if (!core) return escapedText;
-  var escCore = esc(core).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  if (!escCore) return escapedText;
-  try { var re = new RegExp('('+escCore+')', 'ig'); return escapedText.replace(re, '<mark>$1</mark>'); }
-  catch(e){ return escapedText; }
+  if (!core) return esc(text);
+  var reCore = core.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  var re;
+  try { re = new RegExp(reCore, 'ig'); } catch(e){ return esc(text); }
+  var out = '', last = 0, m;
+  while ((m = re.exec(text)) !== null) {
+    if (!m[0].length) { re.lastIndex++; continue; }
+    out += esc(text.slice(last, m.index)) + '<mark>' + esc(m[0]) + '</mark>';
+    last = m.index + m[0].length;
+  }
+  return out + esc(text.slice(last));
 }
 </script>
 </body>

@@ -30,7 +30,7 @@
 
 var PDF_ANNOT_MAX_PER_PDF = 60; // Sicherheitsgrenze: Dateigröße/Laufzeit
 
-// ??? BYTE/STRING-KONVERTIERUNG ????????????????????????????????????????????
+// ─── BYTE/STRING-KONVERTIERUNG ────────────────────────────────────────────
 // Blob.getBytes() liefert VORZEICHENBEHAFTETE Bytes (-128..127, Java-Erbe der
 // Apps-Script-Blob-API). Für die regex-basierte Verarbeitung wird daraus ein
 // "Binärstring" gebaut (1 Zeichen = 1 Byte, 0..255, wie Latin-1) - das erlaubt,
@@ -76,7 +76,7 @@ function _pdfHexString_(s) {
   return '<' + out.join('') + '>';
 }
 
-// ??? MINIMALES, KLARTEXT-BASIERTES PDF-PARSING ?????????????????????????????
+// ─── MINIMALES, KLARTEXT-BASIERTES PDF-PARSING ─────────────────────────────
 function _pdfFindRootRef_(text) {
   var trailerRe = /trailer\s*<</g;
   var m, last = null, lastEnd = null;
@@ -113,6 +113,33 @@ function _pdfFindRootRef_(text) {
     if (rm2) return parseInt(rm2[1], 10);
   }
   throw new Error('Could not locate /Root in the PDF trailer.');
+}
+
+// Liefert den Text des zuletzt geschriebenen Trailer-Dictionaries (klassischer
+// "trailer << ... >>" oder das Dictionary eines Cross-Reference-Streams
+// /Type /XRef), je nachdem, was weiter hinten in der Datei steht. Daraus kommen
+// /Size (naechste freie Objektnummer), /Info, /ID und /Encrypt.
+function _pdfLastTrailerDict_(text) {
+  var best = null;
+  var trailerRe = /trailer\s*<</g;
+  var m;
+  while ((m = trailerRe.exec(text))) best = { pos: m.index, dictStart: trailerRe.lastIndex - 2 };
+  var xrefObjRe = /\/Type\s*\/XRef\b/g;
+  var xm, lastX = null;
+  while ((xm = xrefObjRe.exec(text))) lastX = xm;
+  if (lastX && (!best || lastX.index > best.pos)) {
+    var objIdx = text.lastIndexOf(' obj', lastX.index);
+    var dStart = objIdx === -1 ? -1 : text.indexOf('<<', objIdx);
+    if (dStart !== -1 && dStart < lastX.index) best = { pos: lastX.index, dictStart: dStart };
+  }
+  if (!best) return '';
+  var i = best.dictStart, depth = 0;
+  while (i < text.length) {
+    if (text.substr(i, 2) === '<<') { depth++; i += 2; continue; }
+    if (text.substr(i, 2) === '>>') { depth--; i += 2; if (depth === 0) break; continue; }
+    i++;
+  }
+  return text.slice(best.dictStart, i);
 }
 
 function _pdfScanObjectOffsets_(text) {
@@ -153,6 +180,20 @@ function _pdfGetDictArray_(dictText, key) {
   var re = new RegExp('\\/' + key + '\\s*\\[([\\s\\S]*?)\\]');
   var m = re.exec(dictText);
   return m ? m[1] : null;
+}
+
+// Liest den Inhalt (ohne Klammern) eines indirekten Array-Objekts "N 0 obj [ ... ] endobj".
+function _pdfReadArrayObject_(text, offsets, num) {
+  if (!(num in offsets)) {
+    throw new Error('Annots array object ' + num + ' not found as plain text (likely inside a compressed object stream).');
+  }
+  var objKw = text.indexOf('obj', offsets[num]);
+  var endObj = text.indexOf('endobj', objKw);
+  var lb = text.indexOf('[', objKw);
+  if (objKw === -1 || lb === -1 || (endObj !== -1 && lb > endObj)) throw new Error('Object ' + num + ' is not an array.');
+  var rb = text.indexOf(']', lb);
+  if (rb === -1) throw new Error('Object ' + num + ' has an unterminated array.');
+  return text.slice(lb + 1, rb);
 }
 
 function _pdfGetMediaBox_(dictText) {
@@ -222,8 +263,19 @@ function buildAnnotatedPdfBytes_(bytes, pageAnnotations) {
   if (!lastSx) throw new Error('Could not find startxref.');
   var prevXrefOffset = parseInt(lastSx[1], 10);
 
+  var trailerDict = _pdfLastTrailerDict_(text);
+  // Verschluesselte PDFs: neue Annotation-Strings muessten mitverschluesselt
+  // werden, sonst ist die Datei danach kaputt -> lieber sauber abbrechen.
+  if (/\/Encrypt\b/.test(trailerDict)) throw new Error('Encrypted PDFs are not supported for annotation.');
+
   var maxObjNum = 0;
   for (var k in offsets) { if (offsets.hasOwnProperty(k)) maxObjNum = Math.max(maxObjNum, parseInt(k, 10)); }
+  // /Size aus dem Trailer ist massgeblich: Objekte in komprimierten Objekt-
+  // Streams tauchen im Klartext-Scan nicht auf und koennen hoehere Nummern haben
+  // -> ohne /Size drohten Kollisionen mit bestehenden Objektnummern.
+  var sizeM = /\/Size\s+(\d+)/.exec(trailerDict);
+  var trailerSize = sizeM ? parseInt(sizeM[1], 10) : 0;
+  maxObjNum = Math.max(maxObjNum, trailerSize - 1);
   var nextNum = maxObjNum + 1;
 
   var newObjects = [];     // [{num, body}]
@@ -237,7 +289,16 @@ function buildAnnotatedPdfBytes_(bytes, pageAnnotations) {
     if (pageIndex < 0 || pageIndex >= pages.length) return;
     var page = pages[pageIndex];
     var anns = pageAnnotations[pageIndex];
-    var existingAnnotsRaw = _pdfGetDictArray_(page.dictText, 'Annots') || '';
+    // /Annots kann direkt ein Array sein (/Annots [..]) oder eine indirekte
+    // Referenz auf ein Array-Objekt (/Annots 12 0 R). Letzteres wurde frueher nicht
+    // erkannt -> neue Notizen wurden nie an die Seite gehaengt, obwohl "Erfolg".
+    var annotsRefM = /\/Annots\s+(\d+)\s+(\d+)\s+R/.exec(page.dictText);
+    var existingAnnotsRaw;
+    if (annotsRefM) {
+      existingAnnotsRaw = _pdfReadArrayObject_(text, offsets, parseInt(annotsRefM[1], 10));
+    } else {
+      existingAnnotsRaw = _pdfGetDictArray_(page.dictText, 'Annots') || '';
+    }
     var newAnnotRefs = [];
 
     var mediaBox = page.mediaBox || [0, 0, 612, 792]; // US-Letter-Fallback, falls kein /MediaBox auffindbar war
@@ -269,8 +330,10 @@ function buildAnnotatedPdfBytes_(bytes, pageAnnotations) {
     var newAnnotsArray = (combinedRefs + ' ' + addRefs).replace(/^\s+|\s+$/g, '');
 
     var newPageDict;
-    if (page.dictText.indexOf('/Annots') !== -1) {
-      newPageDict = page.dictText.replace(/\/Annots\s*\[[\s\S]*?\]/, '/Annots [' + newAnnotsArray + ']');
+    if (annotsRefM) {
+      newPageDict = page.dictText.replace(annotsRefM[0], function() { return '/Annots [' + newAnnotsArray + ']'; });
+    } else if (page.dictText.indexOf('/Annots') !== -1) {
+      newPageDict = page.dictText.replace(/\/Annots\s*\[[\s\S]*?\]/, function() { return '/Annots [' + newAnnotsArray + ']'; });
     } else {
       newPageDict = page.dictText.slice(0, -2) + ' /Annots [' + newAnnotsArray + '] ' + page.dictText.slice(-2);
     }
@@ -321,7 +384,13 @@ function buildAnnotatedPdfBytes_(bytes, pageAnnotations) {
     }
     i = j + 1;
   }
-  xrefChunk += 'trailer\n<< /Size ' + size + ' /Root ' + rootNum + ' 0 R /Prev ' + prevXrefOffset + ' >>\n';
+  // /Info (Metadaten) und /ID aus dem bisherigen Trailer uebernehmen - sonst
+  // gehen Titel/Autor verloren und manche Viewer melden eine veraenderte Datei.
+  var infoM = /\/Info\s+\d+\s+\d+\s+R/.exec(trailerDict);
+  var idM = /\/ID\s*\[[^\]]*\]/.exec(trailerDict);
+  xrefChunk += 'trailer\n<< /Size ' + size + ' /Root ' + rootNum + ' 0 R' +
+    (infoM ? ' ' + infoM[0] : '') + (idM ? ' ' + idM[0] : '') +
+    ' /Prev ' + prevXrefOffset + ' >>\n';
   xrefChunk += 'startxref\n' + xrefOffset + '\n%%EOF';
   out.push(xrefChunk);
 

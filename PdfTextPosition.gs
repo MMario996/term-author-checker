@@ -17,7 +17,7 @@
 // funktionierenden Fallback-Platzierung (siehe DriveAddon.gs) - schlägt es
 // fehl, wird einfach wie bisher oben links gestapelt.
 
-// ??? 2D-AFFINE MATRIX-HILFSFUNKTIONEN (PDF: [a b c d e f], Zeilenvektoren) ??
+// ─── 2D-AFFINE MATRIX-HILFSFUNKTIONEN (PDF: [a b c d e f], Zeilenvektoren) ──
 function _pdfMatIdentity_() { return [1, 0, 0, 1, 0, 0]; }
 // "A dann B": kombinierte Matrix, als würde erst A und danach B angewendet.
 function _pdfMatMul_(A, B) {
@@ -33,7 +33,7 @@ function _pdfMatMul_(A, B) {
 // Position des Textursprungs (0,0 in Textraum) nach Anwendung von M im Seitenraum.
 function _pdfMatOrigin_(M) { return [M[4], M[5]]; }
 
-// ??? STREAM-BYTES EINES OBJEKTS LADEN (Dict + Rohdaten) ????????????????????
+// ─── STREAM-BYTES EINES OBJEKTS LADEN (Dict + Rohdaten) ────────────────────
 function _pdfGetStreamData_(text, offsets, objNum) {
   if (!(objNum in offsets)) return null;
   var range = _pdfExtractDictText_(text, offsets[objNum]);
@@ -76,6 +76,46 @@ function _pdfGetStreamData_(text, offsets, objNum) {
   return { dictText: dictText, rawBytes: rawBytes, filters: filters };
 }
 
+// ASCII85 (PDF-Variante, Ende "~>", "z" = 4 Nullbytes). Ein-/Ausgabe: signed Bytes.
+function _pdfDecodeAscii85_(bytes) {
+  var out = [];
+  var group = [];
+  function flush(n) {
+    var v = 0;
+    for (var k = 0; k < 5; k++) v = v * 85 + (k < group.length ? group[k] : 84);
+    var b = [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255];
+    for (var j = 0; j < n; j++) out.push(b[j] > 127 ? b[j] - 256 : b[j]);
+    group = [];
+  }
+  for (var i = 0; i < bytes.length; i++) {
+    var c = bytes[i] & 0xFF;
+    if (c === 0x7E) break;                          // "~>" = Ende
+    if (c <= 0x20) continue;                        // Whitespace
+    if (c === 0x7A && group.length === 0) { out.push(0, 0, 0, 0); continue; } // "z"
+    if (c < 0x21 || c > 0x75) throw new Error('Invalid ASCII85 data.');
+    group.push(c - 33);
+    if (group.length === 5) flush(4);
+  }
+  if (group.length) flush(group.length - 1);
+  return out;
+}
+
+function _pdfDecodeAsciiHex_(bytes) {
+  var hex = '';
+  for (var i = 0; i < bytes.length; i++) {
+    var ch = String.fromCharCode(bytes[i] & 0xFF);
+    if (ch === '>') break;
+    if (/[0-9a-fA-F]/.test(ch)) hex += ch;
+  }
+  if (hex.length % 2) hex += '0';
+  var out = [];
+  for (var j = 0; j < hex.length; j += 2) {
+    var b = parseInt(hex.substr(j, 2), 16);
+    out.push(b > 127 ? b - 256 : b);
+  }
+  return out;
+}
+
 // Dekomprimiert einen Stream zu Klartext (Binärstring, 1 Zeichen = 1 Byte).
 // Wirft, wenn ein nicht unterstützter Filter benutzt wird - Aufrufer fängt das ab.
 function _pdfDecodeStreamToText_(streamData) {
@@ -83,6 +123,11 @@ function _pdfDecodeStreamToText_(streamData) {
   streamData.filters.forEach(function(f) {
     if (f === 'FlateDecode' || f === 'Fl') {
       bytes = inflateZlib_(bytes).map(function(b) { return b > 127 ? b - 256 : b; });
+    } else if (f === 'ASCII85Decode' || f === 'A85') {
+      // z.B. von ReportLab erzeugte PDFs: [/ASCII85Decode /FlateDecode]
+      bytes = _pdfDecodeAscii85_(bytes);
+    } else if (f === 'ASCIIHexDecode' || f === 'AHx') {
+      bytes = _pdfDecodeAsciiHex_(bytes);
     } else {
       throw new Error('Unsupported stream filter: ' + f);
     }
@@ -90,7 +135,7 @@ function _pdfDecodeStreamToText_(streamData) {
   return _pdfBytesToBinaryString_(bytes);
 }
 
-// ??? CONTENT-STREAM EINER SEITE ALS KLARTEXT HOLEN ?????????????????????????
+// ─── CONTENT-STREAM EINER SEITE ALS KLARTEXT HOLEN ─────────────────────────
 function _pdfGetPageContentText_(text, offsets, pageDictText) {
   var singleRef = /\/Contents\s+(\d+)\s+(\d+)\s+R/.exec(pageDictText);
   var objNums = [];
@@ -113,7 +158,7 @@ function _pdfGetPageContentText_(text, offsets, pageDictText) {
   return parts.join('\n');
 }
 
-// ??? CONTENT-STREAM-TOKENIZER (nur die für Textposition relevante Teilmenge) ?
+// ─── CONTENT-STREAM-TOKENIZER (nur die für Textposition relevante Teilmenge) ─
 // Liest einen literalen String "(...)" inkl. Escapes/verschachtelter Klammern,
 // beginnend bei text[i] === '('. Gibt {value, next} zurück.
 function _pdfReadLiteralString_(text, i) {
