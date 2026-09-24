@@ -8,10 +8,15 @@ const DEFAULT_AI_PROMPT = 'Du bist ein Terminologie-Assistent für Kärcher, Her
 // 1. WEB APP ENTRY & ROUTING
 // ============================================================================
 function doGet(e) {
-  return HtmlService.createHtmlOutputFromFile('TermSearch')
+  return HtmlService.createTemplateFromFile('TermSearch').evaluate()
     .setTitle('Kärcher TermSearch')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+// Bindet eine weitere HTML-Datei ein (z.B. <?!= include('I18n'); ?> in TermSearch.html).
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
 function apiGetContext() {
@@ -377,6 +382,7 @@ function apiBrowseTermbase(tbUid, pageNumber, lang, searchQuery, sortDir) {
   var allTermbases = _getTargetTermbases_();
   var matchedTb = allTermbases.find(function(t) { return t.uid === tbUid; });
   var catLabel = matchedTb ? matchedTb.label : '';
+  var catKey = matchedTb ? matchedTb.category : '';
   
   var mapped = concepts.map(function(concept) {
     var cid = concept.conceptId || concept.id || '';
@@ -406,6 +412,7 @@ function apiBrowseTermbase(tbUid, pageNumber, lang, searchQuery, sortDir) {
 
     return {
       conceptId: cid,
+      category: catKey,
       categoryLabel: catLabel,
       sourceTerm: _mapTerm_(sourceTermRaw, cid),
       translations: translationsRaw.map(function(t){ return _mapTerm_(t, cid); })
@@ -418,7 +425,23 @@ function apiBrowseTermbase(tbUid, pageNumber, lang, searchQuery, sortDir) {
   var dir = (sortDir === 'desc') ? -1 : 1;
   mapped.sort(function(a, b) { return dir * String(a.sourceTerm.term || '').localeCompare(String(b.sourceTerm.term || ''), 'de'); });
 
-  return { concepts: mapped, hasMore: concepts.length >= pageSize, pageNumber: pageNumber };
+  // Gesamtzahl nur, wenn PHRASE sie mitliefert (Feldname je nach API-Version);
+  // sonst null -> die UI zeigt dann die Anzahl auf der aktuellen Seite.
+  // Bei zusätzlichem clientseitigem Wildcard-Filter (rawQuery) ist die
+  // API-Zahl nicht mehr exakt, daher dann ebenfalls null.
+  var total = rawQuery ? null : _firstNumber_([data.totalElements, data.totalCount, data.total]);
+  var totalPages = _firstNumber_([data.totalPages]);
+  if (totalPages === null && total !== null) totalPages = Math.max(1, Math.ceil(total / pageSize));
+  if (rawQuery) totalPages = null;
+
+  return { concepts: mapped, hasMore: concepts.length >= pageSize, pageNumber: pageNumber, total: total, totalPages: totalPages };
+}
+
+function _firstNumber_(values) {
+  for (var i = 0; i < values.length; i++) {
+    if (typeof values[i] === 'number' && isFinite(values[i])) return values[i];
+  }
+  return null;
 }
 
 function _searchCore_(query, sourceLang, searchLang) {
@@ -548,8 +571,11 @@ function _fetchGeminiWithRetry_(url, options, maxAttempts) {
 var AI_HISTORY_MAX_MESSAGES = 10;             // 5 Frage/Antwort-Runden
 var AI_IMAGE_MAX_BASE64_CHARS = 10 * 1024 * 1024; // ~7,5 MB Binärdaten
 
-function apiAiAssistedSearch(freeText, history, imageData) {
+// uiLang: Sprache der Oberfläche. Wird NUR verwendet, wenn kein Text eingegeben
+// wurde (reine Bildsuche) - sonst bestimmt immer die Sprache des Textes die Antwort.
+function apiAiAssistedSearch(freeText, history, imageData, uiLang) {
   freeText = String(freeText || '').trim();
+  uiLang = /^[a-z]{2}$/.test(String(uiLang || '')) ? String(uiLang) : 'en';
   history = Array.isArray(history) ? history : [];
   // Nur die letzten Gesprächsrunden mitschicken, sonst wächst jede Anfrage
   // (inkl. vollem Prompt pro Runde) unbegrenzt.
@@ -585,10 +611,13 @@ function apiAiAssistedSearch(freeText, history, imageData) {
   if (!history.length) {
     turnPrompt = promptTemplate.replace(/\{freeText\}/g, freeTextForPrompt.replace(/"/g, "'"));
     if (hasImage) turnPrompt += '\n\nBerücksichtige zusätzlich das angehängte Bild für die inhaltliche Erkennung des Objekts. Das Bild ändert NICHTS an der Sprachwahl, diese richtet sich ausschließlich nach dem Textfeld oben.';
+    if (!freeText) turnPrompt += '\n\nEs wurde kein Text eingegeben. Verwende deshalb die Sprache "' + uiLang + '" (lang = "' + uiLang + '") für Begriffe und Erklärung.';
   } else {
     turnPrompt = 'Verfeinerung der bisherigen Suche: "' + freeTextForPrompt.replace(/"/g, "'") + '"\n\n' +
       (hasImage ? 'Berücksichtige zusätzlich das angehängte Bild.\n\n' : '') +
-      'Erkenne erneut die Sprache dieser Nachfrage und antworte in genau dieser Sprache (Begriffe UND Erklärung), auch wenn sie von der vorherigen Sprache abweicht. ' +
+      (freeText
+        ? 'Erkenne erneut die Sprache dieser Nachfrage und antworte in genau dieser Sprache (Begriffe UND Erklärung), auch wenn sie von der vorherigen Sprache abweicht. '
+        : 'Es wurde kein Text eingegeben. Antworte in derselben Sprache wie bei der vorherigen Antwort im Gesprächsverlauf. ') +
       'Berücksichtige den bisherigen Gesprächsverlauf. Antworte weiterhin AUSSCHLIESSLICH mit validem JSON in exakt derselben Struktur wie zuvor, ohne Markdown-Formatierung, ohne Codeblock:\n' +
       '{"lang": "...", "terms": ["...", "..."], "explanation": "..."}';
   }
