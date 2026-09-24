@@ -240,6 +240,14 @@ button, input, select, textarea{ font-family:inherit; }
   margin:14px auto 0; max-width:800px; padding-bottom:8px; border-bottom:1px solid var(--gray-150);
 }
 .results-meta b{ color:var(--ink); }
+.results-meta-right{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+.link-btn{
+  display:inline-flex; align-items:center; gap:5px; background:var(--white); border:1px solid var(--gray-200);
+  padding:3px 8px; cursor:pointer; font-family:var(--ff-head); font-size:10.5px; font-weight:600;
+  letter-spacing:.6px; text-transform:uppercase; color:var(--gray-500); transition:border-color .15s, color .15s;
+}
+.link-btn:hover{ border-color:var(--ink); color:var(--ink); }
+.link-btn svg{ width:12px; height:12px; }
 
 .concept-card{
   border:1px solid var(--gray-200); margin:0 auto 9px; max-width:800px; background:var(--white);
@@ -422,7 +430,7 @@ button, input, select, textarea{ font-family:inherit; }
 <body>
 
 <div id="topbar">
-<select id="uiLangSelect" data-i18n-title="ui.language" title="Interface language" aria-label="Interface language"></select>
+<select id="uiLangSelect" class="ui-lang-select" data-i18n-title="ui.language" title="Interface language" aria-label="Interface language"></select>
 <button id="adminGear" data-i18n-title="admin.gear" title="Admin settings" onclick="openAdmin()">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
 </button>
@@ -621,26 +629,48 @@ var $bar     = document.getElementById('searchBarHero');
 var $recent  = document.getElementById('recentWrap');
 var $toast   = document.getElementById('toast');
 document.addEventListener('DOMContentLoaded', function(){
-  initUiLangSelect();
+  initUiLangSelects();
   renderRecents();
   populateLangSelect(document.getElementById('browse-lang-select'), { includeAll: true });
   google.script.run.withSuccessHandler(function(ctx){
     _ctx = ctx;
     if (ctx.isAdmin) document.getElementById('adminGear').classList.add('show');
     document.getElementById('aiUnavailable').style.display = ctx.aiEnabled ? 'none' : 'block';
-  }).apiGetContext();
+    applyUrlQuery(); // erst nach dem Kontext, damit der Link-Button die Web-App-URL kennt
+  }).withFailureHandler(function(){ applyUrlQuery(); }).apiGetContext();
   loadBrowseTermbases();
   $query.focus();
 });
 
-// ─── UI LANGUAGE (Texte in I18n.html) ────────────────────────────────────
-function initUiLangSelect(){
-  var sel = document.getElementById('uiLangSelect');
-  sel.innerHTML = UI_LANGS.map(function(p){ return '<option value="'+p[0]+'">'+esc(p[1])+'</option>'; }).join('');
-  sel.value = getUiLang();
-  sel.addEventListener('change', function(){ setUiLang(this.value); });
-  setUiLang(getUiLang());
+// ─── TEILBARE SUCH-LINKS (?q=Begriff) ───────────────────────────────────
+// Beim Öffnen: ?q= aus der URL übernehmen und direkt suchen.
+function applyUrlQuery(){
+  if (!(window.google && google.script && google.script.url)) return;
+  google.script.url.getLocation(function(loc){
+    var q = loc && loc.parameter && loc.parameter.q;
+    if (!q) return;
+    switchMode('search');
+    $query.value = String(q);
+    toggleClearBtn();
+    triggerSearch();
+  });
 }
+// Nach jeder Suche die Adresszeile aktualisieren (ohne neuen Verlaufseintrag).
+function syncUrlQuery(q){
+  try { if (window.google && google.script && google.script.history) google.script.history.replace(null, { q: q }); } catch(e) {}
+}
+function getSearchLink(q){
+  var base = _ctx && _ctx.webAppUrl;
+  return base ? base + (base.indexOf('?') === -1 ? '?' : '&') + 'q=' + encodeURIComponent(q) : '';
+}
+function copySearchLink(){
+  var link = getSearchLink(_searchLangQuery);
+  if (!link) return;
+  copyText(link);
+  showToast(t('toast.linkCopied'));
+}
+
+// ─── UI LANGUAGE (Texte in I18n.html) ────────────────────────────────────
 function onUiLangChanged(){
   updateAiExportLabel();
   updateBrowsePageLabel();
@@ -839,6 +869,7 @@ function triggerSearch(){
       if (myToken !== _requestToken) return;
       stopLoading();
       saveRecent(q);
+      syncUrlQuery(q);
       renderResultsInto($rw, concepts, q, true);
     })
     .withFailureHandler(function(err){
@@ -1202,7 +1233,7 @@ function renderSearchResultsBody(){
   _currentResults = visible;
   var n = visible.length;
   var filterHtml = _searchLangQuery ? showMeFilterHtml() : '';
-  var meta = resultsMetaHtml(n, _searchLangQuery);
+  var meta = resultsMetaHtml(n, _searchLangQuery, true);
   var actionBar = getActionBarHtml();
   var cards = visible.map(function(c, i){ return renderConceptCard(c, _searchLangQuery, i); }).join('');
   body.innerHTML = filterHtml + meta + actionBar + cards;
@@ -1214,10 +1245,15 @@ function showMeFilterHtml(){
     '<button class="sm-btn" onclick="applyShowMeFilter(\'HNG\', this)">Home and Garden</button>'+
     '<button class="sm-btn" onclick="applyShowMeFilter(\'PROF\', this)">Professional</button></div>';
 }
-function resultsMetaHtml(n, query){
+function resultsMetaHtml(n, query, withLink){
+  var linkBtn = (withLink && getSearchLink(query))
+    ? '<button type="button" class="link-btn" onclick="copySearchLink()"'+tAttrTitle('search.copyLinkTitle')+'>'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>'+
+        tl('search.copyLink')+'</button>'
+    : '';
   return '<div class="results-meta">'+
       '<span>'+tln('results.found', n, { n: n })+'</span>'+
-      (query ? '<span>'+tl('results.for', { q: query })+'</span>' : '')+
+      '<span class="results-meta-right">'+(query ? tl('results.for', { q: query }) : '')+linkBtn+'</span>'+
     '</div>';
 }
 
@@ -1358,12 +1394,15 @@ function renderTableInto(target, concepts) {
   wrap.innerHTML = actionBar + tableHtml;
 }
 
-function copyTerm(btn, text){
+function copyText(text){
   var ta = document.createElement('textarea');
   ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
   document.body.appendChild(ta); ta.select();
   try { document.execCommand('copy'); } catch(e){}
   document.body.removeChild(ta);
+}
+function copyTerm(btn, text){
+  copyText(text);
   showToast(t('toast.copied', { term: text }));
 }
 
