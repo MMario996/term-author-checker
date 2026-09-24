@@ -3,6 +3,8 @@
  * (Inklusive Fehler-Analyse / Debugging)
  */
 function exportProjectToTxt() {
+  // Admin-only: jede Funktion ohne "_" am Ende ist per google.script.run aufrufbar.
+  _requireAdmin_('export the project source');
   // 1. Einstellungen
   const folderId = "1am6gR_8i_mEg3zv176lfflhGPEYrBPf2"; // Deine Ordner-ID
   const scriptId = ScriptApp.getScriptId(); 
@@ -21,11 +23,12 @@ function exportProjectToTxt() {
   
   const response = UrlFetchApp.fetch(url, options);
   
-  // --- NEUER DEBUG-CODE START ---
-  // Das schreibt uns die genaue Antwort von Google in das Protokoll
+  // Nur Statuscode und bei Fehlern einen Auszug loggen - nicht den kompletten
+  // Quellcode des Projekts ins Protokoll schreiben.
   Logger.log("API Response Code: " + response.getResponseCode());
-  Logger.log("API Response Body: " + response.getContentText());
-  // --- NEUER DEBUG-CODE ENDE ---
+  if (response.getResponseCode() !== 200) {
+    Logger.log("API Response Body (Auszug): " + response.getContentText().slice(0, 500));
+  }
 
   const projectContent = JSON.parse(response.getContentText());
 

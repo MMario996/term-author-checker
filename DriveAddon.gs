@@ -6,6 +6,7 @@
 var DRIVE_PDF_MAX_BYTES = 15 * 1024 * 1024; // Sicherheitsgrenze, ca. 15 MB
 var DRIVE_PDF_RESULT_CACHE_TTL = 3600; // 1h, reicht für eine interaktive Session in Drive
 var DRIVE_PDF_MAX_CARD_ISSUES = 25; // Card-UI bleibt sonst zu groß/langsam
+var DRIVE_PDF_LAST_LANG_KEY = 'DRIVE_PDF_LAST_LANGUAGE';
 
 // Gleiche Sprachliste wie im Author-Check-Sidebar (AuthorCheck.html), damit die
 // PDF-Prüfung aus Google Drive dieselben Sprachen wie Docs/Sheets/Slides anbietet.
@@ -40,7 +41,7 @@ function onDriveItemsSelected(e) {
 
   var item = items[0];
   if (item.mimeType !== 'application/pdf') {
-    return _buildDriveInfoCard_('Only PDF is supported', 'The file "' + item.title + '" is not a PDF. This check currently only works for PDF files.');
+    return _buildDriveInfoCard_('Only PDF is supported', 'The file "' + _escapeCardHtml_(item.title) + '" is not a PDF. This check currently only works for PDF files.');
   }
 
   var card = CardService.newCardBuilder();
@@ -58,8 +59,10 @@ function onDriveItemsSelected(e) {
     .setType(CardService.SelectionInputType.DROPDOWN)
     .setTitle('Language')
     .setFieldName('language');
+  // Zuletzt verwendete Sprache vorauswaehlen statt immer DE.
+  var lastLang = PropertiesService.getUserProperties().getProperty(DRIVE_PDF_LAST_LANG_KEY) || 'de';
   DRIVE_PDF_LANGUAGES.forEach(function(pair) {
-    langSelect.addItem(pair[1], pair[0], pair[0] === 'de');
+    langSelect.addItem(pair[1], pair[0], pair[0] === lastLang);
   });
   section.addWidget(langSelect);
 
@@ -105,6 +108,7 @@ function apiCheckDrivePdf(e) {
   var language = (e.formInput && e.formInput.language) || 'de';
 
   try {
+    try { PropertiesService.getUserProperties().setProperty(DRIVE_PDF_LAST_LANG_KEY, language); } catch (propErr) {}
     var props = PropertiesService.getScriptProperties();
     var apiKey = (props.getProperty('GEMINI_API_KEY') || '').trim();
     if (!apiKey) throw new Error('AI inspection is not configured (Gemini API Key missing).');
@@ -187,7 +191,7 @@ function apiCheckDrivePdf(e) {
     var errCard = CardService.newCardBuilder();
     errCard.setHeader(CardService.newCardHeader().setTitle('Error'));
     errCard.addSection(CardService.newCardSection()
-      .addWidget(CardService.newTextParagraph().setText(err.message || String(err))));
+      .addWidget(CardService.newTextParagraph().setText(_escapeCardHtml_(err.message || String(err)))));
     return CardService.newActionResponseBuilder()
       .setNavigation(CardService.newNavigation().updateCard(errCard.build()))
       .build();
@@ -439,6 +443,7 @@ function _buildDrivePdfReportSheet_(issues, fileName, language) {
     });
   }
 
+  rows = _sheetSafeRows_(rows);
   var numRows = rows.length;
   var numCols = headers.length;
   var range = sheet.getRange(1, 1, numRows, numCols);

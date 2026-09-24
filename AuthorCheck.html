@@ -250,6 +250,9 @@ body.popup-mode #newRulePrompt {
 }
 .modal-foot .btn-mini { white-space: nowrap; flex: 0 0 auto; padding: 8px 14px; }
 body.popup-mode .modal-foot .btn-mini { font-size: 16px; padding: 10px 18px; }
+.check-notice{margin:0 0 10px;padding:8px 10px;background:#FFF8D6;border-left:3px solid var(--yellow);font-size:11.5px;line-height:1.45;color:#3A3A3A;}
+.remaining-hint{font-size:11px;color:#767676;margin:0 6px;}
+.failed-tag{font-size:11px;color:#D32F2F;margin-right:6px;}
 </style>
 </head>
 <body>
@@ -528,10 +531,23 @@ function startLoading(wrap){
 
 function stopLoading(){ if (_loadingInterval) { clearInterval(_loadingInterval); _loadingInterval = null; } }
 
+// Hinweis, wenn nicht der ganze Text geprueft werden konnte (sehr lange
+// Dokumente oder einzelne fehlgeschlagene KI-Abschnitte) - frueher wurde das
+// stillschweigend abgeschnitten.
+function checkNoticeHtml(res){
+  var parts = [];
+  if (res && res.truncated) parts.push('This document is very long. Only the first ' + Number(res.maxChars || 0).toLocaleString() + ' characters were checked - please check the rest via a text selection.');
+  if (res && res.failedParts) parts.push(res.failedParts + ' of ' + res.parts + ' text sections could not be checked (AI error). Please run the check again.');
+  if (!parts.length) return '';
+  return '<div class="check-notice">' + parts.map(esc).join('<br>') + '</div>';
+}
+
 function renderIssues(wrap, res){
   _currentIssues = res.issues || [];
   if (!_currentIssues.length){
     showState(wrap, 'empty', 'No issues found', 'Grammar, style, and terminology look clean for the selected language.');
+    var notice = checkNoticeHtml(res);
+    if (notice) wrap.insertAdjacentHTML('afterbegin', notice);
     return;
   }
   var summary = '<div class="summary-bar">'+
@@ -544,7 +560,7 @@ function renderIssues(wrap, res){
       '</div>'+
     '</div>';
   var cards = _currentIssues.map(function(issue, i){ return renderIssueCard(issue, i); }).join('');
-  wrap.innerHTML = summary + cards;
+  wrap.innerHTML = checkNoticeHtml(res) + summary + cards;
 }
 
 function renderIssueCard(issue, idx){
@@ -558,7 +574,7 @@ function renderIssueCard(issue, idx){
       '</button>'+
     '</div>'+
     '<div class="issue-body">'+
-      '<div class="diff-line"><span class="diff-original">'+esc(issue.original)+'</span><span class="diff-arrow">?</span><span class="diff-suggestion">'+esc(issue.suggestion)+'</span></div>'+
+      '<div class="diff-line"><span class="diff-original">'+esc(issue.original)+'</span><span class="diff-arrow">→</span><span class="diff-suggestion">'+esc(issue.suggestion)+'</span></div>'+
       '<div class="issue-explanation">'+esc(issue.explanation||'')+'</div>'+
       '<div class="issue-actions">'+
         '<button class="btn-mini primary" title="Replace directly" onclick="applyIssue(\''+issue.id+'\')">Replace</button>'+
@@ -579,8 +595,10 @@ function applyIssue(id){
   google.script.run
     .withSuccessHandler(function(r){
       card.classList.add('applied');
-      actions.innerHTML = '<span class="applied-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg> Replaced ('+r.count+'x)</span>';
-      showToast('Correction applied');
+      actions.innerHTML = '<span class="applied-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg> Replaced</span>' +
+        (r.remaining ? '<span class="remaining-hint">' + r.remaining + ' more occurrence' + (r.remaining !== 1 ? 's' : '') + ' in the document</span>' +
+          '<button class="btn-mini ghost" onclick="applyIssue(\''+id+'\')">Replace next</button>' : '');
+      showToast(r.remaining ? ('Replaced first occurrence (' + r.remaining + ' more)') : 'Correction applied');
     })
     .withFailureHandler(function(err){
       actions.innerHTML = '<button class="btn-mini primary" onclick="applyIssue(\''+id+'\')">Retry</button><button class="btn-mini ghost" onclick="dismissIssue(\''+id+'\')">Ignore</button>';
@@ -618,7 +636,10 @@ function commentIssue(id) {
         actions.innerHTML = '<span style="font-size:11px;color:#D32F2F;">Text not found</span>';
       }
     })
-    .withFailureHandler(function(err){ showToast('Error: ' + err.message); })
+    .withFailureHandler(function(err){
+      actions.innerHTML = '<button class="btn-mini ghost" onclick="commentIssue(\''+id+'\')">Retry note</button><button class="btn-mini ghost" onclick="dismissIssue(\''+id+'\')">Ignore</button>';
+      showToast('Error: ' + ((err && err.message) ? err.message : String(err)));
+    })
     .apiCommentIssue(issue.original, issue.suggestion, issue.explanation);
 }
 
@@ -631,27 +652,35 @@ function dismissIssue(id){
   }
 }
 
-/* ??? BULK ACTIONS ????????????????????????????????????????????????????????? */
+/* ─── BULK ACTIONS ───────────────────────────────────────────────────────── */
 function replaceAll(){
   var pending = _currentIssues.slice();
   if (!pending.length) return;
+  if (!confirm('Replace ' + pending.length + ' passage' + (pending.length !== 1 ? 's' : '') + ' in the document with the suggestions?\n\nEach suggestion replaces the first matching occurrence. Previous versions can be restored via File > Version history.')) return;
   showToast('Replacing all...');
+  var ok = 0, failed = 0;
   function next(i){
     if (i >= pending.length) {
-      showToast('All replacements applied');
+      showToast(failed ? (ok + ' replaced, ' + failed + ' failed (text not found)') : ('All ' + ok + ' replacements applied'));
       return;
     }
     var issue = pending[i];
     var card = document.getElementById(issue.id);
-    if (!card) { next(i+1); return; }
+    if (!card || card.classList.contains('applied')) { next(i+1); return; }
     google.script.run
       .withSuccessHandler(function(r){
+        ok++;
         card.classList.add('applied');
         var actions = card.querySelector('.issue-actions');
         if (actions) actions.innerHTML = '<span class="applied-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg> Replaced</span>';
         next(i+1);
       })
-      .withFailureHandler(function(){ next(i+1); })
+      .withFailureHandler(function(){
+        failed++;
+        var actions = card.querySelector('.issue-actions');
+        if (actions) actions.insertAdjacentHTML('afterbegin', '<span class="failed-tag">Not found</span>');
+        next(i+1);
+      })
       .apiApplyAuthorCheckFix(issue.original, issue.suggestion);
   }
   next(0);
@@ -661,24 +690,28 @@ function noteAll(){
   var pending = _currentIssues.slice();
   if (!pending.length) return;
   showToast('Adding notes for all...');
+  var ok = 0, failed = 0;
   function next(i){
     if (i >= pending.length) {
-      showToast('All notes inserted');
+      showToast(failed ? (ok + ' notes added, ' + failed + ' failed') : ('All ' + ok + ' notes inserted'));
       return;
     }
     var issue = pending[i];
     var card = document.getElementById(issue.id);
-    if (!card) { next(i+1); return; }
+    if (!card || card.classList.contains('applied')) { next(i+1); return; }
     google.script.run
       .withSuccessHandler(function(found){
         if (found) {
+          ok++;
           card.classList.add('applied');
           var actions = card.querySelector('.issue-actions');
           if (actions) actions.innerHTML = '<span class="applied-tag">Note Added</span>';
+        } else {
+          failed++;
         }
         next(i+1);
       })
-      .withFailureHandler(function(){ next(i+1); })
+      .withFailureHandler(function(){ failed++; next(i+1); })
       .apiCommentIssue(issue.original, issue.suggestion, issue.explanation);
   }
   next(0);
@@ -740,7 +773,7 @@ function confirmRulesHelp() {
   }
 }
 
-/* ??? RULES SETTINGS MODAL ?????????????????????????????????????????????????? */
+/* ─── RULES SETTINGS MODAL ────────────────────────────────────────────────── */
 function openRulesSettings() {
   var btn = document.getElementById('rulesBtn');
   var icon = document.getElementById('rulesBtnIcon');
@@ -790,7 +823,7 @@ function loadRulesForLanguage(lang) {
       renderRulesUI(rules);
     })
     .withFailureHandler(function(err) {
-      listEl.innerHTML = '<div style="color:red; text-align:center; padding:20px;">Error: '+err.message+'</div>';
+      listEl.innerHTML = '<div style="color:red; text-align:center; padding:20px;">Error: '+esc(err && err.message ? err.message : String(err))+'</div>';
     })
     .apiGetRulesConfig(lang);
 }
@@ -842,7 +875,7 @@ function renderRulesUI(rules) {
     html += '<div class="rule-group">';
     html +=   '<div class="rule-group-header" onclick="this.parentElement.classList.toggle(\'expanded\')">';
     html +=     '<label style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="event.stopPropagation();">';
-    html +=       '<input type="checkbox" class="select-all-checkbox" data-group="'+esc(section)+'" onclick="toggleGroupAll(\''+esc(section).replace(/'/g,"\\'")+'\', this.checked)">';
+    html +=       '<input type="checkbox" class="select-all-checkbox" data-group="'+esc(section)+'" onclick="toggleGroupAll(\''+escJsAttr(section)+'\', this.checked)">';
     html +=       '<h3 style="margin:0;">' + esc(section) + '</h3>';
     html +=     '</label>';
     html +=     '<span class="rule-group-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></span>';
@@ -853,7 +886,7 @@ function renderRulesUI(rules) {
       html += '<div class="rule-subgroup">';
       html +=   '<div class="rule-subgroup-header" onclick="this.parentElement.classList.toggle(\'expanded\')">';
       html +=     '<label style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="event.stopPropagation();">';
-      html +=       '<input type="checkbox" class="select-all-checkbox-sub" data-subgroup="'+esc(subId)+'" onclick="toggleSubgroupAll(\''+esc(subId).replace(/'/g,"\\'")+'\', this.checked)">';
+      html +=       '<input type="checkbox" class="select-all-checkbox-sub" data-subgroup="'+esc(subId)+'" onclick="toggleSubgroupAll(\''+escJsAttr(subId)+'\', this.checked)">';
       html +=       '<h4 style="margin:0;">' + esc(sub) + '</h4>';
       html +=     '</label>';
       html +=     '<span class="rule-subgroup-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M6 9l6 6 6-6"/></svg></span>';
@@ -876,7 +909,7 @@ function renderRulesUI(rules) {
           '</a>'
         ) : '';
         html += '<div class="rule-item">' +
-                '<label><input type="checkbox" class="rule-checkbox" data-name="'+esc(r.Name)+'" data-group="'+esc(section)+'" data-subgroup="'+esc(subId)+'" onchange="updateGroupSelectAllState(\''+esc(section).replace(/'/g,"\\'")+'\'); updateSubgroupSelectAllState(\''+esc(subId).replace(/'/g,"\\'")+'\')" '+checked+'> ' + esc(r.Description) + '</label>' +
+                '<label><input type="checkbox" class="rule-checkbox" data-name="'+esc(r.Name)+'" data-group="'+esc(section)+'" data-subgroup="'+esc(subId)+'" onchange="updateGroupSelectAllState(\''+escJsAttr(section)+'\'); updateSubgroupSelectAllState(\''+escJsAttr(subId)+'\')" '+checked+'> ' + esc(r.Description) + '</label>' +
                 inputHtml +
                 refLinkHtml +
                 '<button class="btn-move" title="In andere Section/Unterthema verschieben" onclick="openMoveRuleDialog(\''+escJsAttr(r.Name)+'\')">' +
@@ -1137,7 +1170,7 @@ function exportAllRulesToLogSheet() {
       showToast(res.exported + ' rule(s) written to the log sheet.');
     })
     .withFailureHandler(function(err) {
-      showToast('Fehler: ' + (err.message || err));
+      showToast('Error: ' + (err.message || err));
     })
     .apiExportAllRulesToLogSheet(_currentRulesData, _currentRulesLang);
 }
