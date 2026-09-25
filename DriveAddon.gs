@@ -237,7 +237,7 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues) {
     .setText('Export as Sheet')
     .setOnClickAction(CardService.newAction().setFunctionName('apiExportDrivePdfResultToSheet').setParameters({ resultId: resultId })));
   topSection.addWidget(CardService.newTextParagraph()
-    .setText('<i>"Open Annotated PDF" creates a copy of this file with a sticky-note comment per finding, placed right next to the matching text where possible (Google Drive itself does not support visible comments on PDFs). Placement is best-effort - if the exact spot can’t be located, the note falls back to the top of its best-guess page; the full original quote is always in the note text either way.</i>'));
+    .setText('<i>"Open Annotated PDF" creates a copy of this file in which each finding is highlighted in yellow directly on the affected words, with a sticky-note comment in the margin next to it (Google Drive itself does not support visible comments on PDFs). Placement is best-effort - if the exact spot can’t be located, the note falls back to the top of its best-guess page; the full original quote is always in the note text either way.</i>'));
   card.addSection(topSection);
 
   var shown = issues.slice(0, DRIVE_PDF_MAX_CARD_ISSUES);
@@ -323,17 +323,19 @@ function apiExportDrivePdfAnnotated(e) {
 }
 
 /**
- * Lädt die Original-PDF-Bytes erneut, findet pro Fund per Content-Stream-
- * Analyse (PdfTextPosition.gs) die tatsächliche Y-Position von issue.original
- * auf der Seite und platziert die Sticky-Note-Annotation dort statt generisch
- * oben links. Wenn keine Textposition gefunden wird (z.B. Seite mit nicht
- * unterstütztem Stream-Filter, oder das Zitat kommt so im Content-Stream
- * nicht vor - etwa bei Diagramm-/Formular-Layouts), fällt die einzelne Notiz
- * automatisch auf die alte Stapel-oben-links-Platzierung zurück (siehe
- * buildAnnotatedPdfBytes_ in PdfAnnotate.gs) - nie ein harter Fehler dafür.
+ * Lädt die Original-PDF-Bytes erneut und sucht pro Fund issue.original im
+ * rekonstruierten Seitentext (PdfTextPosition.gs: Schriften inkl. ToUnicode
+ * und Zeichenbreiten werden ausgewertet). Bei einem Treffer werden genau die
+ * betroffenen Wörter gelb markiert (Highlight-Annotation, eine Box pro
+ * Textzeile) und die Sticky-Note sitzt auf Höhe der Stelle im Seitenrand
+ * daneben. Wenn keine Textposition gefunden wird (z.B. gescannte Seite ohne
+ * Textebene, nicht unterstützter Stream-Filter, oder das Zitat kommt so im
+ * Dokument nicht vor), fällt die einzelne Notiz automatisch auf die alte
+ * Stapel-oben-links-Platzierung auf der von Gemini genannten Seite zurück
+ * (siehe buildAnnotatedPdfBytes_ in PdfAnnotate.gs) - nie ein harter Fehler.
  * Legt das Ergebnis als neue Datei in Drive ab und gibt deren URL zurück.
- * Wirft weiter, wenn die PDF-Struktur selbst nicht in Klartext auffindbar war
- * (siehe PdfAnnotate.gs) - der Aufrufer fängt das ab.
+ * Wirft weiter, wenn die PDF-Struktur selbst nicht auffindbar war (siehe
+ * PdfAnnotate.gs) - der Aufrufer fängt das ab.
  */
 function _buildAnnotatedPdfFile_(fileId, fileName, issues) {
   var blob = DriveApp.getFileById(fileId).getBlob();
@@ -342,27 +344,29 @@ function _buildAnnotatedPdfFile_(fileId, fileName, issues) {
 
   var rootNum = _pdfFindRootRef_(text);
   var offsets = _pdfScanObjectOffsets_(text);
-  var pages = _pdfCollectPages_(text, offsets, rootNum);
+  var doc = _pdfOpenDoc_(text, offsets);
+  var pages = _pdfCollectPages_(text, offsets, rootNum, doc);
 
-  // Pro Seite werden die Content-Stream-Textausgaben nur EINMAL dekomprimiert/
-  // geparst und dann für alle Funde wiederverwendet (Laufzeit).
-  var pageRunsCache = {};
-  function getPageRuns(pageIdx) {
-    if (pageIdx in pageRunsCache) return pageRunsCache[pageIdx];
-    var runs = null;
+  // Pro Seite wird der Content-Stream nur EINMAL dekomprimiert/interpretiert
+  // und dann für alle Funde wiederverwendet (Laufzeit).
+  var pageModelCache = {};
+  function getPageModel(pageIdx) {
+    if (pageIdx in pageModelCache) return pageModelCache[pageIdx];
+    var model = null;
     try {
-      var contentText = _pdfGetPageContentText_(text, offsets, pages[pageIdx].dictText);
-      if (contentText) runs = _pdfExtractTextRuns_(contentText);
+      var glyphs = _pdfExtractPageGlyphs_(doc, pages[pageIdx]);
+      if (glyphs && glyphs.length) model = _pdfBuildPageModel_(glyphs);
     } catch (e) {
       Logger.log('_buildAnnotatedPdfFile_: Seite ' + pageIdx + ' - Content-Stream nicht auswertbar: ' + e.message);
     }
-    pageRunsCache[pageIdx] = runs;
-    return runs;
+    pageModelCache[pageIdx] = model;
+    return model;
   }
 
   var capped = issues.slice(0, PDF_ANNOT_MAX_PER_PDF);
   var pageAnnotations = {};
-  var countOnPage = {};
+  var iconsOnPage = {};     // pageIdx -> bereits belegte Icon-Rechtecke
+  var occurrenceUsed = {};  // gleiches Zitat mehrfach gemeldet -> nächstes Vorkommen nehmen
   var positioned = 0;
 
   capped.forEach(function(issue) {
@@ -371,18 +375,23 @@ function _buildAnnotatedPdfFile_(fileId, fileName, issues) {
 
     // Erst die von Gemini genannte Seite versuchen, danach alle anderen -
     // der tatsächliche Textinhalt ist zuverlässiger als Geminis Seitenangabe.
-    var matchedPage = null, matchedY = null;
+    var matchedPage = null, hit = null;
     var searchOrder = [guessedPage];
     for (var p = 0; p < pages.length; p++) { if (p !== guessedPage) searchOrder.push(p); }
-    for (var si = 0; si < searchOrder.length; si++) {
-      var runs = getPageRuns(searchOrder[si]);
-      if (!runs) continue;
-      var y = _pdfFindQuoteYOnPage_(runs, issue.original);
-      if (y !== null) { matchedPage = searchOrder[si]; matchedY = y; break; }
+    for (var si = 0; si < searchOrder.length && issue.original; si++) {
+      var model = getPageModel(searchOrder[si]);
+      if (!model) continue;
+      var occKey = searchOrder[si] + '|' + String(issue.original).toLowerCase();
+      var h = _pdfFindQuoteOnPage_(model, issue.original, occurrenceUsed[occKey] || 0);
+      if (h) {
+        matchedPage = searchOrder[si];
+        hit = h;
+        occurrenceUsed[occKey] = (occurrenceUsed[occKey] || 0) + 1;
+        break;
+      }
     }
 
     var pageIdx = matchedPage !== null ? matchedPage : guessedPage;
-    countOnPage[pageIdx] = (countOnPage[pageIdx] || 0) + 1;
 
     var typeLabel = (issue.type || 'style').toUpperCase();
     var contents = '[' + typeLabel + ']\n' + issue.original + '\n\n-> ' + issue.suggestion +
@@ -390,17 +399,12 @@ function _buildAnnotatedPdfFile_(fileId, fileName, issues) {
       (issue.location ? '\n\n(AI-reported location: ' + issue.location + ')' : '');
     var ann = { contents: contents, title: 'Author Check (' + typeLabel + ')' };
 
-    if (matchedY !== null) {
+    if (hit) {
       positioned++;
-      var mediaBox = pages[pageIdx].mediaBox || [0, 0, 612, 792];
-      var iconSize = 20, margin = 16;
-      // Mehrere Treffer auf derselben Zeile/Höhe leicht nach rechts staffeln,
-      // damit sich die Icons nicht exakt überlappen.
-      var stackOffset = (countOnPage[pageIdx] - 1) * (iconSize + 4);
-      var x = Math.min(mediaBox[0] + margin + stackOffset, mediaBox[2] - iconSize - margin);
-      var yTop = Math.min(mediaBox[3] - margin, matchedY + iconSize / 2);
-      var yBottom = Math.max(mediaBox[1] + margin, yTop - iconSize);
-      ann.rect = [x, yBottom, x + iconSize, yTop];
+      ann.highlight = hit.boxes;
+      if (!iconsOnPage[pageIdx]) iconsOnPage[pageIdx] = [];
+      ann.rect = _pdfPlaceNoteIcon_(pages[pageIdx].mediaBox || [0, 0, 612, 792],
+        getPageModel(pageIdx), hit.boxes[0], iconsOnPage[pageIdx]);
     } // sonst: kein rect -> automatischer Stapel-Fallback oben links
 
     if (!pageAnnotations[pageIdx]) pageAnnotations[pageIdx] = [];
@@ -413,6 +417,38 @@ function _buildAnnotatedPdfFile_(fileId, fileName, issues) {
   var file = DriveApp.createFile(newBlob);
   logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_ANNOTATED', fileName + ' - ' + capped.length + ' annotation(s), ' + positioned + ' precisely positioned -> ' + file.getId());
   return file.getUrl();
+}
+
+/**
+ * Platziert das Sticky-Note-Icon im Seitenrand auf Höhe der ersten markierten
+ * Zeile (im breiteren Rand neben dem Textblock), damit es keinen Text
+ * verdeckt. Ist die Stelle schon durch ein anderes Icon belegt, wird der
+ * gegenüberliegende Rand genommen, danach schrittweise tiefer.
+ */
+function _pdfPlaceNoteIcon_(mediaBox, model, lineBox, placed) {
+  var size = 20, gap = 4, edge = 2;
+  var yMid = (lineBox[1] + lineBox[3]) / 2;
+  var y = Math.min(mediaBox[3] - size - edge, Math.max(mediaBox[1] + edge, yMid - size / 2));
+  var leftX = Math.max(mediaBox[0] + edge, model.textLeft - size - gap);
+  var rightX = Math.min(mediaBox[2] - size - edge, model.textRight + gap);
+  // Linker Rand bevorzugt; ist er zu schmal (oder schon belegt), der rechte.
+  var columns = (model.textLeft - mediaBox[0] >= mediaBox[2] - model.textRight) ? [leftX, rightX] : [rightX, leftX];
+
+  function overlaps(r) {
+    return placed.some(function(o) { return r[0] < o[2] && r[2] > o[0] && r[1] < o[3] && r[3] > o[1]; });
+  }
+  var rect = null;
+  // Beide Ränder auf Zeilenhöhe probieren, danach schrittweise tiefer.
+  for (var row = 0; row < 20 && !rect; row++) {
+    var ry = Math.max(mediaBox[1] + edge, y - row * (size + 2));
+    for (var c = 0; c < columns.length && !rect; c++) {
+      var cand = [columns[c], ry, columns[c] + size, ry + size];
+      if (!overlaps(cand)) rect = cand;
+    }
+  }
+  if (!rect) rect = [columns[0], y, columns[0] + size, y + size];
+  placed.push(rect);
+  return rect;
 }
 
 /**

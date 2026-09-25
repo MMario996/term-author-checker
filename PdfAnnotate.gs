@@ -183,8 +183,15 @@ function _pdfGetDictArray_(dictText, key) {
 }
 
 // Liest den Inhalt (ohne Klammern) eines indirekten Array-Objekts "N 0 obj [ ... ] endobj".
-function _pdfReadArrayObject_(text, offsets, num) {
+// doc (optional, siehe _pdfOpenDoc_ in PdfTextPosition.gs): findet das Objekt
+// auch in einem komprimierten Object Stream.
+function _pdfReadArrayObject_(text, offsets, num, doc) {
   if (!(num in offsets)) {
+    var loc = doc ? _pdfDocObjStmIndex_(doc)[num] : null;
+    if (loc) {
+      var lb0 = loc.text.indexOf('[', loc.pos), rb0 = lb0 === -1 ? -1 : loc.text.indexOf(']', lb0);
+      if (rb0 !== -1) return loc.text.slice(lb0 + 1, rb0);
+    }
     throw new Error('Annots array object ' + num + ' not found as plain text (likely inside a compressed object stream).');
   }
   var objKw = text.indexOf('obj', offsets[num]);
@@ -196,23 +203,49 @@ function _pdfReadArrayObject_(text, offsets, num) {
   return text.slice(lb + 1, rb);
 }
 
+function _pdfNumList_(arr) { return arr.map(function(v) { return v.toFixed(2); }).join(' '); }
+
+function _pdfUnionBox_(boxes) {
+  var u = boxes[0].slice();
+  boxes.forEach(function(b) {
+    u[0] = Math.min(u[0], b[0]); u[1] = Math.min(u[1], b[1]);
+    u[2] = Math.max(u[2], b[2]); u[3] = Math.max(u[3], b[3]);
+  });
+  return u;
+}
+
 function _pdfGetMediaBox_(dictText) {
   var m = /\/MediaBox\s*\[\s*([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)\s*\]/.exec(dictText);
   if (!m) return null;
   return [parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]), parseFloat(m[4])];
 }
 
-function _pdfResolveObject_(text, offsets, num) {
+// doc (optional): Objekte, die in einem komprimierten Object Stream liegen
+// (PDF 1.5+, z.B. Word/"Optimiertes PDF"), werden darüber gefunden.
+function _pdfResolveObject_(text, offsets, num, doc) {
   if (!(num in offsets)) {
+    var loc = doc ? _pdfDocObjStmIndex_(doc)[num] : null;
+    if (loc) {
+      var i = _pdfSkipWs_(loc.text, loc.pos);
+      if (loc.text.substr(i, 2) === '<<') {
+        var start = i, depth = 0;
+        while (i < loc.text.length) {
+          if (loc.text.substr(i, 2) === '<<') { depth++; i += 2; continue; }
+          if (loc.text.substr(i, 2) === '>>') { depth--; i += 2; if (depth === 0) break; continue; }
+          i++;
+        }
+        return { num: num, dictText: loc.text.slice(start, i) };
+      }
+    }
     throw new Error('Object ' + num + ' not found as plain text (likely inside a compressed object stream). This PDF\'s internal structure is not supported for direct annotation.');
   }
   var range = _pdfExtractDictText_(text, offsets[num]);
   if (!range) throw new Error('Object ' + num + ' has no dictionary.');
-  return { num: num, start: range.start, end: range.end, dictText: text.slice(range.start, range.end) };
+  return { num: num, dictText: text.slice(range.start, range.end) };
 }
 
-function _pdfCollectPages_(text, offsets, rootNum) {
-  var catalog = _pdfResolveObject_(text, offsets, rootNum);
+function _pdfCollectPages_(text, offsets, rootNum, doc) {
+  var catalog = _pdfResolveObject_(text, offsets, rootNum, doc);
   var pagesNum = _pdfGetDictValueRef_(catalog.dictText, 'Pages');
   if (pagesNum === null) throw new Error('Catalog has no /Pages.');
 
@@ -221,7 +254,7 @@ function _pdfCollectPages_(text, offsets, rootNum) {
   function walk(nodeNum, inheritedMediaBox) {
     if (visited[nodeNum]) return; // Schutz vor Zyklen in kaputten PDFs
     visited[nodeNum] = true;
-    var node = _pdfResolveObject_(text, offsets, nodeNum);
+    var node = _pdfResolveObject_(text, offsets, nodeNum, doc);
     var mediaBox = _pdfGetMediaBox_(node.dictText) || inheritedMediaBox;
     var typeM = /\/Type\s*\/(\w+)/.exec(node.dictText);
     var nodeType = typeM ? typeM[1] : null;
@@ -241,9 +274,12 @@ function _pdfCollectPages_(text, offsets, rootNum) {
 }
 
 /**
- * pageAnnotations: { pageIndex(0-based): [ {rect?:[x,y,x,y], contents:str, title?:str}, ... ] }
- * "rect" is optional - if omitted, annotations are stacked in the page's top-left
- * corner using its actual /MediaBox, so callers don't need to know page dimensions.
+ * pageAnnotations: { pageIndex(0-based): [ {rect?:[x,y,x,y], highlight?:[[x0,y0,x1,y1],...],
+ *   contents:str, title?:str}, ... ] }
+ * "rect" is the sticky-note icon position and optional - if omitted, notes are
+ * stacked in the page's top-left corner using its actual /MediaBox, so callers
+ * don't need to know page dimensions. "highlight" (optional) adds a yellow
+ * highlight annotation over exactly these boxes (one per text line).
  * bytes: signed byte array (as returned by Blob.getBytes()).
  * Returns a signed byte array for the new, annotated PDF (Utilities.newBlob-ready).
  * Throws Error with a clear message if the PDF's structure can't be located in
@@ -255,7 +291,8 @@ function buildAnnotatedPdfBytes_(bytes, pageAnnotations) {
 
   var rootNum = _pdfFindRootRef_(text);
   var offsets = _pdfScanObjectOffsets_(text);
-  var pages = _pdfCollectPages_(text, offsets, rootNum);
+  var doc = _pdfOpenDoc_(text, offsets);
+  var pages = _pdfCollectPages_(text, offsets, rootNum, doc);
 
   var sxRe = /startxref\s+(\d+)/g;
   var sxMatch, lastSx = null;
@@ -295,15 +332,47 @@ function buildAnnotatedPdfBytes_(bytes, pageAnnotations) {
     var annotsRefM = /\/Annots\s+(\d+)\s+(\d+)\s+R/.exec(page.dictText);
     var existingAnnotsRaw;
     if (annotsRefM) {
-      existingAnnotsRaw = _pdfReadArrayObject_(text, offsets, parseInt(annotsRefM[1], 10));
+      existingAnnotsRaw = _pdfReadArrayObject_(text, offsets, parseInt(annotsRefM[1], 10), doc);
     } else {
       existingAnnotsRaw = _pdfGetDictArray_(page.dictText, 'Annots') || '';
     }
     var newAnnotRefs = [];
 
     var mediaBox = page.mediaBox || [0, 0, 612, 792]; // US-Letter-Fallback, falls kein /MediaBox auffindbar war
-    anns.forEach(function(ann, idxOnPage) {
-      var annotNum = nextNum++;
+    var stackIdx = 0;
+    anns.forEach(function(ann) {
+      var contentsHex = _pdfHexString_(ann.contents);
+      var titleHex = _pdfHexString_(ann.title || 'Author Check');
+
+      // Exakt gefundene Textstelle: gelbe Markierung (Highlight-Annotation)
+      // über genau den betroffenen Wörtern, eine Box pro Textzeile. Trägt
+      // denselben Kommentartext, damit Acrobat & Co. ihn beim Überfahren der
+      // Markierung anzeigen. Das eigene Erscheinungsbild (/AP, "Multiply")
+      // sorgt dafür, dass auch Viewer ohne eigene Highlight-Darstellung die
+      // Markierung zeigen und der Text darunter lesbar bleibt.
+      if (ann.highlight && ann.highlight.length) {
+        var hb = _pdfUnionBox_(ann.highlight);
+        var bboxStr = _pdfNumList_(hb);
+        var quads = [], fills = [];
+        ann.highlight.forEach(function(b) {
+          // QuadPoints-Reihenfolge wie Acrobat: oben links, oben rechts, unten links, unten rechts.
+          quads.push(b[0], b[3], b[2], b[3], b[0], b[1], b[2], b[1]);
+          fills.push(_pdfNumList_([b[0], b[1], b[2] - b[0], b[3] - b[1]]) + ' re');
+        });
+        var apData = '/GS0 gs 1 0.93 0 rg\n' + fills.join('\n') + '\nf\n';
+        var apNum = nextNum++;
+        newObjects.push({ num: apNum, body:
+          '<< /Type /XObject /Subtype /Form /BBox [' + bboxStr + ']' +
+          ' /Resources << /ExtGState << /GS0 << /Type /ExtGState /BM /Multiply /ca 1 /CA 1 >> >> >>' +
+          ' /Length ' + apData.length + ' >>\nstream\n' + apData + '\nendstream' });
+        var hlNum = nextNum++;
+        newObjects.push({ num: hlNum, body:
+          '<< /Type /Annot /Subtype /Highlight /Rect [' + bboxStr + '] /QuadPoints [' + _pdfNumList_(quads) + ']' +
+          ' /Contents ' + contentsHex + ' /T ' + titleHex + ' /C [1 0.93 0] /F 4 /P ' + page.num + ' 0 R' +
+          ' /AP << /N ' + apNum + ' 0 R >> >>' });
+        newAnnotRefs.push(hlNum);
+      }
+
       // Rect wird, falls vom Aufrufer nicht explizit vorgegeben, relativ zur
       // tatsächlichen Seitengröße oben links gestapelt platziert (ein
       // 20x20pt "Sprechblasen"-Icon pro Fund, mit 26pt Abstand).
@@ -311,15 +380,13 @@ function buildAnnotatedPdfBytes_(bytes, pageAnnotations) {
       if (!rect) {
         var iconSize = 20, gap = 26, margin = 16;
         var x = mediaBox[0] + margin;
-        var y = mediaBox[3] - margin - iconSize - (idxOnPage * gap);
+        var y = mediaBox[3] - margin - iconSize - (stackIdx++ * gap);
         if (y < mediaBox[1] + margin) y = mediaBox[1] + margin; // nicht unten aus der Seite laufen
         rect = [x, y, x + iconSize, y + iconSize];
       }
-      var contentsHex = _pdfHexString_(ann.contents);
-      var titleHex = _pdfHexString_(ann.title || 'Author Check');
-      var rectStr = rect.map(function(v) { return v.toFixed(2); }).join(' ');
+      var annotNum = nextNum++;
       var body =
-        '<< /Type /Annot /Subtype /Text /Rect [' + rectStr + '] /Contents ' + contentsHex +
+        '<< /Type /Annot /Subtype /Text /Rect [' + _pdfNumList_(rect) + '] /Contents ' + contentsHex +
         ' /T ' + titleHex + ' /Name /Comment /Open false /C [1 0.93 0] >>';
       newObjects.push({ num: annotNum, body: body });
       newAnnotRefs.push(annotNum);
