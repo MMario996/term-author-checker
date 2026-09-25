@@ -165,11 +165,9 @@ function apiCheckDrivePdfContinue(e) {
   var started = Date.now();
   try {
     var job = _drivePdfLoadJob_(e.parameters.stateId);
-    var files = {};
+    // Nur für das (seltene) Zerlegen in Einzelseiten wird ein Paket als Text gebraucht.
     function partText(p) {
-      var fid = p.file || job.tmpId;
-      if (!files[fid]) files[fid] = _pdfBytesToBinaryString_(DriveApp.getFileById(fid).getBlob().getBytes());
-      return files[fid].substr(p.start, p.len);
+      return _pdfBytesToBinaryString_(_driveReadRanges_([{ file: p.file || job.tmpId, start: p.start, len: p.len }])[0]);
     }
     // Die letzte Etappe ist nicht fertig geworden (Zeitlimit) -> kleiner werden:
     // erst weniger Pakete pro Etappe, dann das Paket in Einzelseiten zerlegen,
@@ -194,9 +192,16 @@ function apiCheckDrivePdfContinue(e) {
       Logger.log('apiCheckDrivePdfContinue: Etappe ab Paket ' + (inf.next + 1) + ' (' + inf.size + ' Paket(e)) am Zeitlimit abgebrochen -> ' +
         (inf.size > 1 ? job.batch + ' pro Etappe' : (entry.to - entry.from > 1 ? 'restliche Pakete in Einzelseiten zerlegt' : 'Seite übersprungen')));
     }
-    var parts = job.parts.map(function(p) { return { from: p.from, to: p.to, text: partText(p) }; });
-    files = null;
-    return _drivePdfWork_(job, parts, started);
+    // Pakete NICHT alle vorab laden (das kostete bei großen PDFs ~20 s pro Klick):
+    // _drivePdfWork_ holt pro Etappe nur die benötigten Bytes per Range-Anfrage.
+    var parts = job.parts.map(function(p) { return { from: p.from, to: p.to, entry: p }; });
+    return _drivePdfWork_(job, parts, started, function(batch) {
+      var need = batch.filter(function(part) { return !part.bytes && part.text === undefined; });
+      var data = _driveReadRanges_(need.map(function(part) {
+        return { file: part.entry.file || job.tmpId, start: part.entry.start, len: part.entry.len };
+      }));
+      need.forEach(function(part, k) { part.bytes = data[k]; });
+    });
   } catch (err) {
     return _drivePdfErrorResponse_(err);
   }
@@ -208,7 +213,7 @@ function apiCheckDrivePdfContinue(e) {
 // eine Etappe nach der anderen gestartet (DRIVE_PDF_BATCH_PARTS Pakete parallel),
 // solange die gemessene Dauer der letzten Etappe noch sicher in die Restzeit
 // passt. Danach zeigt die Card den Fortschritt und einen "Continue"-Button.
-var DRIVE_PDF_BATCH_PARTS = 4;               // Seitenpakete pro Etappe (parallel)
+var DRIVE_PDF_BATCH_PARTS = 8;               // Seitenpakete pro Etappe (parallel)
 var DRIVE_PDF_START_BATCH_BEFORE_MS = 15000; // neue Etappe nur, wenn so viel Zeit noch nicht verbraucht ist ...
 var DRIVE_PDF_ACTION_LIMIT_MS = 38000;       // ... und die letzte Etappendauer darunter bleiben würde
 
@@ -253,7 +258,27 @@ function _drivePdfCleanupJob_(job) {
   });
 }
 
-function _drivePdfWork_(job, parts, started) {
+// Liest Byte-Bereiche aus Drive-Dateien (parallel) und liefert sie als Byte-Arrays.
+function _driveReadRanges_(ranges) {
+  var token = ScriptApp.getOAuthToken();
+  var responses = UrlFetchApp.fetchAll(ranges.map(function(r) {
+    return {
+      url: 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(r.file) + '?alt=media&supportsAllDrives=true',
+      headers: { Authorization: 'Bearer ' + token, Range: 'bytes=' + r.start + '-' + (r.start + r.len - 1) },
+      muteHttpExceptions: true
+    };
+  }));
+  return responses.map(function(res, k) {
+    var code = res.getResponseCode();
+    if (code !== 206 && code !== 200) throw new Error('Drive download failed (HTTP ' + code + ').');
+    var bytes = res.getContent();
+    if (code === 200 && bytes.length > ranges[k].len) bytes = bytes.slice(ranges[k].start, ranges[k].start + ranges[k].len);
+    return bytes;
+  });
+}
+
+// loadBatch (optional): lädt die Bytes der Pakete einer Etappe nach (part.bytes).
+function _drivePdfWork_(job, parts, started, loadBatch) {
   var cfg = _driveGeminiConfig_();
   var prompt = _drivePdfPrompt_(job);
   var seen = {};
@@ -275,11 +300,14 @@ function _drivePdfWork_(job, parts, started) {
       job.inflight = { next: job.next, size: batch.length };
       _drivePdfSaveJob_(job);
     }
+    if (loadBatch) loadBatch(batch);
     var t0 = Date.now();
+    var startedAfter = Math.round((t0 - started) / 100) / 10;
     var result = _drivePdfRunBatch_(cfg, prompt, batch, parts.length > 1);
+    batch.forEach(function(part) { part.bytes = null; part.text = null; });
     job.lastBatchMs = Date.now() - t0;
     Logger.log('_drivePdfWork_: Etappe mit ' + batch.length + ' Paket(en) (Seiten ' + (batch[0].from + 1) + '-' +
-      batch[batch.length - 1].to + ') dauerte ' + Math.round(job.lastBatchMs / 100) / 10 + ' s');
+      batch[batch.length - 1].to + ') dauerte ' + Math.round(job.lastBatchMs / 100) / 10 + ' s (gestartet nach ' + startedAfter + ' s)');
     result.issues.forEach(function(issue) {
       var key = issue.original + '\u0000' + issue.suggestion;
       if (seen[key]) return;
@@ -331,7 +359,7 @@ function _drivePdfRunBatch_(cfg, prompt, batch, isSplit) {
         role: 'user',
         parts: [
           { text: partPrompt },
-          { inlineData: { mimeType: 'application/pdf', data: Utilities.base64Encode(_pdfBinaryStringToBytes_(part.text)) } }
+          { inlineData: { mimeType: 'application/pdf', data: Utilities.base64Encode(part.bytes || _pdfBinaryStringToBytes_(part.text)) } }
         ]
       }],
       generationConfig: { temperature: cfg.temperature }
