@@ -37,9 +37,12 @@ function apiSetUiLang(lang) {
 }
 
 // Liefert eine Add-on-Seite als Template aus, mit der gespeicherten UI-Sprache.
-function renderWithI18n_(filename) {
+// hostApp ('docs' / 'sheets' / 'slides', optional) landet in der Seite als
+// HOST_APP und wird bei Server-Aufrufen, die ein Fenster öffnen, mitgeschickt.
+function renderWithI18n_(filename, hostApp) {
   var tpl = HtmlService.createTemplateFromFile(filename);
   tpl.uiLang = getUiLangPref_();
+  tpl.hostApp = hostApp || '';
   return tpl.evaluate();
 }
 
@@ -911,14 +914,13 @@ function onOpen(e) {
   }
 }
 
-function showSidebar() {
-  var ui = renderWithI18n_('Sidebar')
+// e: Event-Objekt (Card-Action/Menü) oder hostApp-String aus der Seitenleiste.
+function showSidebar(e) {
+  var host = _resolveHost_(e);
+  var ui = renderWithI18n_('Sidebar', host.app)
     .setTitle('Kärcher TermCheck')
     .setWidth(300);
-    
-  if (DocumentApp.getActiveDocument()) DocumentApp.getUi().showSidebar(ui);
-  else if (SpreadsheetApp.getActiveSpreadsheet()) SpreadsheetApp.getUi().showSidebar(ui);
-  else if (SlidesApp.getActivePresentation()) SlidesApp.getUi().showSidebar(ui);
+  host.ui.showSidebar(ui);
 }
 
 // Sammelt alle Textbereiche einer Liste von Folienelementen: Formen jeder Art

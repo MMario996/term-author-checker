@@ -424,6 +424,8 @@ body.popup-mode .ui-lang-select{ font-size:13px; max-width:none; }
 <script>
 // Vom Server gespeicherte UI-Sprache (pro Nutzer), siehe renderWithI18n_ in Code.gs.
 var I18N_INITIAL_LANG = <?!= JSON.stringify(uiLang) ?>;
+// Editor-App, in der diese Seite läuft ('docs'/'sheets'/'slides'), siehe _resolveHost_.
+var HOST_APP = <?!= JSON.stringify(hostApp) ?>;
 function I18N_PERSIST(lang){ google.script.run.apiSetUiLang(lang); }
 </script>
 <?!= include('I18n'); ?>
@@ -786,7 +788,7 @@ function openRulesSettings() {
   google.script.run
     .withSuccessHandler(function(){ clearTimeout(timeoutId); resetBtn(); })
     .withFailureHandler(function(err){ clearTimeout(timeoutId); resetBtn(); showToast(t('ac.error', { msg: err.message })); })
-    .apiOpenRulesModal();
+    .apiOpenRulesModal(HOST_APP);
 }
 
 function closeRulesSettings() {
@@ -1240,7 +1242,7 @@ function toggleViewMode() {
 }
 
 function backToHomepage() {
-  google.script.run.apiShowHomeChooser();
+  google.script.run.apiShowHomeChooser(HOST_APP);
 }
 
 </script>

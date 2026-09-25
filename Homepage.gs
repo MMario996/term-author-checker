@@ -23,9 +23,11 @@ function onHomepage(e) {
   card.addSection(section);
   return card.build();
 }
-function apiShowHomeChooser(e) {
-  var ui = renderWithI18n_('HomeChooser')
+// hostApp: von der Seitenleiste mitgeschickt (siehe _resolveHost_).
+function apiShowHomeChooser(hostApp) {
+  var host = _resolveHost_(hostApp);
+  var ui = renderWithI18n_('HomeChooser', host.app)
     .setTitle('Kärcher TermCheck')
     .setWidth(300);
-  _getUiSafe_(e).showSidebar(ui);
+  host.ui.showSidebar(ui);
 }
