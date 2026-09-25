@@ -126,20 +126,35 @@ function apiCheckDrivePdf(e) {
     var prep = _drivePdfPrepare_(fileId, fileName);
     var job = { fileId: fileId, fileName: fileName, language: language, fileSize: prep.fileSize,
                 imagesRemoved: prep.imagesRemoved, imagesKept: prep.imagesKept };
+    var parts = _drivePdfPlanParts_(prep);
+    prep = null;
+    parts.forEach(function(part) {
+      if (part.text.length > DRIVE_PDF_MAX_BYTES) {
+        throw new Error('Pages ' + (part.from + 1) + '-' + part.to + ' are still ' + _driveMb_(part.text.length) + ' MB after reduction (limit: ' + _driveMb_(DRIVE_PDF_MAX_BYTES) + ' MB). Please split the PDF.');
+      }
+    });
 
     // Sicherheitsnetz: hat die Vorbereitung schon zu viel vom Zeitbudget der
-    // Aktion verbraucht, wird die vorbereitete PDF zwischengespeichert und die
-    // Prüfung in einer zweiten Aktion ("Continue check") mit frischem Budget gestartet.
+    // Aktion verbraucht, werden die fertigen Seitenpakete zwischengespeichert
+    // (hintereinander in EINER Temp-Datei, Positionen in job.parts) und die
+    // Prüfung in einer zweiten Aktion ("Continue check") mit frischem Budget
+    // gestartet - dort wird dann nur noch Gemini aufgerufen.
     if (Date.now() - started > DRIVE_PDF_PREP_BUDGET_MS) {
+      var pos = 0;
+      job.parts = parts.map(function(part) {
+        var entry = { from: part.from, to: part.to, start: pos, len: part.text.length };
+        pos += part.text.length;
+        return entry;
+      });
       var tmp = _getOrCreateExportFolder_().createFile(Utilities.newBlob(
-        _pdfBinaryStringToBytes_(prep.model ? prep.model.text : prep.text), 'application/pdf',
-        '.authorcheck-temp-' + Utilities.getUuid() + '.pdf'));
+        _pdfBinaryStringToBytes_(parts.map(function(part) { return part.text; }).join('')), 'application/octet-stream',
+        '.authorcheck-temp-' + Utilities.getUuid() + '.bin'));
       job.tmpId = tmp.getId();
       return CardService.newActionResponseBuilder()
         .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfContinueCard_(job)))
         .build();
     }
-    return _drivePdfRunCheck_(job, prep);
+    return _drivePdfRunCheck_(job, parts);
   } catch (err) {
     return _drivePdfErrorResponse_(err);
   }
@@ -150,12 +165,10 @@ function apiCheckDrivePdfContinue(e) {
   var job;
   try {
     job = JSON.parse(e.parameters.job);
-    var tmpFile = DriveApp.getFileById(job.tmpId);
-    var text = _pdfBytesToBinaryString_(tmpFile.getBlob().getBytes());
-    var prep = { fileSize: job.fileSize, imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept };
-    try { prep.model = pdfRebuild_(_pdfStringReader_(text)); }
-    catch (rebuildErr) { prep.text = text; }
-    return _drivePdfRunCheck_(job, prep);
+    var all = _pdfBytesToBinaryString_(DriveApp.getFileById(job.tmpId).getBlob().getBytes());
+    var parts = job.parts.map(function(p) { return { from: p.from, to: p.to, text: all.substr(p.start, p.len) }; });
+    all = null;
+    return _drivePdfRunCheck_(job, parts);
   } catch (err) {
     return _drivePdfErrorResponse_(err);
   } finally {
@@ -240,8 +253,8 @@ function _drivePdfPrepare_(fileId, fileName) {
   return { fileSize: fileSize, model: model, imagesRemoved: model.imagesRemoved, imagesKept: model.imagesKept };
 }
 
-/** Schickt die vorbereitete PDF (in Seitenpaketen, parallel) an Gemini und zeigt das Ergebnis. */
-function _drivePdfRunCheck_(job, prep) {
+/** Schickt die Seitenpakete (parallel) an Gemini und zeigt das Ergebnis. */
+function _drivePdfRunCheck_(job, parts) {
   var cfg = _driveGeminiConfig_();
   var language = job.language;
   var promptParts = _buildAuthorCheckPromptParts_(language, {
@@ -263,7 +276,7 @@ function _drivePdfRunCheck_(job, prep) {
     'Check ONLY the passages that are written in ' + targetLanguageName + '. ' +
     'Completely ignore and skip any passages written in other languages, even if they appear right next to or interleaved with ' + targetLanguageName + ' text. ' +
     'Do not report any issue whose "original" quote is not itself in ' + targetLanguageName + '.\n\n' +
-    (prep.imagesRemoved ? 'NOTE: To reduce the file size, some large images were removed from this PDF. Empty areas where images used to be are expected - do not report them.\n\n' : '') +
+    (job.imagesRemoved ? 'NOTE: To reduce the file size, some large images were removed from this PDF. Empty areas where images used to be are expected - do not report them.\n\n' : '') +
     'Within the ' + targetLanguageName + ' passages, check for these error types:\n' +
     '1. GRAMMAR AND SPELLING ERRORS\n' +
     '2. INCORRECT OR INCONSISTENT KÄRCHER TERMINOLOGY - compare against this list ' +
@@ -278,14 +291,6 @@ function _drivePdfRunCheck_(job, prep) {
     '- Only return genuine errors found in ' + targetLanguageName + ' passages. If no errors are found, return {"issues":[]}.';
 
   // Seitenpakete parallel prüfen (eine Add-on-Aktion darf nur ca. 30-45 s laufen).
-  var parts = _drivePdfPlanParts_(prep);
-  prep.model = null;
-  prep.text = null;
-  parts.forEach(function(part) {
-    if (part.text.length > DRIVE_PDF_MAX_BYTES) {
-      throw new Error('Pages ' + (part.from + 1) + '-' + part.to + ' are still ' + _driveMb_(part.text.length) + ' MB after reduction (limit: ' + _driveMb_(DRIVE_PDF_MAX_BYTES) + ' MB). Please split the PDF.');
-    }
-  });
   var requests = parts.map(function(part) {
     var partPrompt = prompt;
     if (parts.length > 1) {
@@ -436,8 +441,9 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
 // Gemini gehen (jedes Paket enthält nur Schriften/Bilder seiner Seiten).
 // Liefert [{from, to, text}] (Seiten 0-basiert, to exklusiv). Kleine PDFs oder
 // PDFs, die sich nicht aufteilen lassen, gehen als ein Paket raus.
-var DRIVE_PDF_PAGES_PER_PART = 15;
-var DRIVE_PDF_MAX_PARTS = 10;
+// Kleine Pakete = kurze Antwortzeit pro Gemini-Anfrage (alle laufen parallel).
+var DRIVE_PDF_PAGES_PER_PART = 6;
+var DRIVE_PDF_MAX_PARTS = 25;
 function _drivePdfPlanParts_(prep) {
   if (!prep.model) return [{ from: 0, to: 0, text: prep.text }];
   var whole = [{ from: 0, to: 0, text: prep.model.text }];
