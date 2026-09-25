@@ -374,7 +374,9 @@ function pdfRebuild_(reader, opts) {
   return {
     text: written.text, offsets: written.offsets, compressed: compressed,
     rootNum: parseInt(rootM[1], 10), maxNum: maxNum, trailerExtra: trailerExtra, encrypted: !!encM,
-    imagesRemoved: imagesRemoved, imagesKept: imagesKept, bytesRead: bytesRead
+    imagesRemoved: imagesRemoved, imagesKept: imagesKept, bytesRead: bytesRead,
+    // Struktur der ORIGINAL-Datei (für Incremental Updates an großen PDFs, siehe DriveAddon.gs)
+    origStartxref: xr.sections[0], origTrailer: xr.trailer
   };
 }
 

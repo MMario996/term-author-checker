@@ -298,21 +298,49 @@ function buildAnnotatedPdfBytes_(bytes, pageAnnotations) {
   var sxMatch, lastSx = null;
   while ((sxMatch = sxRe.exec(text))) lastSx = sxMatch;
   if (!lastSx) throw new Error('Could not find startxref.');
-  var prevXrefOffset = parseInt(lastSx[1], 10);
 
   var trailerDict = _pdfLastTrailerDict_(text);
+  var maxObjNum = 0;
+  for (var k in offsets) { if (offsets.hasOwnProperty(k)) maxObjNum = Math.max(maxObjNum, parseInt(k, 10)); }
+
+  var appended = pdfAnnotationUpdate_({
+    baseLength: text.length,
+    endsWithNewline: text.charAt(text.length - 1) === '\n',
+    prevXref: parseInt(lastSx[1], 10),
+    trailerDict: trailerDict,
+    rootNum: rootNum,
+    pages: pages,
+    maxObjNum: maxObjNum,
+    readAnnotsArray: function(num) { return _pdfReadArrayObject_(text, offsets, num, doc); }
+  }, pageAnnotations);
+  return _pdfBinaryStringToBytes_(text + appended);
+}
+
+/**
+ * Kern des Incremental Updates: liefert den Text, der an die UNVERÄNDERTE
+ * Original-PDF angehängt wird (neue Annotationen, aktualisierte Seiten, neue
+ * xref + Trailer). Braucht die Original-Datei nicht im Speicher - nur deren
+ * Länge und Struktur-Informationen (ctx):
+ *   baseLength, endsWithNewline, prevXref (letztes startxref), trailerDict,
+ *   rootNum, pages ([{num, dictText, mediaBox}]), maxObjNum,
+ *   readAnnotsArray(num) -> Inhalt eines indirekten /Annots-Arrays.
+ * Dadurch funktioniert das auch für Dateien über 50 MB (siehe DriveAddon.gs).
+ */
+function pdfAnnotationUpdate_(ctx, pageAnnotations) {
+  var trailerDict = ctx.trailerDict;
+  var pages = ctx.pages;
+  var rootNum = ctx.rootNum;
+  var prevXrefOffset = ctx.prevXref;
   // Verschluesselte PDFs: neue Annotation-Strings muessten mitverschluesselt
   // werden, sonst ist die Datei danach kaputt -> lieber sauber abbrechen.
   if (/\/Encrypt\b/.test(trailerDict)) throw new Error('Encrypted PDFs are not supported for annotation.');
 
-  var maxObjNum = 0;
-  for (var k in offsets) { if (offsets.hasOwnProperty(k)) maxObjNum = Math.max(maxObjNum, parseInt(k, 10)); }
   // /Size aus dem Trailer ist massgeblich: Objekte in komprimierten Objekt-
   // Streams tauchen im Klartext-Scan nicht auf und koennen hoehere Nummern haben
   // -> ohne /Size drohten Kollisionen mit bestehenden Objektnummern.
   var sizeM = /\/Size\s+(\d+)/.exec(trailerDict);
   var trailerSize = sizeM ? parseInt(sizeM[1], 10) : 0;
-  maxObjNum = Math.max(maxObjNum, trailerSize - 1);
+  var maxObjNum = Math.max(ctx.maxObjNum || 0, trailerSize - 1);
   var nextNum = maxObjNum + 1;
 
   var newObjects = [];     // [{num, body}]
@@ -332,7 +360,7 @@ function buildAnnotatedPdfBytes_(bytes, pageAnnotations) {
     var annotsRefM = /\/Annots\s+(\d+)\s+(\d+)\s+R/.exec(page.dictText);
     var existingAnnotsRaw;
     if (annotsRefM) {
-      existingAnnotsRaw = _pdfReadArrayObject_(text, offsets, parseInt(annotsRefM[1], 10), doc);
+      existingAnnotsRaw = ctx.readAnnotsArray(parseInt(annotsRefM[1], 10));
     } else {
       existingAnnotsRaw = _pdfGetDictArray_(page.dictText, 'Annots') || '';
     }
@@ -409,11 +437,11 @@ function buildAnnotatedPdfBytes_(bytes, pageAnnotations) {
 
   if (!newObjects.length) throw new Error('No matching pages to annotate.');
 
-  var out = [text];
-  if (text.charAt(text.length - 1) !== '\n') out.push('\n');
+  var out = [];
+  if (!ctx.endsWithNewline) out.push('\n');
 
   var offsetsNew = {};
-  var curLen = text.length + (text.charAt(text.length - 1) !== '\n' ? 1 : 0);
+  var curLen = ctx.baseLength + (ctx.endsWithNewline ? 0 : 1);
 
   newObjects.forEach(function(o) {
     offsetsNew[o.num] = curLen;
@@ -461,8 +489,7 @@ function buildAnnotatedPdfBytes_(bytes, pageAnnotations) {
   xrefChunk += 'startxref\n' + xrefOffset + '\n%%EOF';
   out.push(xrefChunk);
 
-  var finalText = out.join('');
-  return _pdfBinaryStringToBytes_(finalText);
+  return out.join('');
 }
 
 /**

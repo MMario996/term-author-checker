@@ -7,9 +7,9 @@ var DRIVE_PDF_MAX_BYTES = 15 * 1024 * 1024; // Sicherheitsgrenze, ca. 15 MB (Gem
 // Größere PDFs werden vor dem Check ohne Bilder neu aufgebaut (PdfShrink.gs);
 // bis zu dieser Dateigröße wird das versucht.
 var DRIVE_PDF_SHRINK_MAX_BYTES = 300 * 1024 * 1024;
-// Apps Script kann Dateien nur bis 50 MB als Ganzes laden - darüber gibt es
-// keine annotierte Kopie (dafür müsste die Original-PDF inkl. Bildern geladen werden).
-var DRIVE_PDF_ANNOTATE_MAX_BYTES = 50 * 1024 * 1024;
+// Apps Script kann Dateien nur bis 50 MB als Ganzes laden - darüber wird die
+// annotierte Kopie stückweise geschrieben (siehe _driveLargeAnnotatedStart_).
+var DRIVE_PDF_ANNOTATE_MAX_BYTES = 45 * 1024 * 1024;
 // Bei verkleinerten PDFs: so viel Bilddaten bleiben insgesamt erhalten (kleinste
 // Bilder zuerst - Piktogramme/Warnsymbole vor großen Fotos).
 var DRIVE_PDF_IMAGE_BUDGET = 12 * 1024 * 1024;
@@ -384,28 +384,24 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
     topSection.addWidget(CardService.newTextParagraph().setText(
       '<b>Note:</b> pages ' + _escapeCardHtml_(info.failedRanges.join(', ')) + ' could not be checked (AI request failed). Please run the check again.'));
   }
-  var canAnnotate = !(info.fileSize > DRIVE_PDF_ANNOTATE_MAX_BYTES);
   if (!issues.length) {
     topSection.addWidget(CardService.newTextParagraph().setText('No errors found for the selected language.'));
     card.addSection(topSection);
     return card.build();
   }
 
-  if (canAnnotate) {
-    topSection.addWidget(CardService.newTextButton()
-      .setText('Open Annotated PDF')
-      .setOnClickAction(CardService.newAction()
-        .setFunctionName('apiExportDrivePdfAnnotated')
-        .setParameters({ resultId: resultId })
-        .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
-  }
+  topSection.addWidget(CardService.newTextButton()
+    .setText('Open Annotated PDF')
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('apiExportDrivePdfAnnotated')
+      .setParameters({ resultId: resultId })
+      .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
   topSection.addWidget(CardService.newTextButton()
     .setText('Export as Sheet')
     .setOnClickAction(CardService.newAction().setFunctionName('apiExportDrivePdfResultToSheet').setParameters({ resultId: resultId })));
   topSection.addWidget(CardService.newTextParagraph()
-    .setText(!canAnnotate
-      ? '<i>An annotated PDF is not available for files over ' + _driveMb_(DRIVE_PDF_ANNOTATE_MAX_BYTES) + ' MB. Please use "Export as Sheet".</i>'
-      : '<i>"Open Annotated PDF" creates a copy of this file in which each finding is highlighted in yellow directly on the affected words, with a sticky-note comment in the margin next to it (Google Drive itself does not support visible comments on PDFs). Placement is best-effort - if the exact spot can’t be located, the note falls back to the top of its best-guess page; the full original quote is always in the note text either way.</i>'));
+    .setText('<i>"Open Annotated PDF" creates a copy of this file in which each finding is highlighted in yellow directly on the affected words, with a sticky-note comment in the margin next to it (Google Drive itself does not support visible comments on PDFs). Placement is best-effort - if the exact spot can’t be located, the note falls back to the top of its best-guess page; the full original quote is always in the note text either way.' +
+      (info.fileSize > DRIVE_PDF_ANNOTATE_MAX_BYTES ? ' For large files like this one it may take a few steps (click "Continue").' : '') + '</i>'));
   card.addSection(topSection);
 
   var shown = issues.slice(0, DRIVE_PDF_MAX_CARD_ISSUES);
@@ -506,8 +502,18 @@ function apiExportDrivePdfResultToSheet(e) {
  * mit in den Cache passen.
  */
 function apiExportDrivePdfAnnotated(e) {
+  var started = Date.now();
   try {
     var data = _loadDrivePdfResult_(e.parameters.resultId);
+    if (data.fileSize > DRIVE_PDF_ANNOTATE_MAX_BYTES) {
+      var r = _driveLargeAnnotatedStart_(data.fileId, data.fileName, data.issues, started);
+      if (!r.done) {
+        return CardService.newActionResponseBuilder()
+          .setNavigation(CardService.newNavigation().pushCard(_buildDrivePdfAnnotateProgressCard_(r.state)))
+          .build();
+      }
+      return CardService.newActionResponseBuilder().setOpenLink(CardService.newOpenLink().setUrl(r.url)).build();
+    }
     var pdfUrl = _buildAnnotatedPdfFile_(data.fileId, data.fileName, data.issues);
     return CardService.newActionResponseBuilder()
       .setOpenLink(CardService.newOpenLink().setUrl(pdfUrl))
@@ -547,7 +553,22 @@ function _buildAnnotatedPdfFile_(fileId, fileName, issues) {
   var offsets = _pdfScanObjectOffsets_(text);
   var doc = _pdfOpenDoc_(text, offsets);
   var pages = _pdfCollectPages_(text, offsets, rootNum, doc);
+  var result = _drivePdfComputeAnnotations_(doc, pages, issues);
 
+  var newBytes = buildAnnotatedPdfBytes_(bytes, result.pageAnnotations);
+  var outName = fileName.replace(/\.pdf$/i, '') + ' (annotated).pdf';
+  var newBlob = Utilities.newBlob(newBytes, 'application/pdf', outName);
+  var file = DriveApp.createFile(newBlob);
+  logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_ANNOTATED', fileName + ' - ' + result.count + ' annotation(s), ' + result.positioned + ' precisely positioned -> ' + file.getId());
+  return file.getUrl();
+}
+
+/**
+ * Sucht jeden Fund im Seitentext (PdfTextPosition.gs) und baut daraus die
+ * Annotationen pro Seite. doc/pages: siehe _pdfOpenDoc_ / _pdfCollectPages_.
+ * Liefert { pageAnnotations, count, positioned }.
+ */
+function _drivePdfComputeAnnotations_(doc, pages, issues) {
   // Pro Seite wird der Content-Stream nur EINMAL dekomprimiert/interpretiert
   // und dann für alle Funde wiederverwendet (Laufzeit).
   var pageModelCache = {};
@@ -558,7 +579,7 @@ function _buildAnnotatedPdfFile_(fileId, fileName, issues) {
       var glyphs = _pdfExtractPageGlyphs_(doc, pages[pageIdx]);
       if (glyphs && glyphs.length) model = _pdfBuildPageModel_(glyphs);
     } catch (e) {
-      Logger.log('_buildAnnotatedPdfFile_: Seite ' + pageIdx + ' - Content-Stream nicht auswertbar: ' + e.message);
+      Logger.log('_drivePdfComputeAnnotations_: Seite ' + pageIdx + ' - Content-Stream nicht auswertbar: ' + e.message);
     }
     pageModelCache[pageIdx] = model;
     return model;
@@ -612,12 +633,158 @@ function _buildAnnotatedPdfFile_(fileId, fileName, issues) {
     pageAnnotations[pageIdx].push(ann);
   });
 
-  var newBytes = buildAnnotatedPdfBytes_(bytes, pageAnnotations);
+  return { pageAnnotations: pageAnnotations, count: capped.length, positioned: positioned };
+}
+
+// ─── ANNOTIERTE KOPIE GROSSER PDFs (über 50 MB) ───────────────────────────
+// Apps Script kann Dateien über 50 MB weder komplett laden noch als Ganzes
+// speichern. Ein Incremental Update hängt aber nur Daten ans ENDE der
+// unveränderten Original-PDF an. Deshalb:
+//  1. Positionen der Funde aus der verkleinerten Fassung berechnen (gleiche
+//     Objektnummern wie das Original, Bilder werden dafür nicht gebraucht) und
+//     daraus den Anhang bauen (pdfAnnotationUpdate_ in PdfAnnotate.gs).
+//  2. Das Original stückweise per Range-Anfrage lesen und über die "resumable
+//     upload"-Schnittstelle von Drive stückweise als neue Datei hochladen, am
+//     Ende den Anhang dazu.
+// Reicht die Zeit einer Aktion nicht, wird der Upload in der nächsten Aktion
+// fortgesetzt ("Continue"), die Upload-Sitzung bleibt bei Google eine Woche gültig.
+var DRIVE_UPLOAD_CHUNK = 16 * 1024 * 1024;     // Vielfaches von 256 KiB (Vorgabe von Drive)
+var DRIVE_ACTION_BUDGET_MS = 25000;            // danach Fortsetzung in der nächsten Aktion
+
+function _driveLargeAnnotatedStart_(fileId, fileName, issues, started) {
+  var fileSize = DriveApp.getFileById(fileId).getSize();
+  var reader = _pdfDriveRangeReader_(fileId, fileSize);
+  var model = pdfRebuild_(reader, { imageBudget: 0 });
+  var doc = _pdfOpenDoc_(model.text, model.offsets);
+  var pages = _pdfCollectPages_(model.text, model.offsets, model.rootNum, doc);
+  var result = _drivePdfComputeAnnotations_(doc, pages, issues);
+
+  var appended = pdfAnnotationUpdate_({
+    baseLength: fileSize,
+    endsWithNewline: reader.read(fileSize - 1, fileSize) === '\n',
+    prevXref: model.origStartxref,
+    trailerDict: model.origTrailer,
+    rootNum: model.rootNum,
+    pages: pages,
+    maxObjNum: model.maxNum,
+    readAnnotsArray: function(num) { return _pdfReadArrayObject_(model.text, model.offsets, num, doc); }
+  }, result.pageAnnotations);
+
+  // Der Anhang (wenige KB) wird bis zum Ende des Uploads als Temp-Datei geparkt.
+  var tmp = _getOrCreateExportFolder_().createFile(Utilities.newBlob(
+    _pdfBinaryStringToBytes_(appended), 'application/octet-stream', '.authorcheck-temp-' + Utilities.getUuid() + '.bin'));
+
+  var total = fileSize + appended.length;
   var outName = fileName.replace(/\.pdf$/i, '') + ' (annotated).pdf';
-  var newBlob = Utilities.newBlob(newBytes, 'application/pdf', outName);
-  var file = DriveApp.createFile(newBlob);
-  logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_ANNOTATED', fileName + ' - ' + capped.length + ' annotation(s), ' + positioned + ' precisely positioned -> ' + file.getId());
-  return file.getUrl();
+  var init = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true', {
+    method: 'post', contentType: 'application/json; charset=UTF-8',
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Upload-Content-Type': 'application/pdf', 'X-Upload-Content-Length': String(total) },
+    payload: JSON.stringify({ name: outName, mimeType: 'application/pdf' }),
+    muteHttpExceptions: true
+  });
+  if (init.getResponseCode() !== 200) throw new Error('Drive upload could not be started (HTTP ' + init.getResponseCode() + ').');
+  var hdrs = init.getHeaders();
+  var sessionUri = hdrs.Location || hdrs.location;
+  if (!sessionUri) throw new Error('Drive upload could not be started (no session).');
+
+  var state = { srcId: fileId, fileName: fileName, fileSize: fileSize, total: total, offset: 0,
+                session: sessionUri, tmpId: tmp.getId(), count: result.count, positioned: result.positioned };
+  return _driveLargeAnnotatedContinue_(state, started);
+}
+
+/**
+ * Lädt weitere Stücke hoch, bis fertig oder das Zeitbudget der Aktion erreicht
+ * ist. Liefert { done: true, url } oder { done: false, state }.
+ */
+function _driveLargeAnnotatedContinue_(state, started) {
+  var token = ScriptApp.getOAuthToken();
+  var srcUrl = 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(state.srcId) + '?alt=media&supportsAllDrives=true';
+  var appended = null;
+
+  while (state.offset < state.total) {
+    if (Date.now() - started > DRIVE_ACTION_BUDGET_MS) return { done: false, state: state };
+    var end = Math.min(state.total, state.offset + DRIVE_UPLOAD_CHUNK);
+    var chunk = [];
+    if (state.offset < state.fileSize) {
+      var srcEnd = Math.min(end, state.fileSize);
+      var dl = UrlFetchApp.fetch(srcUrl, {
+        headers: { Authorization: 'Bearer ' + token, Range: 'bytes=' + state.offset + '-' + (srcEnd - 1) },
+        muteHttpExceptions: true
+      });
+      if (dl.getResponseCode() !== 206) throw new Error('Drive download failed (HTTP ' + dl.getResponseCode() + ').');
+      chunk = dl.getContent();
+      if (chunk.length !== srcEnd - state.offset) throw new Error('Drive download returned an unexpected length.');
+    }
+    if (end > state.fileSize) {
+      if (!appended) appended = DriveApp.getFileById(state.tmpId).getBlob().getBytes();
+      var from = Math.max(0, state.offset - state.fileSize);
+      chunk = chunk.concat(appended.slice(from, end - state.fileSize));
+    }
+    var up = UrlFetchApp.fetch(state.session, {
+      method: 'put', contentType: 'application/pdf', payload: chunk,
+      headers: { 'Content-Range': 'bytes ' + state.offset + '-' + (end - 1) + '/' + state.total },
+      muteHttpExceptions: true
+    });
+    var code = up.getResponseCode();
+    if (code === 200 || code === 201) {
+      var fileId = JSON.parse(up.getContentText()).id;
+      try { DriveApp.getFileById(state.tmpId).setTrashed(true); } catch (trashErr) {}
+      logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_ANNOTATED', state.fileName + ' - ' + state.count + ' annotation(s), ' +
+        state.positioned + ' precisely positioned, ' + _driveMb_(state.total) + ' MB (streamed) -> ' + fileId);
+      return { done: true, url: 'https://drive.google.com/file/d/' + fileId + '/view' };
+    }
+    if (code !== 308) throw new Error('Drive upload failed (HTTP ' + code + ').');
+    // Drive meldet, bis wohin es angekommen ist ("Range: bytes=0-N").
+    var h = up.getHeaders(), range = h.Range || h.range;
+    var rm = range ? /bytes=0-(\d+)/.exec(range) : null;
+    state.offset = rm ? parseInt(rm[1], 10) + 1 : end;
+  }
+  throw new Error('Drive upload ended without a file.');
+}
+
+function _buildDrivePdfAnnotateProgressCard_(state) {
+  var pct = Math.floor(state.offset / state.total * 100);
+  var card = CardService.newCardBuilder();
+  card.setHeader(CardService.newCardHeader().setTitle('Creating annotated PDF').setSubtitle(state.fileName));
+  var section = CardService.newCardSection();
+  section.addWidget(CardService.newTextParagraph().setText(
+    'This PDF is large (' + _driveMb_(state.fileSize) + ' MB), so the annotated copy is written in several steps. ' +
+    'Progress: <b>' + pct + ' %</b>. Click <b>Continue</b> to go on.'));
+  section.addWidget(CardService.newTextButton()
+    .setText('Continue')
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('apiExportDrivePdfAnnotatedContinue')
+      .setParameters({ state: JSON.stringify(state) })
+      .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
+  card.addSection(section);
+  return card.build();
+}
+
+function _buildDrivePdfAnnotatedDoneCard_(fileName, url) {
+  var card = CardService.newCardBuilder();
+  card.setHeader(CardService.newCardHeader().setTitle('Annotated PDF ready').setSubtitle(fileName));
+  card.addSection(CardService.newCardSection().addWidget(CardService.newTextButton()
+    .setText('Open Annotated PDF')
+    .setOpenLink(CardService.newOpenLink().setUrl(url))));
+  return card.build();
+}
+
+/** Card-Action: setzt den Upload einer großen annotierten PDF fort. */
+function apiExportDrivePdfAnnotatedContinue(e) {
+  var started = Date.now();
+  try {
+    var state = JSON.parse(e.parameters.state);
+    var r = _driveLargeAnnotatedContinue_(state, started);
+    var nav = CardService.newNavigation().updateCard(r.done
+      ? _buildDrivePdfAnnotatedDoneCard_(state.fileName, r.url)
+      : _buildDrivePdfAnnotateProgressCard_(r.state));
+    return CardService.newActionResponseBuilder().setNavigation(nav).build();
+  } catch (err) {
+    Logger.log('apiExportDrivePdfAnnotatedContinue: ' + (err.message || err));
+    return CardService.newActionResponseBuilder()
+      .setNotification(CardService.newNotification().setText('Could not create the annotated PDF: ' + (err.message || err)))
+      .build();
+  }
 }
 
 /**
