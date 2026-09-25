@@ -58,6 +58,25 @@ function onDriveItemsSelected(e) {
     .setTitle('Kärcher Author Check')
     .setSubtitle(item.title));
 
+  // Ergebnis der letzten Prüfung dieser Datei (bis zu 1 h) wieder anbieten -
+  // Drive setzt die Seitenleiste beim erneuten Anklicken der Datei zurück.
+  var lastResultId = null, lastData = null;
+  try {
+    lastResultId = CacheService.getUserCache().get(_drivePdfLastResultKey_(item.id));
+    if (lastResultId) lastData = _loadDrivePdfResult_(lastResultId);
+  } catch (cacheErr) { lastData = null; }
+  if (lastData) {
+    var lastSection = CardService.newCardSection().setHeader('Last check');
+    lastSection.addWidget(CardService.newTextParagraph().setText(
+      lastData.issues.length + ' issue(s) found for this file. You can reopen the result (e.g. to create the annotated PDF) without checking again.'));
+    lastSection.addWidget(CardService.newTextButton()
+      .setText('Show last result')
+      .setOnClickAction(CardService.newAction()
+        .setFunctionName('apiShowDrivePdfResult')
+        .setParameters({ resultId: lastResultId })));
+    card.addSection(lastSection);
+  }
+
   var section = CardService.newCardSection();
   section.addWidget(CardService.newTextParagraph()
     .setText('Checks the entire content of this PDF against the Author Check rules (grammar, terminology, style) - the same as Author Check in Docs, Sheets and Slides.'));
@@ -334,9 +353,13 @@ function _drivePdfWork_(job, parts, started, loadBatch) {
     (job.failedRanges.length ? ', failed pages ' + job.failedRanges.join(',') : ''));
 
   var resultId = Utilities.getUuid();
-  var cachePayload = { fileId: job.fileId, fileName: job.fileName, language: job.language, issues: job.issues, fileSize: job.fileSize };
+  var cachePayload = { fileId: job.fileId, fileName: job.fileName, language: job.language, issues: job.issues, fileSize: job.fileSize,
+                       imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept, failedRanges: job.failedRanges };
   try {
-    CacheService.getUserCache().put(_drivePdfResultCacheKey_(resultId), JSON.stringify(cachePayload), DRIVE_PDF_RESULT_CACHE_TTL);
+    var cache = CacheService.getUserCache();
+    cache.put(_drivePdfResultCacheKey_(resultId), JSON.stringify(cachePayload), DRIVE_PDF_RESULT_CACHE_TTL);
+    // Merken, damit das Ergebnis beim erneuten Anklicken der Datei wieder angeboten wird.
+    cache.put(_drivePdfLastResultKey_(job.fileId), resultId, DRIVE_PDF_RESULT_CACHE_TTL);
   } catch (cacheErr) {
     Logger.log('_drivePdfWork_: result cache failed (result possibly too large): ' + cacheErr);
   }
@@ -629,6 +652,26 @@ function _driveMb_(bytes) {
 function _escapeCardHtml_(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function _drivePdfLastResultKey_(fileId) {
+  return 'drivepdf_last_' + fileId;
+}
+
+/** Card-Action: zeigt das zuletzt gespeicherte Prüfergebnis einer Datei wieder an. */
+function apiShowDrivePdfResult(e) {
+  try {
+    var resultId = e.parameters.resultId;
+    var data = _loadDrivePdfResult_(resultId);
+    return CardService.newActionResponseBuilder()
+      .setNavigation(CardService.newNavigation().pushCard(_buildDrivePdfResultsCard_(resultId, data.fileName, data.issues,
+        { fileSize: data.fileSize, imagesRemoved: data.imagesRemoved, imagesKept: data.imagesKept, failedRanges: data.failedRanges || [] })))
+      .build();
+  } catch (err) {
+    return CardService.newActionResponseBuilder()
+      .setNotification(CardService.newNotification().setText(err.message || String(err)))
+      .build();
+  }
 }
 
 function _loadDrivePdfResult_(resultId) {
