@@ -21,7 +21,9 @@
 // wird nirgends gespeichert.
 
 var PDF_SHRINK_CHUNK = 8 * 1024 * 1024;   // Größe einer Range-Anfrage an Drive
-var PDF_SHRINK_PEEK = 4096;                // so viel wird von jedem Objekt vorab gelesen
+var PDF_SHRINK_PEEK = 4096;                // so viel wird von großen Objekten vorab gelesen
+var PDF_SHRINK_BIG = 128 * 1024;           // ab dieser Größe: erst anschauen, dann ggf. überspringen
+var PDF_SHRINK_PARALLEL = 16;              // gleichzeitige Range-Anfragen
 
 /**
  * Liest Byte-Bereiche einer Drive-Datei per HTTP-Range, ohne die ganze Datei zu
@@ -46,6 +48,25 @@ function _pdfDriveRangeReader_(fileId, size) {
       var s = res.getContentText('ISO-8859-1');
       if (code === 200 && s.length > end - start) s = s.slice(start, end); // Range ignoriert
       return s;
+    },
+    // Mehrere Bereiche PARALLEL laden (UrlFetchApp.fetchAll) - [[start, end], ...].
+    readMany: function(ranges) {
+      var out = [];
+      for (var i = 0; i < ranges.length; i += PDF_SHRINK_PARALLEL) {
+        var batch = ranges.slice(i, i + PDF_SHRINK_PARALLEL);
+        var responses = UrlFetchApp.fetchAll(batch.map(function(r) {
+          return { url: url, headers: { Authorization: 'Bearer ' + token, Range: 'bytes=' + r[0] + '-' + (Math.min(r[1], size) - 1) },
+                   muteHttpExceptions: true };
+        }));
+        responses.forEach(function(res, k) {
+          var code = res.getResponseCode();
+          if (code !== 206) throw new Error('Drive download failed (HTTP ' + code + ').');
+          var txt = res.getContentText('ISO-8859-1');
+          if (txt.length !== Math.min(batch[k][1], size) - batch[k][0]) throw new Error('Drive download returned an unexpected length.');
+          out.push(txt);
+        });
+      }
+      return out;
     }
   };
 }
@@ -212,48 +233,86 @@ function shrinkPdfForCheck_(reader) {
     o.end = bi < bounds.length ? bounds[bi] : reader.size;
   });
 
-  // Lesefenster: lädt fortlaufend in PDF_SHRINK_CHUNK-Blöcken nach und springt
-  // über Bereiche, die nicht gebraucht werden (Bilddaten).
-  var win = '', winStart = 0, bytesRead = 0;
-  function get(a, b) {
-    if (a < winStart || a > winStart + win.length) { win = ''; winStart = a; }
-    else if (a > winStart) { win = win.slice(a - winStart); winStart = a; }
-    while (winStart + win.length < b) {
-      var from = winStart + win.length;
-      var chunk = reader.read(from, Math.min(reader.size, from + PDF_SHRINK_CHUNK));
-      if (!chunk) break;
-      bytesRead += chunk.length;
-      win += chunk;
-    }
-    return win.slice(0, b - winStart);
-  }
-
-  var kept = {}, imagesRemoved = 0;
+  // Lesestrategie (Laufzeit!): kleine, aufeinanderfolgende Objekte werden zu
+  // Blöcken bis PDF_SHRINK_CHUNK zusammengefasst; von großen Objekten wird
+  // zunächst nur der Anfang geholt. Alles parallel. Nur große Objekte, die
+  // KEINE Bilder sind (z.B. Schriften), werden danach noch komplett geladen -
+  // Bilddaten werden so nie heruntergeladen.
+  var ranges = [], plan = [], bytesRead = 0;
+  var cur = null;
   objs.forEach(function(o) {
-    var head = get(o.off, Math.min(o.end, o.off + PDF_SHRINK_PEEK));
+    var len = o.end - o.off;
+    if (len > PDF_SHRINK_BIG) {
+      cur = null;
+      plan.push({ big: o, range: ranges.length });
+      ranges.push([o.off, o.off + PDF_SHRINK_PEEK]);
+      return;
+    }
+    if (cur && cur.end === o.off && o.end - cur.start <= PDF_SHRINK_CHUNK) {
+      cur.end = o.end;
+      cur.objs.push(o);
+      ranges[cur.range][1] = o.end;
+    } else {
+      cur = { start: o.off, end: o.end, objs: [o], range: ranges.length };
+      ranges.push([o.off, o.end]);
+      plan.push({ group: cur });
+    }
+  });
+  var texts = reader.readMany(ranges);
+  texts.forEach(function(t) { bytesRead += t.length; });
+
+  var kept = {}, imagesRemoved = 0, fullNeeded = [];
+
+  // Liefert true, wenn das Objekt (anhand seines Anfangs) ersetzt wurde.
+  function replaceIfImage(o, head) {
     var hm = /^\s*(\d+)\s+(\d+)\s+obj\b/.exec(head);
     if (!hm || parseInt(hm[1], 10) !== o.num) throw new Error('Object ' + o.num + ' not found at its xref offset.');
-
     var parsed = _pdfParseValue_(head, hm[0].length, true);
     var d = parsed.v && parsed.v.d;
     var isStream = d && /^\s*stream/.test(head.slice(parsed.next));
     var subtype = d && d.Subtype && d.Subtype.n, type = d && d.Type && d.Type.n;
-
     if (isStream && subtype === 'Image') {
       // Unsichtbarer Platzhalter: 1x1-Stencil-Maske, deren einziges Pixel nicht malt.
       kept[o.num] = o.num + ' ' + o.gen + ' obj\n<< /Type /XObject /Subtype /Image /ImageMask true /Width 1 /Height 1' +
-        ' /BitsPerComponent 1 /Length 1 >>\nstream\nÿ\nendstream\nendobj\n';
+        ' /BitsPerComponent 1 /Length 1 >>\nstream\n\u00FF\nendstream\nendobj\n';
       imagesRemoved++;
-      return;
+      return true;
     }
     if (isStream && type === 'EmbeddedFile') {
       kept[o.num] = o.num + ' ' + o.gen + ' obj\n<< /Type /EmbeddedFile /Length 0 >>\nstream\n\nendstream\nendobj\n';
-      return;
+      return true;
     }
-    var full = get(o.off, o.end);
+    return false;
+  }
+  function keepFull(o, full) {
     var endIdx = full.lastIndexOf('endobj');
     kept[o.num] = (endIdx !== -1 ? full.slice(0, endIdx + 6) : full).replace(/^\s+/, '') + '\n';
+  }
+
+  plan.forEach(function(item) {
+    var t = texts[item.range !== undefined ? item.range : item.group.range];
+    if (item.big) {
+      if (!replaceIfImage(item.big, t)) fullNeeded.push(item.big);
+      return;
+    }
+    item.group.objs.forEach(function(o) {
+      var full = t.slice(o.off - item.group.start, o.end - item.group.start);
+      if (!replaceIfImage(o, full.slice(0, PDF_SHRINK_PEEK))) keepFull(o, full);
+    });
   });
+
+  // Große Nicht-Bild-Objekte komplett nachladen (ggf. in mehreren Teilen).
+  var fullRanges = [], owners = [];
+  fullNeeded.forEach(function(o, idx) {
+    for (var p = o.off; p < o.end; p += PDF_SHRINK_CHUNK) {
+      fullRanges.push([p, Math.min(o.end, p + PDF_SHRINK_CHUNK)]);
+      owners.push(idx);
+    }
+  });
+  var parts = fullRanges.length ? reader.readMany(fullRanges) : [];
+  var joined = fullNeeded.map(function() { return []; });
+  parts.forEach(function(t, k) { bytesRead += t.length; joined[owners[k]].push(t); });
+  fullNeeded.forEach(function(o, idx) { keepFull(o, joined[idx].join('')); });
 
   // Neue Datei: Kopf + Objekte + Cross-Reference-Stream (unkomprimiert). Ein
   // xref-STREAM ist nötig, weil Objekte in Object Streams (Typ 2) nur dort
@@ -288,4 +347,123 @@ function shrinkPdfForCheck_(reader) {
     'startxref\n' + xrefOff + '\n%%EOF\n');
 
   return { text: out.join(''), imagesRemoved: imagesRemoved, bytesRead: bytesRead };
+}
+
+// ============================================================================
+// PDF IN SEITENPAKETE AUFTEILEN (für parallele Gemini-Anfragen)
+// ============================================================================
+// Eine Add-on-Aktion darf nur ca. 30 Sekunden laufen. Ein ganzes Handbuch in
+// EINER Gemini-Anfrage dauert länger - deshalb wird die PDF in Seitenpakete
+// aufgeteilt, die gleichzeitig geprüft werden.
+//
+// Ein Paket ist die unveränderte PDF plus ein angehängtes "Incremental Update"
+// mit einem neuen Seitenbaum, der nur die gewünschten Seiten enthält. Die
+// übrigen Seiten stecken zwar noch in der Datei, sind aber nicht mehr Teil des
+// Dokuments. Geerbte Seiteneigenschaften (/Resources, /MediaBox ...) werden in
+// die Seiten selbst übernommen, weil sie einen neuen Elternknoten bekommen.
+
+function _pdfSerialize_(v) {
+  if (v === null || v === undefined) return 'null';
+  if (typeof v === 'number') return String(Math.round(v * 1e6) / 1e6);
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  if (Array.isArray(v)) return '[' + v.map(_pdfSerialize_).join(' ') + ']';
+  if (v.r !== undefined) return v.r + ' 0 R';
+  if (v.n !== undefined) {
+    return '/' + v.n.replace(/[^!-~]|[#()<>\[\]{}\/%]/g, function(c) {
+      var h = c.charCodeAt(0).toString(16); return '#' + (h.length < 2 ? '0' + h : h);
+    });
+  }
+  if (v.s !== undefined) {
+    var hex = '';
+    for (var i = 0; i < v.s.length; i++) { var h2 = (v.s.charCodeAt(i) & 255).toString(16); hex += h2.length < 2 ? '0' + h2 : h2; }
+    return '<' + hex + '>';
+  }
+  if (v.d) {
+    var parts = [];
+    for (var k in v.d) if (v.d.hasOwnProperty(k)) parts.push(_pdfSerialize_({ n: k }) + ' ' + _pdfSerialize_(v.d[k]));
+    return '<< ' + parts.join(' ') + ' >>';
+  }
+  return 'null';
+}
+
+/**
+ * Zählt die Seiten einer PDF (Binärstring) und liefert eine Funktion, die für
+ * einen Seitenbereich [from, to) (0-basiert) die Paket-PDF baut.
+ */
+function pdfPageSplitter_(text) {
+  var offsets = _pdfScanObjectOffsets_(text);
+  var doc = _pdfOpenDoc_(text, offsets);
+  var rootNum = _pdfFindRootRef_(text);
+  var pages = _pdfCollectPages_(text, offsets, rootNum, doc);
+  var catalog = _pdfResolveObject_(text, offsets, rootNum, doc);
+
+  var sxRe = /startxref\s+(\d+)/g, m, lastSx = null;
+  while ((m = sxRe.exec(text))) lastSx = m;
+  if (!lastSx) throw new Error('Could not find startxref.');
+  var trailerDict = _pdfLastTrailerDict_(text);
+  if (/\/Encrypt\b/.test(trailerDict)) throw new Error('Encrypted PDFs cannot be split.');
+  var sizeM = /\/Size\s+(\d+)/.exec(trailerDict);
+  var maxNum = sizeM ? parseInt(sizeM[1], 10) - 1 : 0;
+  for (var k in offsets) if (offsets.hasOwnProperty(k)) maxNum = Math.max(maxNum, parseInt(k, 10));
+  var infoM = /\/Info\s+\d+\s+\d+\s+R/.exec(trailerDict);
+  var idM = /\/ID\s*\[[^\]]*\]/.exec(trailerDict);
+
+  var INHERITED = ['Resources', 'MediaBox', 'CropBox', 'Rotate'];
+  function pageDictFor(page, newParent) {
+    var pageObj = _pdfDocObj_(doc, page.num);
+    var dict = page.dictText.replace(/\/Parent\s+\d+\s+\d+\s+R/, '/Parent ' + newParent + ' 0 R');
+    var extra = '';
+    INHERITED.forEach(function(key) {
+      if (pageObj && pageObj.d && pageObj.d.hasOwnProperty(key)) return;
+      var node = pageObj ? _pdfDocGet_(doc, pageObj, 'Parent') : null;
+      for (var depth = 0; node && depth < 32; depth++) {
+        if (node.d && node.d.hasOwnProperty(key)) { extra += ' /' + key + ' ' + _pdfSerialize_(node.d[key]); return; }
+        node = _pdfDocGet_(doc, node, 'Parent');
+      }
+    });
+    return dict.slice(0, -2) + extra + ' >>';
+  }
+
+  return {
+    pageCount: pages.length,
+    build: function(from, to) {
+      var pagesNum = maxNum + 1, catNum = maxNum + 2;
+      var objsOut = [];
+      var kids = [];
+      for (var i = from; i < to && i < pages.length; i++) {
+        kids.push(pages[i].num + ' 0 R');
+        objsOut.push({ num: pages[i].num, body: pageDictFor(pages[i], pagesNum) });
+      }
+      objsOut.push({ num: pagesNum, body: '<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + kids.length + ' >>' });
+      var cat = catalog.dictText.replace(/\/Pages\s+\d+\s+\d+\s+R/, '/Pages ' + pagesNum + ' 0 R')
+        .replace(/\/(Outlines|OpenAction|PageLabels)\s+\d+\s+\d+\s+R/g, '');
+      objsOut.push({ num: catNum, body: cat });
+
+      var out = [text];
+      var pos = text.length;
+      if (text.charAt(text.length - 1) !== '\n') { out.push('\n'); pos++; }
+      var offs = {};
+      objsOut.forEach(function(o) {
+        offs[o.num] = pos;
+        var chunk = o.num + ' 0 obj\n' + o.body + '\nendobj\n';
+        out.push(chunk);
+        pos += chunk.length;
+      });
+      // Cross-Reference als Stream (die Basis-PDF kann Object Streams enthalten).
+      var xrefNum = catNum + 1;
+      offs[xrefNum] = pos;
+      var nums = Object.keys(offs).map(Number).sort(function(a, b) { return a - b; });
+      var index = [], rows = '';
+      function be(v, w) { var s = ''; for (var b = w - 1; b >= 0; b--) s += String.fromCharCode(Math.floor(v / Math.pow(256, b)) & 255); return s; }
+      nums.forEach(function(n) {
+        index.push(n + ' 1');
+        rows += '\u0001' + be(offs[n], 4) + be(0, 2);
+      });
+      out.push(xrefNum + ' 0 obj\n<< /Type /XRef /Size ' + (xrefNum + 1) + ' /W [1 4 2] /Index [' + index.join(' ') + ']' +
+        ' /Root ' + catNum + ' 0 R' + (infoM ? ' ' + infoM[0] : '') + (idM ? ' ' + idM[0] : '') +
+        ' /Prev ' + lastSx[1] + ' /Length ' + rows.length + ' >>\nstream\n' + rows + '\nendstream\nendobj\n' +
+        'startxref\n' + pos + '\n%%EOF\n');
+      return out.join('');
+    }
+  };
 }

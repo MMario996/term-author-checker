@@ -121,9 +121,9 @@ function apiCheckDrivePdf(e) {
 
     var file = DriveApp.getFileById(fileId);
     var fileSize = file.getSize();
-    var pdfBytes, imagesRemoved = null;
+    var pdfText, imagesRemoved = null; // pdfText: PDF als Binärstring (1 Zeichen = 1 Byte)
     if (fileSize <= DRIVE_PDF_MAX_BYTES) {
-      pdfBytes = file.getBlob().getBytes();
+      pdfText = _pdfBytesToBinaryString_(file.getBlob().getBytes());
     } else {
       // Zu groß für Gemini: Kopie ohne Bilder bauen (nur für den Check, wird nicht gespeichert).
       if (fileSize > DRIVE_PDF_SHRINK_MAX_BYTES) {
@@ -139,12 +139,10 @@ function apiCheckDrivePdf(e) {
       if (shrunk.text.length > DRIVE_PDF_MAX_BYTES) {
         throw new Error('Even without images the PDF is ' + _driveMb_(shrunk.text.length) + ' MB (limit: ' + _driveMb_(DRIVE_PDF_MAX_BYTES) + ' MB). Please split it, e.g. into the pages of one language.');
       }
-      pdfBytes = _pdfBinaryStringToBytes_(shrunk.text);
+      pdfText = shrunk.text;
       imagesRemoved = shrunk.imagesRemoved;
       logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_SHRUNK', fileName + ' - ' + _driveMb_(fileSize) + ' MB -> ' + _driveMb_(shrunk.text.length) + ' MB, ' + imagesRemoved + ' image(s) removed');
     }
-    var base64 = Utilities.base64Encode(pdfBytes);
-    pdfBytes = null;
 
     var promptParts = _buildAuthorCheckPromptParts_(language, {
       noGlossary: '(no specific entries found for this language)',
@@ -184,24 +182,57 @@ function apiCheckDrivePdf(e) {
     var model = (props.getProperty('AI_MODEL') || 'gemini-3.6-flash').trim();
     var temperature = parseFloat(props.getProperty('AI_TEMPERATURE')) || 0.2;
 
-    var call = _buildGeminiRequest_(apiUrl, model, apiKey, {
-      contents: [{
-        role: 'user',
-        parts: [
-          { text: prompt },
-          { inlineData: { mimeType: 'application/pdf', data: base64 } }
-        ]
-      }],
-      generationConfig: { temperature: temperature }
+    // Seitenpakete parallel prüfen (eine Add-on-Aktion darf nur ca. 30 s laufen).
+    var parts = _drivePdfPlanParts_(pdfText);
+    pdfText = null;
+    var requests = parts.map(function(part) {
+      var partPrompt = prompt;
+      if (parts.length > 1) {
+        partPrompt += '\n\nThis file contains only pages ' + (part.from + 1) + ' to ' + part.to + ' of the original document ' +
+          '(the first page in this file is page ' + (part.from + 1) + '). In "location", always use these ORIGINAL page numbers.';
+      }
+      var call = _buildGeminiRequest_(apiUrl, model, apiKey, {
+        contents: [{
+          role: 'user',
+          parts: [
+            { text: partPrompt },
+            { inlineData: { mimeType: 'application/pdf', data: Utilities.base64Encode(_pdfBinaryStringToBytes_(part.text)) } }
+          ]
+        }],
+        generationConfig: { temperature: temperature }
+      });
+      part.text = null;
+      return {
+        url: call.url, method: 'post', contentType: 'application/json',
+        headers: call.headers, payload: JSON.stringify(call.body), muteHttpExceptions: true
+      };
     });
+    var responses = requests.length === 1
+      ? [_fetchGeminiWithRetry_(requests[0].url, requests[0])]
+      : UrlFetchApp.fetchAll(requests);
 
-    var res = _fetchGeminiWithRetry_(call.url, {
-      method: 'post', contentType: 'application/json',
-      headers: call.headers, payload: JSON.stringify(call.body), muteHttpExceptions: true
+    var issues = [], seen = {}, failedParts = 0, firstError = null, failedRanges = [];
+    responses.forEach(function(res, idx) {
+      if (requests.length > 1 && GEMINI_RETRYABLE_CODES.indexOf(res.getResponseCode()) !== -1) {
+        res = _fetchGeminiWithRetry_(requests[idx].url, requests[idx], 2);
+      }
+      try {
+        _parseGeminiIssuesResponse_(res, 'AI request failed').forEach(function(issue) {
+          var key = issue.original + '\u0000' + issue.suggestion;
+          if (seen[key]) return;
+          seen[key] = true;
+          issues.push(issue);
+        });
+      } catch (partErr) {
+        failedParts++;
+        if (!firstError) firstError = partErr;
+        failedRanges.push((parts[idx].from + 1) + '-' + parts[idx].to);
+        Logger.log('apiCheckDrivePdf: Seiten ' + (parts[idx].from + 1) + '-' + parts[idx].to + ' fehlgeschlagen: ' + partErr.message);
+      }
     });
-    var issues = _parseGeminiIssuesResponse_(res, 'AI request failed');
+    if (failedParts === responses.length) throw firstError;
 
-    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_CHECK_RUN', fileName + ' - ' + issues.length + ' issue(s)');
+    logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_CHECK_RUN', fileName + ' - ' + issues.length + ' issue(s), ' + parts.length + ' part(s)' + (failedParts ? ', failed pages ' + failedRanges.join(',') : ''));
 
     var resultId = Utilities.getUuid();
     var cachePayload = { fileId: fileId, fileName: fileName, language: language, issues: issues, fileSize: fileSize };
@@ -212,7 +243,7 @@ function apiCheckDrivePdf(e) {
     }
 
     return CardService.newActionResponseBuilder()
-      .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfResultsCard_(resultId, fileName, issues, { fileSize: fileSize, imagesRemoved: imagesRemoved })))
+      .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfResultsCard_(resultId, fileName, issues, { fileSize: fileSize, imagesRemoved: imagesRemoved, failedRanges: failedRanges })))
       .build();
 
   } catch (err) {
@@ -256,6 +287,10 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
     topSection.addWidget(CardService.newTextParagraph().setText(
       '<i>This PDF (' + _driveMb_(info.fileSize) + ' MB) was too large to send as is, so it was checked without its images (' +
       info.imagesRemoved + ' removed). The text was checked completely.</i>'));
+  }
+  if (info.failedRanges && info.failedRanges.length) {
+    topSection.addWidget(CardService.newTextParagraph().setText(
+      '<b>Note:</b> pages ' + _escapeCardHtml_(info.failedRanges.join(', ')) + ' could not be checked (AI request failed). Please run the check again.'));
   }
   var canAnnotate = !(info.fileSize > DRIVE_PDF_ANNOTATE_MAX_BYTES);
   if (!issues.length) {
@@ -309,6 +344,35 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
 // CardService-TextParagraph unterstützt ein kleines HTML-Subset (b/s/i/...),
 // daher hier - analog zu esc() in den Sidebar-HTMLs - Nutzertext/KI-Text vor der
 // Einbettung escapen, statt rohen Text in setText() zu interpolieren.
+// Teilt die PDF in Seitenpakete auf, die parallel an Gemini gehen. Liefert
+// [{from, to, text}] (Seiten 0-basiert, to exklusiv). Kleine PDFs oder PDFs, die
+// sich nicht aufteilen lassen, gehen unverändert als ein Paket raus.
+var DRIVE_PDF_PAGES_PER_PART = 15;
+var DRIVE_PDF_MAX_PARTS = 10;
+var DRIVE_PDF_MAX_TOTAL_PAYLOAD = 60 * 1024 * 1024; // Summe aller Pakete (Speicher)
+function _drivePdfPlanParts_(pdfText) {
+  var whole = [{ from: 0, to: 0, text: pdfText }];
+  var splitter;
+  try { splitter = pdfPageSplitter_(pdfText); }
+  catch (e) { Logger.log('_drivePdfPlanParts_: nicht aufteilbar: ' + e.message); return whole; }
+  var n = splitter.pageCount;
+  whole[0].to = n;
+  var count = Math.min(Math.ceil(n / DRIVE_PDF_PAGES_PER_PART), DRIVE_PDF_MAX_PARTS,
+                       Math.max(1, Math.floor(DRIVE_PDF_MAX_TOTAL_PAYLOAD / pdfText.length)));
+  if (count <= 1) return whole;
+  var per = Math.ceil(n / count), parts = [];
+  try {
+    for (var from = 0; from < n; from += per) {
+      var to = Math.min(n, from + per);
+      parts.push({ from: from, to: to, text: splitter.build(from, to) });
+    }
+  } catch (e2) {
+    Logger.log('_drivePdfPlanParts_: Aufteilen fehlgeschlagen: ' + e2.message);
+    return whole;
+  }
+  return parts;
+}
+
 function _driveMb_(bytes) {
   return (Math.round(bytes / (1024 * 1024) * 10) / 10).toString();
 }
