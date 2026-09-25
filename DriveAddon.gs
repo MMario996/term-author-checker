@@ -3,7 +3,13 @@
 // Docs/Sheets/Slides). Ergebnis-Ausgabe nur als Sheet-Export, da Drive für PDFs
 // keine sichtbaren Kommentare unterstützt (siehe _buildDrivePdfResultsCard_).
 // ============================================================================
-var DRIVE_PDF_MAX_BYTES = 15 * 1024 * 1024; // Sicherheitsgrenze, ca. 15 MB
+var DRIVE_PDF_MAX_BYTES = 15 * 1024 * 1024; // Sicherheitsgrenze, ca. 15 MB (Gemini-Anfrage max. ~20 MB)
+// Größere PDFs werden vor dem Check ohne Bilder neu aufgebaut (PdfShrink.gs);
+// bis zu dieser Dateigröße wird das versucht.
+var DRIVE_PDF_SHRINK_MAX_BYTES = 300 * 1024 * 1024;
+// Apps Script kann Dateien nur bis 50 MB als Ganzes laden - darüber gibt es
+// keine annotierte Kopie (dafür müsste die Original-PDF inkl. Bildern geladen werden).
+var DRIVE_PDF_ANNOTATE_MAX_BYTES = 50 * 1024 * 1024;
 var DRIVE_PDF_RESULT_CACHE_TTL = 3600; // 1h, reicht für eine interaktive Session in Drive
 var DRIVE_PDF_MAX_CARD_ISSUES = 25; // Card-UI bleibt sonst zu groß/langsam
 var DRIVE_PDF_LAST_LANG_KEY = 'DRIVE_PDF_LAST_LANGUAGE';
@@ -113,11 +119,32 @@ function apiCheckDrivePdf(e) {
     var apiKey = (props.getProperty('GEMINI_API_KEY') || '').trim();
     if (!apiKey) throw new Error('AI inspection is not configured (Gemini API Key missing).');
 
-    var blob = DriveApp.getFileById(fileId).getBlob();
-    if (blob.getBytes().length > DRIVE_PDF_MAX_BYTES) {
-      throw new Error('The PDF file is too large (limit: ' + (DRIVE_PDF_MAX_BYTES / (1024*1024)) + ' MB).');
+    var file = DriveApp.getFileById(fileId);
+    var fileSize = file.getSize();
+    var pdfBytes, imagesRemoved = null;
+    if (fileSize <= DRIVE_PDF_MAX_BYTES) {
+      pdfBytes = file.getBlob().getBytes();
+    } else {
+      // Zu groß für Gemini: Kopie ohne Bilder bauen (nur für den Check, wird nicht gespeichert).
+      if (fileSize > DRIVE_PDF_SHRINK_MAX_BYTES) {
+        throw new Error('The PDF file is too large (' + _driveMb_(fileSize) + ' MB, limit: ' + _driveMb_(DRIVE_PDF_SHRINK_MAX_BYTES) + ' MB). Please split it, e.g. into the pages of one language.');
+      }
+      var shrunk;
+      try {
+        shrunk = shrinkPdfForCheck_(_pdfDriveRangeReader_(fileId, fileSize));
+      } catch (shrinkErr) {
+        Logger.log('apiCheckDrivePdf: Verkleinern fehlgeschlagen: ' + (shrinkErr.message || shrinkErr));
+        throw new Error('The PDF file is too large (' + _driveMb_(fileSize) + ' MB) and could not be reduced automatically. Please reduce its size (e.g. Acrobat "Reduce File Size") or split it.');
+      }
+      if (shrunk.text.length > DRIVE_PDF_MAX_BYTES) {
+        throw new Error('Even without images the PDF is ' + _driveMb_(shrunk.text.length) + ' MB (limit: ' + _driveMb_(DRIVE_PDF_MAX_BYTES) + ' MB). Please split it, e.g. into the pages of one language.');
+      }
+      pdfBytes = _pdfBinaryStringToBytes_(shrunk.text);
+      imagesRemoved = shrunk.imagesRemoved;
+      logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_SHRUNK', fileName + ' - ' + _driveMb_(fileSize) + ' MB -> ' + _driveMb_(shrunk.text.length) + ' MB, ' + imagesRemoved + ' image(s) removed');
     }
-    var base64 = Utilities.base64Encode(blob.getBytes());
+    var base64 = Utilities.base64Encode(pdfBytes);
+    pdfBytes = null;
 
     var promptParts = _buildAuthorCheckPromptParts_(language, {
       noGlossary: '(no specific entries found for this language)',
@@ -138,6 +165,7 @@ function apiCheckDrivePdf(e) {
       'Check ONLY the passages that are written in ' + targetLanguageName + '. ' +
       'Completely ignore and skip any passages written in other languages, even if they appear right next to or interleaved with ' + targetLanguageName + ' text. ' +
       'Do not report any issue whose "original" quote is not itself in ' + targetLanguageName + '.\n\n' +
+      (imagesRemoved !== null ? 'NOTE: To reduce the file size, all images were removed from this PDF. Empty areas where images used to be are expected - do not report them; check only the text.\n\n' : '') +
       'Within the ' + targetLanguageName + ' passages, check for these error types:\n' +
       '1. GRAMMAR AND SPELLING ERRORS\n' +
       '2. INCORRECT OR INCONSISTENT KÄRCHER TERMINOLOGY - compare against this list ' +
@@ -176,7 +204,7 @@ function apiCheckDrivePdf(e) {
     logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_CHECK_RUN', fileName + ' - ' + issues.length + ' issue(s)');
 
     var resultId = Utilities.getUuid();
-    var cachePayload = { fileId: fileId, fileName: fileName, language: language, issues: issues };
+    var cachePayload = { fileId: fileId, fileName: fileName, language: language, issues: issues, fileSize: fileSize };
     try {
       CacheService.getUserCache().put(_drivePdfResultCacheKey_(resultId), JSON.stringify(cachePayload), DRIVE_PDF_RESULT_CACHE_TTL);
     } catch (cacheErr) {
@@ -184,7 +212,7 @@ function apiCheckDrivePdf(e) {
     }
 
     return CardService.newActionResponseBuilder()
-      .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfResultsCard_(resultId, fileName, issues)))
+      .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfResultsCard_(resultId, fileName, issues, { fileSize: fileSize, imagesRemoved: imagesRemoved })))
       .build();
 
   } catch (err) {
@@ -214,30 +242,43 @@ function apiCheckDrivePdf(e) {
  * Drive verwaltete Metadaten. "Export as Sheet" bleibt als tabellarische
  * Alternative bestehen.
  */
-function _buildDrivePdfResultsCard_(resultId, fileName, issues) {
+// info (optional): { fileSize, imagesRemoved } - imagesRemoved !== null heißt,
+// die PDF wurde für den Check ohne Bilder neu aufgebaut (PdfShrink.gs).
+function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
+  info = info || {};
   var card = CardService.newCardBuilder();
   card.setHeader(CardService.newCardHeader()
     .setTitle(issues.length + ' issue(s) found')
     .setSubtitle(fileName));
 
   var topSection = CardService.newCardSection();
+  if (info.imagesRemoved !== null && info.imagesRemoved !== undefined) {
+    topSection.addWidget(CardService.newTextParagraph().setText(
+      '<i>This PDF (' + _driveMb_(info.fileSize) + ' MB) was too large to send as is, so it was checked without its images (' +
+      info.imagesRemoved + ' removed). The text was checked completely.</i>'));
+  }
+  var canAnnotate = !(info.fileSize > DRIVE_PDF_ANNOTATE_MAX_BYTES);
   if (!issues.length) {
     topSection.addWidget(CardService.newTextParagraph().setText('No errors found for the selected language.'));
     card.addSection(topSection);
     return card.build();
   }
 
-  topSection.addWidget(CardService.newTextButton()
-    .setText('Open Annotated PDF')
-    .setOnClickAction(CardService.newAction()
-      .setFunctionName('apiExportDrivePdfAnnotated')
-      .setParameters({ resultId: resultId })
-      .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
+  if (canAnnotate) {
+    topSection.addWidget(CardService.newTextButton()
+      .setText('Open Annotated PDF')
+      .setOnClickAction(CardService.newAction()
+        .setFunctionName('apiExportDrivePdfAnnotated')
+        .setParameters({ resultId: resultId })
+        .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
+  }
   topSection.addWidget(CardService.newTextButton()
     .setText('Export as Sheet')
     .setOnClickAction(CardService.newAction().setFunctionName('apiExportDrivePdfResultToSheet').setParameters({ resultId: resultId })));
   topSection.addWidget(CardService.newTextParagraph()
-    .setText('<i>"Open Annotated PDF" creates a copy of this file in which each finding is highlighted in yellow directly on the affected words, with a sticky-note comment in the margin next to it (Google Drive itself does not support visible comments on PDFs). Placement is best-effort - if the exact spot can’t be located, the note falls back to the top of its best-guess page; the full original quote is always in the note text either way.</i>'));
+    .setText(!canAnnotate
+      ? '<i>An annotated PDF is not available for files over ' + _driveMb_(DRIVE_PDF_ANNOTATE_MAX_BYTES) + ' MB. Please use "Export as Sheet".</i>'
+      : '<i>"Open Annotated PDF" creates a copy of this file in which each finding is highlighted in yellow directly on the affected words, with a sticky-note comment in the margin next to it (Google Drive itself does not support visible comments on PDFs). Placement is best-effort - if the exact spot can’t be located, the note falls back to the top of its best-guess page; the full original quote is always in the note text either way.</i>'));
   card.addSection(topSection);
 
   var shown = issues.slice(0, DRIVE_PDF_MAX_CARD_ISSUES);
@@ -268,6 +309,10 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues) {
 // CardService-TextParagraph unterstützt ein kleines HTML-Subset (b/s/i/...),
 // daher hier - analog zu esc() in den Sidebar-HTMLs - Nutzertext/KI-Text vor der
 // Einbettung escapen, statt rohen Text in setText() zu interpolieren.
+function _driveMb_(bytes) {
+  return (Math.round(bytes / (1024 * 1024) * 10) / 10).toString();
+}
+
 function _escapeCardHtml_(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
