@@ -1,23 +1,23 @@
 {
   "dependencies": [
     [
-      "task_6",
+      "task_1",
       "task_7"
     ],
     [
       "task_7",
+      "task_4"
+    ],
+    [
+      "task_4",
       "task_3"
     ],
     [
       "task_3",
-      "task_1"
+      "task_6"
     ],
     [
-      "task_1",
-      "task_5"
-    ],
-    [
-      "task_5",
+      "task_6",
       "task_8"
     ],
     [
@@ -26,195 +26,16 @@
     ],
     [
       "task_9",
-      "task_4"
+      "task_2"
     ],
     [
-      "task_4",
-      "task_2"
+      "task_2",
+      "task_5"
     ]
   ],
   "description": null,
   "name": "Brand Review Assignment v7 (Step 2 + 3)",
   "tasks": [
-    {
-      "action_version_id": 6847,
-      "conditions": {
-        "conditionals": [
-          {
-            "compare": "StringEquals",
-            "group": "AND",
-            "negation": "NOT",
-            "value": "__EMPTY__",
-            "variable": {
-              "source": "task_9",
-              "type": "task",
-              "value": "{{ $.templateUid }}"
-            }
-          }
-        ],
-        "new_group": []
-      },
-      "continue_on_status": "succeeded",
-      "description": "This action bundle maps jobs to workflow steps",
-      "event_trigger_json": {},
-      "id": "task_4",
-      "input_params": {
-        "access_token": {
-          "source": "task_6",
-          "type": "task",
-          "value": "{{ $.tokens.tms_token }}"
-        },
-        "job_uid": {
-          "source": "trigger_id",
-          "type": "trigger",
-          "value": "{{ $.jobParts[0].uid }}"
-        },
-        "project_uid": {
-          "source": "trigger_id",
-          "type": "trigger",
-          "value": "{{ $.metadata.project.uid }}"
-        },
-        "workflow_level_number": {
-          "source": "task_8",
-          "type": "task",
-          "value": "{{ @raw }}"
-        }
-      },
-      "loop_json": {},
-      "name": "Map job to workflow steps",
-      "note": "",
-      "retry_strategy_json": {},
-      "uuid": "orchestrator|action-bundle-map-job-to-workflow-steps|6847"
-    },
-    {
-      "action_version_id": 4462,
-      "conditions": {},
-      "continue_on_status": "succeeded",
-      "description": "Login to Phrase Strings and TMS and fetch API tokens",
-      "event_trigger_json": {},
-      "id": "task_6",
-      "input_params": {},
-      "loop_json": {},
-      "name": "Fetch access tokens",
-      "note": "",
-      "retry_strategy_json": {},
-      "uuid": "orchestrator|phrase_login/call|4462"
-    },
-    {
-      "action_version_id": 5361,
-      "conditions": {},
-      "continue_on_status": "succeeded",
-      "description": "Slice, filter, map and transform JSON data with jq.",
-      "event_trigger_json": {},
-      "id": "task_1",
-      "input_params": {
-        "input": {
-          "source": "",
-          "type": "",
-          "value": "{\"reviewakw\": {\"2\": {\"templateUid\": \"fEp3QVEveabMf91OcwP418\", \"emailUid\": \"\"}}, \"reviewkft\": {\"2\": {\"templateUid\": \"89QZMp1Zd4TrgOPVjLBCC2\", \"emailUid\": \"\"}}, \"reviewkvd\": {\"2\": {\"templateUid\": \"5GU9UvINjt9oeJWM765ec3\", \"emailUid\": \"\"}}, \"reviewkwsf\": {\"2\": {\"templateUid\": \"qM3OckqWZDWK9xGz6sfc17\", \"emailUid\": \"\"}}, \"revieww2p\": {\"2\": {\"templateUid\": \"tYlrKXdlLU83b9OImXra83\", \"emailUid\": \"\"}}, \"reviewcampusproducttrainings\": {\"2\": {\"templateUid\": \"UID_PRODUCT_TRAININGS_SECOND_STEP\", \"emailUid\": \"\"}, \"3\": {\"templateUid\": \"UID_PRODUCT_TRAININGS_THIRD_STEP\", \"emailUid\": \"\"}}, \"reviewcampusdsgvotraining\": {\"2\": {\"templateUid\": \"UID_DSGVO_TRAINING_SECOND_STEP\", \"emailUid\": \"\"}, \"3\": {\"templateUid\": \"UID_DSGVO_TRAINING_THIRD_STEP\", \"emailUid\": \"\"}}, \"reviewcampussalesprofessional\": {\"2\": {\"templateUid\": \"UID_SALES_PROFESSIONAL_SECOND_STEP\", \"emailUid\": \"\"}, \"3\": {\"templateUid\": \"UID_SALES_PROFESSIONAL_THIRD_STEP\", \"emailUid\": \"\"}}, \"reviewcampussaleshg\": {\"2\": {\"templateUid\": \"UID_SALES_HG_SECOND_STEP\", \"emailUid\": \"\"}, \"3\": {\"templateUid\": \"UID_SALES_HG_THIRD_STEP\", \"emailUid\": \"\"}}}"
-        },
-        "input_type": {
-          "source": "",
-          "type": "",
-          "value": "json"
-        },
-        "jq": {
-          "source": "",
-          "type": "",
-          "value": "."
-        },
-        "raw-output": {
-          "source": "",
-          "type": "",
-          "value": "true"
-        }
-      },
-      "loop_json": {},
-      "name": "Configuration values (mapping)",
-      "note": "",
-      "retry_strategy_json": {},
-      "uuid": "orchestrator|phrase_jq/jq|5361"
-    },
-    {
-      "action_version_id": 5361,
-      "conditions": {},
-      "continue_on_status": "succeeded",
-      "description": "Slice, filter, map and transform JSON data with jq.",
-      "event_trigger_json": {},
-      "id": "task_5",
-      "input_params": {
-        "input": {
-          "source": "task_1",
-          "type": "task",
-          "value": "{{ @raw }}"
-        },
-        "input_type": {
-          "source": "",
-          "type": "",
-          "value": "json"
-        },
-        "jq": {
-          "source": "task_3",
-          "type": "task",
-          "value": "( .[ \"{{ @raw }}\" ] // {} )"
-        },
-        "raw-output": {
-          "source": "",
-          "type": "",
-          "value": "false"
-        }
-      },
-      "loop_json": {},
-      "name": "Select mapping for CF value",
-      "note": "",
-      "retry_strategy_json": {},
-      "uuid": "orchestrator|phrase_jq/jq|5361"
-    },
-    {
-      "action_version_id": 12453,
-      "conditions": {
-        "conditionals": [
-          {
-            "compare": "StringEquals",
-            "group": "AND",
-            "negation": "NOT",
-            "value": "__EMPTY__",
-            "variable": {
-              "source": "task_9",
-              "type": "task",
-              "value": "{{ $.templateUid }}"
-            }
-          }
-        ],
-        "new_group": []
-      },
-      "continue_on_status": "succeeded",
-      "description": "Jobs that will be skipped: <ul><li>jobs in Assigned status</li><li>jobs that already has assignments</li><li>jobs that are not ready yet (import or update source is in progress)</li></ul>",
-      "event_trigger_json": {},
-      "id": "task_2",
-      "input_params": {
-        "access_token": {
-          "source": "task_6",
-          "type": "task",
-          "value": "{{ $.tokens.tms_token }}"
-        },
-        "projectUid": {
-          "source": "trigger_id",
-          "type": "trigger",
-          "value": "{{ $.metadata.project.uid }}"
-        },
-        "templateUid": {
-          "source": "task_9",
-          "type": "task",
-          "value": "{{ $.templateUid }}"
-        }
-      },
-      "loop_json": {},
-      "name": "Assigns providers from template",
-      "note": "",
-      "retry_strategy_json": {},
-      "uuid": "tms|assignLinguistsFromTemplate|12453"
-    },
     {
       "action_version_id": 12623,
       "conditions": {},
@@ -224,7 +45,7 @@
       "id": "task_7",
       "input_params": {
         "access_token": {
-          "source": "task_6",
+          "source": "task_1",
           "type": "task",
           "value": "{{ $.tokens.tms_token }}"
         },
@@ -261,7 +82,137 @@
       "continue_on_status": "succeeded",
       "description": "Slice, filter, map and transform JSON data with jq.",
       "event_trigger_json": {},
-      "id": "task_3",
+      "id": "task_6",
+      "input_params": {
+        "input": {
+          "source": "task_3",
+          "type": "task",
+          "value": "{{ @raw }}"
+        },
+        "input_type": {
+          "source": "",
+          "type": "",
+          "value": "json"
+        },
+        "jq": {
+          "source": "task_4",
+          "type": "task",
+          "value": "( .[ \"{{ @raw }}\" ] // {} )"
+        },
+        "raw-output": {
+          "source": "",
+          "type": "",
+          "value": "false"
+        }
+      },
+      "loop_json": {},
+      "name": "Select mapping for CF value",
+      "note": "",
+      "retry_strategy_json": {},
+      "uuid": "orchestrator|phrase_jq/jq|5361"
+    },
+    {
+      "action_version_id": 12453,
+      "conditions": {
+        "conditionals": [
+          {
+            "compare": "StringEquals",
+            "group": "AND",
+            "negation": "NOT",
+            "value": "__EMPTY__",
+            "variable": {
+              "source": "task_9",
+              "type": "task",
+              "value": "{{ $.templateUid }}"
+            }
+          }
+        ],
+        "new_group": []
+      },
+      "continue_on_status": "succeeded",
+      "description": "Jobs that will be skipped: <ul><li>jobs in Assigned status</li><li>jobs that already has assignments</li><li>jobs that are not ready yet (import or update source is in progress)</li></ul>",
+      "event_trigger_json": {},
+      "id": "task_5",
+      "input_params": {
+        "access_token": {
+          "source": "task_1",
+          "type": "task",
+          "value": "{{ $.tokens.tms_token }}"
+        },
+        "projectUid": {
+          "source": "trigger_id",
+          "type": "trigger",
+          "value": "{{ $.metadata.project.uid }}"
+        },
+        "templateUid": {
+          "source": "task_9",
+          "type": "task",
+          "value": "{{ $.templateUid }}"
+        }
+      },
+      "loop_json": {},
+      "name": "Assigns providers from template",
+      "note": "",
+      "retry_strategy_json": {},
+      "uuid": "tms|assignLinguistsFromTemplate|12453"
+    },
+    {
+      "action_version_id": 6847,
+      "conditions": {
+        "conditionals": [
+          {
+            "compare": "StringEquals",
+            "group": "AND",
+            "negation": "NOT",
+            "value": "__EMPTY__",
+            "variable": {
+              "source": "task_9",
+              "type": "task",
+              "value": "{{ $.templateUid }}"
+            }
+          }
+        ],
+        "new_group": []
+      },
+      "continue_on_status": "succeeded",
+      "description": "This action bundle maps jobs to workflow steps",
+      "event_trigger_json": {},
+      "id": "task_2",
+      "input_params": {
+        "access_token": {
+          "source": "task_1",
+          "type": "task",
+          "value": "{{ $.tokens.tms_token }}"
+        },
+        "job_uid": {
+          "source": "trigger_id",
+          "type": "trigger",
+          "value": "{{ $.jobParts[0].uid }}"
+        },
+        "project_uid": {
+          "source": "trigger_id",
+          "type": "trigger",
+          "value": "{{ $.metadata.project.uid }}"
+        },
+        "workflow_level_number": {
+          "source": "task_8",
+          "type": "task",
+          "value": "{{ @raw }}"
+        }
+      },
+      "loop_json": {},
+      "name": "Map job to workflow steps",
+      "note": "",
+      "retry_strategy_json": {},
+      "uuid": "orchestrator|action-bundle-map-job-to-workflow-steps|6847"
+    },
+    {
+      "action_version_id": 5361,
+      "conditions": {},
+      "continue_on_status": "succeeded",
+      "description": "Slice, filter, map and transform JSON data with jq.",
+      "event_trigger_json": {},
+      "id": "task_4",
       "input_params": {
         "input": {
           "source": "task_7",
@@ -289,6 +240,55 @@
       "note": "",
       "retry_strategy_json": {},
       "uuid": "orchestrator|phrase_jq/jq|5361"
+    },
+    {
+      "action_version_id": 5361,
+      "conditions": {},
+      "continue_on_status": "succeeded",
+      "description": "Slice, filter, map and transform JSON data with jq.",
+      "event_trigger_json": {},
+      "id": "task_3",
+      "input_params": {
+        "input": {
+          "source": "",
+          "type": "",
+          "value": "{\"reviewakw\": {\"2\": {\"templateUid\": \"fEp3QVEveabMf91OcwP418\", \"emailUid\": \"\"}}, \"reviewkft\": {\"2\": {\"templateUid\": \"89QZMp1Zd4TrgOPVjLBCC2\", \"emailUid\": \"\"}}, \"reviewkvd\": {\"2\": {\"templateUid\": \"5GU9UvINjt9oeJWM765ec3\", \"emailUid\": \"\"}}, \"reviewkwsf\": {\"2\": {\"templateUid\": \"qM3OckqWZDWK9xGz6sfc17\", \"emailUid\": \"\"}}, \"revieww2p\": {\"2\": {\"templateUid\": \"tYlrKXdlLU83b9OImXra83\", \"emailUid\": \"\"}}, \"reviewcampusproducttrainings\": {\"2\": {\"templateUid\": \"UID_PRODUCT_TRAININGS_SECOND_STEP\", \"emailUid\": \"\"}, \"3\": {\"templateUid\": \"UID_PRODUCT_TRAININGS_THIRD_STEP\", \"emailUid\": \"\"}}, \"reviewcampusdsgvotraining\": {\"2\": {\"templateUid\": \"UID_DSGVO_TRAINING_SECOND_STEP\", \"emailUid\": \"\"}, \"3\": {\"templateUid\": \"UID_DSGVO_TRAINING_THIRD_STEP\", \"emailUid\": \"\"}}, \"reviewcampussalesprofessional\": {\"2\": {\"templateUid\": \"UID_SALES_PROFESSIONAL_SECOND_STEP\", \"emailUid\": \"\"}, \"3\": {\"templateUid\": \"UID_SALES_PROFESSIONAL_THIRD_STEP\", \"emailUid\": \"\"}}, \"reviewcampussaleshg\": {\"2\": {\"templateUid\": \"UID_SALES_HG_SECOND_STEP\", \"emailUid\": \"\"}, \"3\": {\"templateUid\": \"UID_SALES_HG_THIRD_STEP\", \"emailUid\": \"\"}}}"
+        },
+        "input_type": {
+          "source": "",
+          "type": "",
+          "value": "json"
+        },
+        "jq": {
+          "source": "",
+          "type": "",
+          "value": "."
+        },
+        "raw-output": {
+          "source": "",
+          "type": "",
+          "value": "true"
+        }
+      },
+      "loop_json": {},
+      "name": "Configuration values (mapping)",
+      "note": "",
+      "retry_strategy_json": {},
+      "uuid": "orchestrator|phrase_jq/jq|5361"
+    },
+    {
+      "action_version_id": 4462,
+      "conditions": {},
+      "continue_on_status": "succeeded",
+      "description": "Login to Phrase Strings and TMS and fetch API tokens",
+      "event_trigger_json": {},
+      "id": "task_1",
+      "input_params": {},
+      "loop_json": {},
+      "name": "Fetch access tokens",
+      "note": "",
+      "retry_strategy_json": {},
+      "uuid": "orchestrator|phrase_login/call|4462"
     },
     {
       "action_version_id": 5361,
@@ -334,7 +334,7 @@
       "id": "task_9",
       "input_params": {
         "input": {
-          "source": "task_5",
+          "source": "task_6",
           "type": "task",
           "value": "{{ @raw }}"
         },
