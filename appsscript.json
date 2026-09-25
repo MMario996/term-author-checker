@@ -22,7 +22,8 @@
   "urlFetchWhitelist": [
     "https://cloud.memsource.com/",
     "https://34-111-99-134.nip.io/",
-    "https://script.googleapis.com/"
+    "https://script.googleapis.com/",
+    "https://www.googleapis.com/drive/"
   ],
   "addOns": {
     "common": {
