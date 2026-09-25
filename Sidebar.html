@@ -167,6 +167,8 @@ button, input, select{ font-family:inherit; }
 <script>
 // Vom Server gespeicherte UI-Sprache (pro Nutzer), siehe renderWithI18n_ in Code.gs.
 var I18N_INITIAL_LANG = <?!= JSON.stringify(uiLang) ?>;
+// Editor-App, in der diese Seite läuft ('docs'/'sheets'/'slides'), siehe _resolveHost_.
+var HOST_APP = <?!= JSON.stringify(hostApp) ?>;
 function I18N_PERSIST(lang){ google.script.run.apiSetUiLang(lang); }
 </script>
 <?!= include('I18n'); ?>

@@ -23,21 +23,25 @@ const AUTHORCHECK_DEFAULT_PROMPT =
 // ─── ANSICHTEN: CHECKS IN DER SEITENLEISTE / RULES IM POPUP ───────────────
 function showAuthorCheckSidebar(e) {
   PropertiesService.getUserProperties().deleteProperty('AUTHORCHECK_IS_RULES_ONLY');
-  var ui = renderWithI18n_('AuthorCheck')
+  var host = _resolveHost_(e);
+  var ui = renderWithI18n_('AuthorCheck', host.app)
     .setTitle('Kärcher Author Check')
     .setWidth(350);
 
-  _getUiSafe_(e).showSidebar(ui);
+  host.ui.showSidebar(ui);
 }
 
-function apiOpenRulesModal(e) {
+// hostApp: 'docs' | 'sheets' | 'slides' - wird von der Seitenleiste mitgeschickt
+// (HOST_APP), weil google.script.run kein Event-Objekt liefert.
+function apiOpenRulesModal(hostApp) {
   PropertiesService.getUserProperties().setProperty('AUTHORCHECK_IS_RULES_ONLY', 'true');
-  var ui = renderWithI18n_('AuthorCheck')
+  var host = _resolveHost_(hostApp);
+  var ui = renderWithI18n_('AuthorCheck', host.app)
     .setTitle('Rules & Custom Prompts')
     .setWidth(1350)
     .setHeight(900);
 
-  _getUiSafe_(e).showModalDialog(ui, 'Rules & Custom Prompts');
+  host.ui.showModalDialog(ui, 'Rules & Custom Prompts');
 }
 
 function apiMarkRulesHelpSeen() {
@@ -46,34 +50,58 @@ function apiMarkRulesHelpSeen() {
 }
 
 /**
- * Hilfsfunktion: Ermittelt sicher das UI für Docs, Sheets oder Slides
- * ohne Permission-Exceptions abzuwerfen.
- * @param {Object} e Das Event-Objekt der Card-Action (enthält hostApp/docs/sheets/slides)
+ * Liest aus dem, was der Aufrufer mitgibt, in welcher Editor-App das Add-on
+ * läuft. Mögliche Quellen:
+ *  - ein String ('docs' / 'sheets' / 'slides'), den die HTML-Seitenleiste per
+ *    google.script.run mitschickt (dort gibt es kein Event-Objekt),
+ *  - das Event-Objekt einer Card-Action: e.commonEventObject.hostApp ("DOCS", ...)
+ *    bzw. die ältere Form e.hostApp oder e.docs / e.sheets / e.slides.
  */
-function _getUiSafe_(e) {
-  var hostApp = e && (e.hostApp || (e.docs && 'docs') || (e.sheets && 'sheets') || (e.slides && 'slides'));
+function _detectHostApp_(e) {
+  var h = null;
+  if (typeof e === 'string') h = e;
+  else if (e) h = (e.commonEventObject && e.commonEventObject.hostApp) || e.hostApp ||
+                  (e.docs && 'docs') || (e.sheets && 'sheets') || (e.slides && 'slides');
+  h = h ? String(h).toLowerCase() : null;
+  return (h === 'docs' || h === 'sheets' || h === 'slides') ? h : null;
+}
 
-  try {
-    if (hostApp === 'docs') return DocumentApp.getUi();
-    if (hostApp === 'sheets') return SpreadsheetApp.getUi();
-    if (hostApp === 'slides') return SlidesApp.getUi();
-  } catch (err) {
-    Logger.log('_getUiSafe_: getUi() ueber hostApp "' + hostApp + '" fehlgeschlagen: ' + err);
+/**
+ * Ermittelt, in welcher Editor-App (Docs/Sheets/Slides) das Add-on läuft, und
+ * liefert { app, ui }. Reihenfolge: ausdrückliche Angabe des Aufrufers, dann das
+ * aktive Dokument, zuletzt ein direkter getUi()-Versuch pro App - getUi() wirft
+ * nur, wenn man sich NICHT in dieser App befindet, und funktioniert auch dann,
+ * wenn (noch) kein Zugriff auf das aktive Dokument erteilt wurde.
+ * @param {Object|string} e Event-Objekt einer Card-Action oder hostApp-String
+ */
+function _resolveHost_(e) {
+  var hostApp = _detectHostApp_(e);
+  var apps = {
+    docs:   function() { return DocumentApp; },
+    sheets: function() { return SpreadsheetApp; },
+    slides: function() { return SlidesApp; }
+  };
+
+  if (hostApp) {
+    try { return { app: hostApp, ui: apps[hostApp]().getUi() }; }
+    catch (err) { Logger.log('_resolveHost_: getUi() ueber hostApp "' + hostApp + '" fehlgeschlagen: ' + err); }
   }
 
-  try {
-    if (typeof DocumentApp !== 'undefined' && DocumentApp.getActiveDocument()) return DocumentApp.getUi();
-  } catch (err) { Logger.log('_getUiSafe_: Docs Fallback fehlgeschlagen: ' + err); }
+  try { if (DocumentApp.getActiveDocument()) return { app: 'docs', ui: DocumentApp.getUi() }; }
+  catch (err) { Logger.log('_resolveHost_: Docs-Fallback fehlgeschlagen: ' + err); }
+  try { if (SpreadsheetApp.getActiveSpreadsheet()) return { app: 'sheets', ui: SpreadsheetApp.getUi() }; }
+  catch (err) { Logger.log('_resolveHost_: Sheets-Fallback fehlgeschlagen: ' + err); }
+  try { if (SlidesApp.getActivePresentation()) return { app: 'slides', ui: SlidesApp.getUi() }; }
+  catch (err) { Logger.log('_resolveHost_: Slides-Fallback fehlgeschlagen: ' + err); }
 
-  try {
-    if (typeof SpreadsheetApp !== 'undefined' && SpreadsheetApp.getActiveSpreadsheet()) return SpreadsheetApp.getUi();
-  } catch (err) { Logger.log('_getUiSafe_: Sheets Fallback fehlgeschlagen: ' + err); }
+  var names = ['docs', 'sheets', 'slides'];
+  for (var i = 0; i < names.length; i++) {
+    try { return { app: names[i], ui: apps[names[i]]().getUi() }; }
+    catch (err) { /* nicht diese App */ }
+  }
 
-  try {
-    if (typeof SlidesApp !== 'undefined' && SlidesApp.getActivePresentation()) return SlidesApp.getUi();
-  } catch (err) { Logger.log('_getUiSafe_: Slides Fallback fehlgeschlagen: ' + err); }
-
-  throw new Error('Could not determine active Workspace App UI. hostApp=' + hostApp);
+  throw new Error('Could not detect whether this is Google Docs, Sheets or Slides (hostApp=' + hostApp + '). ' +
+    'Please close the side panel, reload the file and open Kärcher TermCheck again.');
 }
 
 // ─── GLOSSAR AUS DEN TERMBASES BAUEN ───────────────────────────────────────

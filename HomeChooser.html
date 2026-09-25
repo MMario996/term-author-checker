@@ -59,16 +59,18 @@ p{ font-size:14px; color:var(--gray-500); margin-bottom:22px; line-height:1.4; }
 <script>
 // Vom Server gespeicherte UI-Sprache (pro Nutzer), siehe renderWithI18n_ in Code.gs.
 var I18N_INITIAL_LANG = <?!= JSON.stringify(uiLang) ?>;
+// Editor-App, in der diese Seite läuft ('docs'/'sheets'/'slides'), siehe _resolveHost_.
+var HOST_APP = <?!= JSON.stringify(hostApp) ?>;
 function I18N_PERSIST(lang){ google.script.run.apiSetUiLang(lang); }
 </script>
 <?!= include('I18n'); ?>
 <script>
 document.addEventListener('DOMContentLoaded', initUiLangSelects);
 function openTermSearch() {
-  google.script.run.showSidebar();
+  google.script.run.showSidebar(HOST_APP);
 }
 function openAuthorCheck() {
-  google.script.run.showAuthorCheckSidebar();
+  google.script.run.showAuthorCheckSidebar(HOST_APP);
 }
 </script>
 </body>
