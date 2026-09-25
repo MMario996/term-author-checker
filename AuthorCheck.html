@@ -28,7 +28,8 @@
 html,body{ background:var(--white); color:var(--ink); font-family:var(--ff-body); font-size:17px; -webkit-font-smoothing:antialiased; }
 button, select, input, textarea{ font-family:inherit; }
 #app{ padding:20px; }
-.header{ margin-bottom:16px; }
+.header{ margin-bottom:16px; flex-wrap:wrap; }
+.header-text{ flex:1 1 160px; min-width:0; }
 .header h1{ font-family:var(--ff-head); font-size:20px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--ink); }
 .header p{ font-size:14px; color:var(--gray-500); margin-top:4px; line-height:1.4; }
 
@@ -62,11 +63,17 @@ button, select, input, textarea{ font-family:inherit; }
   /* Header-Buttons kompakt halten */
   .header-btn span { display: none; }
   .header-btn { padding: 6px; }
+
+  /* Schmale Seitenleiste: Sprache/Home/Regeln als eigene Zeile oben rechts,
+     Titel und Beschreibung darunter in voller Breite (statt zusammengequetscht). */
+  #app { padding: 14px; }
+  .header-nav { order: -1; margin-left: auto; }
+  .header-text { flex-basis: 100%; }
 }
-.control-row{ display:flex; gap:12px; margin-bottom:14px; }
+.control-row{ display:flex; gap:12px; margin-bottom:14px; min-width:0; }
 .control-row label{ display:flex; align-items:center; font-family:var(--ff-head); font-size:15px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--gray-500); white-space:nowrap; }
 #lang-select{
-  flex:1; border:1.5px solid var(--gray-300); background:var(--white);
+  flex:1 1 0; min-width:0; width:100%; border:1.5px solid var(--gray-300); background:var(--white);
   padding:10px 12px; font-size:17px; color:var(--ink); cursor:pointer; outline:none;
 }
 #lang-select:focus{ border-color:var(--ink); }
@@ -261,7 +268,7 @@ body.popup-mode .ui-lang-select{ font-size:13px; max-width:none; }
 <body>
 <div id="app">
   <div class="header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-    <div>
+    <div class="header-text">
       <h1 data-i18n="ac.title">Author Check</h1>
       <p data-i18n="ac.subtitle">Check active text for grammar, terminology, and custom style rules.</p>
     </div>
