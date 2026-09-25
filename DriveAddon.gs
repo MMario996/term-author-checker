@@ -13,8 +13,6 @@ var DRIVE_PDF_ANNOTATE_MAX_BYTES = 45 * 1024 * 1024;
 // Bei verkleinerten PDFs: so viel Bilddaten bleiben insgesamt erhalten (kleinste
 // Bilder zuerst - Piktogramme/Warnsymbole vor großen Fotos).
 var DRIVE_PDF_IMAGE_BUDGET = 12 * 1024 * 1024;
-// Dauert die Vorbereitung länger, wird die Prüfung als zweiter Schritt gestartet.
-var DRIVE_PDF_PREP_BUDGET_MS = 15000;
 var DRIVE_PDF_RESULT_CACHE_TTL = 3600; // 1h, reicht für eine interaktive Session in Drive
 var DRIVE_PDF_MAX_CARD_ISSUES = 25; // Card-UI bleibt sonst zu groß/langsam
 var DRIVE_PDF_LAST_LANG_KEY = 'DRIVE_PDF_LAST_LANGUAGE';
@@ -107,12 +105,8 @@ function _drivePdfResultCacheKey_(resultId) {
   return 'DRIVE_PDF_RESULT_' + resultId;
 }
 
-/**
- * Card-Action: prüft die ausgewählte PDF-Datei per Gemini und zeigt die Treffer
- * direkt interaktiv an (wie die Issue-Karten im Author-Check-Sidebar). Das
- * Ergebnis wird gecacht (siehe _drivePdfResultCacheKey_), damit "Export as
- * Sheet" es ohne erneuten Gemini-Call weiterverwenden kann.
- */
+
+
 function apiCheckDrivePdf(e) {
   var started = Date.now();
   var fileId = e.parameters.fileId;
@@ -125,7 +119,8 @@ function apiCheckDrivePdf(e) {
 
     var prep = _drivePdfPrepare_(fileId, fileName);
     var job = { fileId: fileId, fileName: fileName, language: language, fileSize: prep.fileSize,
-                imagesRemoved: prep.imagesRemoved, imagesKept: prep.imagesKept };
+                imagesRemoved: prep.imagesRemoved, imagesKept: prep.imagesKept,
+                next: 0, batch: DRIVE_PDF_BATCH_PARTS, lastBatchMs: 0, inflight: null, issues: [], failedRanges: [] };
     var parts = _drivePdfPlanParts_(prep);
     prep = null;
     parts.forEach(function(part) {
@@ -134,46 +129,295 @@ function apiCheckDrivePdf(e) {
       }
     });
 
-    // Sicherheitsnetz: hat die Vorbereitung schon zu viel vom Zeitbudget der
-    // Aktion verbraucht, werden die fertigen Seitenpakete zwischengespeichert
-    // (hintereinander in EINER Temp-Datei, Positionen in job.parts) und die
-    // Prüfung in einer zweiten Aktion ("Continue check") mit frischem Budget
-    // gestartet - dort wird dann nur noch Gemini aufgerufen.
-    if (Date.now() - started > DRIVE_PDF_PREP_BUDGET_MS) {
-      var pos = 0;
-      job.parts = parts.map(function(part) {
-        var entry = { from: part.from, to: part.to, start: pos, len: part.text.length };
-        pos += part.text.length;
-        return entry;
-      });
-      var tmp = _getOrCreateExportFolder_().createFile(Utilities.newBlob(
-        _pdfBinaryStringToBytes_(parts.map(function(part) { return part.text; }).join('')), 'application/octet-stream',
-        '.authorcheck-temp-' + Utilities.getUuid() + '.bin'));
-      job.tmpId = tmp.getId();
-      return CardService.newActionResponseBuilder()
-        .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfContinueCard_(job)))
-        .build();
+    // Kleine PDF in einem Paket: direkt prüfen, ohne Zwischenspeicher.
+    if (parts.length === 1 && Date.now() - started < DRIVE_PDF_START_BATCH_BEFORE_MS) {
+      return _drivePdfWork_(job, parts, started);
     }
-    return _drivePdfRunCheck_(job, parts);
+
+    // Sonst: Seitenpakete hintereinander in EINER Temp-Datei ablegen (Positionen
+    // in job.parts), damit die Prüfung über mehrere Aktionen verteilt werden kann.
+    var pos = 0;
+    job.parts = parts.map(function(part) {
+      var entry = { from: part.from, to: part.to, start: pos, len: part.text.length };
+      pos += part.text.length;
+      return entry;
+    });
+    job.tmpId = _getOrCreateExportFolder_().createFile(Utilities.newBlob(
+      _pdfBinaryStringToBytes_(parts.map(function(part) { return part.text; }).join('')), 'application/octet-stream',
+      '.authorcheck-temp-' + Utilities.getUuid() + '.bin')).getId();
+    // Bewusst noch KEINE Gemini-Anfrage in dieser Aktion: würde sie am Zeitlimit
+    // abgebrochen, gäbe es noch keine Card mit "Continue". Ab jetzt hat jeder
+    // Schritt einen Button, mit dem es weitergeht.
+    _drivePdfSaveJob_(job);
+    return CardService.newActionResponseBuilder()
+      .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfProgressCard_(job, parts)))
+      .build();
   } catch (err) {
     return _drivePdfErrorResponse_(err);
   }
 }
 
-/** Card-Action: zweiter Schritt nach dem Zwischenspeichern (siehe apiCheckDrivePdf). */
+/**
+ * Card-Action "Continue": nächste Etappe der Prüfung. Der Zwischenstand (inkl.
+ * bisheriger Funde) liegt in einer Temp-Datei, deren ID der Button mitschickt.
+ */
 function apiCheckDrivePdfContinue(e) {
-  var job;
+  var started = Date.now();
   try {
-    job = JSON.parse(e.parameters.job);
-    var all = _pdfBytesToBinaryString_(DriveApp.getFileById(job.tmpId).getBlob().getBytes());
-    var parts = job.parts.map(function(p) { return { from: p.from, to: p.to, text: all.substr(p.start, p.len) }; });
-    all = null;
-    return _drivePdfRunCheck_(job, parts);
+    var job = _drivePdfLoadJob_(e.parameters.stateId);
+    var files = {};
+    function partText(p) {
+      var fid = p.file || job.tmpId;
+      if (!files[fid]) files[fid] = _pdfBytesToBinaryString_(DriveApp.getFileById(fid).getBlob().getBytes());
+      return files[fid].substr(p.start, p.len);
+    }
+    // Die letzte Etappe ist nicht fertig geworden (Zeitlimit) -> kleiner werden:
+    // erst weniger Pakete pro Etappe, dann das Paket in Einzelseiten zerlegen,
+    // und eine einzelne Seite, die selbst dafür zu lange braucht, überspringen.
+    if (job.inflight) {
+      var inf = job.inflight;
+      job.inflight = null;
+      job.lastBatchMs = 0;
+      var entry = job.parts[inf.next];
+      if (inf.size > 1) {
+        job.batch = Math.max(1, Math.floor(inf.size / 2));
+      } else if (entry.to - entry.from > 1) {
+        // Schon ein einzelnes Paket ist zu langsam: alle restlichen Pakete in
+        // Einzelseiten zerlegen (von hinten, damit die Indizes stimmen).
+        for (var k = job.parts.length - 1; k >= inf.next; k--) {
+          if (job.parts[k].to - job.parts[k].from > 1) _drivePdfSplitEntry_(job, k, partText(job.parts[k]));
+        }
+      } else {
+        job.failedRanges.push((entry.from + 1) + '-' + entry.to);
+        job.next++;
+      }
+      Logger.log('apiCheckDrivePdfContinue: Etappe ab Paket ' + (inf.next + 1) + ' (' + inf.size + ' Paket(e)) am Zeitlimit abgebrochen -> ' +
+        (inf.size > 1 ? job.batch + ' pro Etappe' : (entry.to - entry.from > 1 ? 'restliche Pakete in Einzelseiten zerlegt' : 'Seite übersprungen')));
+    }
+    var parts = job.parts.map(function(p) { return { from: p.from, to: p.to, text: partText(p) }; });
+    files = null;
+    return _drivePdfWork_(job, parts, started);
   } catch (err) {
     return _drivePdfErrorResponse_(err);
-  } finally {
-    if (job && job.tmpId) { try { DriveApp.getFileById(job.tmpId).setTrashed(true); } catch (trashErr) {} }
   }
+}
+
+// ─── ETAPPENWEISE PRÜFUNG ─────────────────────────────────────────────────
+// Eine Add-on-Aktion wird nach ca. 45 s hart abgebrochen, und eine laufende
+// Gemini-Anfrage lässt sich nicht unterbrechen. Deshalb wird pro Aktion nur
+// eine Etappe nach der anderen gestartet (DRIVE_PDF_BATCH_PARTS Pakete parallel),
+// solange die gemessene Dauer der letzten Etappe noch sicher in die Restzeit
+// passt. Danach zeigt die Card den Fortschritt und einen "Continue"-Button.
+var DRIVE_PDF_BATCH_PARTS = 4;               // Seitenpakete pro Etappe (parallel)
+var DRIVE_PDF_START_BATCH_BEFORE_MS = 15000; // neue Etappe nur, wenn so viel Zeit noch nicht verbraucht ist ...
+var DRIVE_PDF_ACTION_LIMIT_MS = 38000;       // ... und die letzte Etappendauer darunter bleiben würde
+
+function _drivePdfSaveJob_(job) {
+  if (!job.stateId) {
+    job.stateId = _getOrCreateExportFolder_().createFile('.authorcheck-state-' + Utilities.getUuid() + '.json', '{}', 'application/json').getId();
+  }
+  DriveApp.getFileById(job.stateId).setContent(JSON.stringify(job));
+}
+
+function _drivePdfLoadJob_(stateId) {
+  var file = DriveApp.getFileById(stateId);
+  if (file.isTrashed()) throw new Error('This check has already finished. Please start a new check if needed.');
+  var job = JSON.parse(file.getBlob().getDataAsString());
+  job.stateId = stateId;
+  return job;
+}
+
+// Zerlegt das Paket job.parts[idx] (Text: text) in Einzelseiten, abgelegt in
+// einer eigenen Temp-Datei.
+function _drivePdfSplitEntry_(job, idx, text) {
+  var entry = job.parts[idx];
+  var splitter = pdfPageSplitter_(pdfRebuild_(_pdfStringReader_(text)));
+  var pieces = [];
+  for (var i = 0; i < splitter.pageCount; i++) pieces.push(splitter.build(i, i + 1));
+  var fileId = _getOrCreateExportFolder_().createFile(Utilities.newBlob(
+    _pdfBinaryStringToBytes_(pieces.join('')), 'application/octet-stream',
+    '.authorcheck-temp-' + Utilities.getUuid() + '.bin')).getId();
+  job.extraFiles = (job.extraFiles || []).concat([fileId]);
+  var pos = 0;
+  var entries = pieces.map(function(piece, i) {
+    var en = { from: entry.from + i, to: entry.from + i + 1, start: pos, len: piece.length, file: fileId };
+    pos += piece.length;
+    return en;
+  });
+  Array.prototype.splice.apply(job.parts, [idx, 1].concat(entries));
+}
+
+function _drivePdfCleanupJob_(job) {
+  [job.tmpId, job.stateId].concat(job.extraFiles || []).forEach(function(id) {
+    if (id) { try { DriveApp.getFileById(id).setTrashed(true); } catch (e) {} }
+  });
+}
+
+function _drivePdfWork_(job, parts, started) {
+  var cfg = _driveGeminiConfig_();
+  var prompt = _drivePdfPrompt_(job);
+  var seen = {};
+  job.issues.forEach(function(issue) { seen[issue.original + '\u0000' + issue.suggestion] = true; });
+
+  var batchesHere = 0;
+  while (job.next < parts.length) {
+    // Die erste Etappe einer Aktion läuft immer (dafür ist der Klick da); weitere
+    // nur, wenn die Dauer der letzten Etappe noch sicher in die Restzeit passt.
+    var elapsed = Date.now() - started;
+    if (batchesHere > 0 && (elapsed > DRIVE_PDF_START_BATCH_BEFORE_MS ||
+        elapsed + job.lastBatchMs * 1.2 > DRIVE_PDF_ACTION_LIMIT_MS)) break;
+    batchesHere++;
+
+    var batch = parts.slice(job.next, job.next + job.batch);
+    if (job.tmpId) {
+      // Vor dem Start vermerken: bricht diese Etappe am Zeitlimit ab, nimmt der
+      // nächste "Continue"-Klick automatisch kleinere Etappen.
+      job.inflight = { next: job.next, size: batch.length };
+      _drivePdfSaveJob_(job);
+    }
+    var t0 = Date.now();
+    var result = _drivePdfRunBatch_(cfg, prompt, batch, parts.length > 1);
+    job.lastBatchMs = Date.now() - t0;
+    Logger.log('_drivePdfWork_: Etappe mit ' + batch.length + ' Paket(en) (Seiten ' + (batch[0].from + 1) + '-' +
+      batch[batch.length - 1].to + ') dauerte ' + Math.round(job.lastBatchMs / 100) / 10 + ' s');
+    result.issues.forEach(function(issue) {
+      var key = issue.original + '\u0000' + issue.suggestion;
+      if (seen[key]) return;
+      seen[key] = true;
+      job.issues.push(issue);
+    });
+    job.failedRanges = job.failedRanges.concat(result.failedRanges);
+    job.next += batch.length;
+    job.inflight = null;
+  }
+
+  if (job.next < parts.length) {
+    _drivePdfSaveJob_(job);
+    return CardService.newActionResponseBuilder()
+      .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfProgressCard_(job, parts)))
+      .build();
+  }
+
+  _drivePdfCleanupJob_(job);
+  if (job.failedRanges.length && job.failedRanges.length === parts.length) {
+    throw new Error('The AI request failed for all pages. Please try again.');
+  }
+  logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_CHECK_RUN', job.fileName + ' - ' + job.issues.length + ' issue(s), ' + parts.length + ' part(s)' +
+    (job.failedRanges.length ? ', failed pages ' + job.failedRanges.join(',') : ''));
+
+  var resultId = Utilities.getUuid();
+  var cachePayload = { fileId: job.fileId, fileName: job.fileName, language: job.language, issues: job.issues, fileSize: job.fileSize };
+  try {
+    CacheService.getUserCache().put(_drivePdfResultCacheKey_(resultId), JSON.stringify(cachePayload), DRIVE_PDF_RESULT_CACHE_TTL);
+  } catch (cacheErr) {
+    Logger.log('_drivePdfWork_: result cache failed (result possibly too large): ' + cacheErr);
+  }
+  return CardService.newActionResponseBuilder()
+    .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfResultsCard_(resultId, job.fileName, job.issues,
+      { fileSize: job.fileSize, imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept, failedRanges: job.failedRanges })))
+    .build();
+}
+
+/** Schickt eine Etappe (mehrere Seitenpakete parallel) an Gemini. */
+function _drivePdfRunBatch_(cfg, prompt, batch, isSplit) {
+  var requests = batch.map(function(part) {
+    var partPrompt = prompt;
+    if (isSplit) {
+      partPrompt += '\n\nThis file contains only pages ' + (part.from + 1) + ' to ' + part.to + ' of the original document ' +
+        '(the first page in this file is page ' + (part.from + 1) + '). In "location", always use these ORIGINAL page numbers.';
+    }
+    var call = _buildGeminiRequest_(cfg.apiUrl, cfg.model, cfg.apiKey, {
+      contents: [{
+        role: 'user',
+        parts: [
+          { text: partPrompt },
+          { inlineData: { mimeType: 'application/pdf', data: Utilities.base64Encode(_pdfBinaryStringToBytes_(part.text)) } }
+        ]
+      }],
+      generationConfig: { temperature: cfg.temperature }
+    });
+    return {
+      url: call.url, method: 'post', contentType: 'application/json',
+      headers: call.headers, payload: JSON.stringify(call.body), muteHttpExceptions: true
+    };
+  });
+  var responses = requests.length === 1
+    ? [_fetchGeminiWithRetry_(requests[0].url, requests[0], 1)]
+    : UrlFetchApp.fetchAll(requests);
+
+  var issues = [], failedRanges = [];
+  responses.forEach(function(res, idx) {
+    try {
+      _parseGeminiIssuesResponse_(res, 'AI request failed').forEach(function(issue) { issues.push(issue); });
+    } catch (partErr) {
+      failedRanges.push((batch[idx].from + 1) + '-' + batch[idx].to);
+      Logger.log('_drivePdfRunBatch_: Seiten ' + (batch[idx].from + 1) + '-' + batch[idx].to + ' fehlgeschlagen: ' + partErr.message);
+    }
+  });
+  return { issues: issues, failedRanges: failedRanges };
+}
+
+function _buildDrivePdfProgressCard_(job, parts) {
+  var card = CardService.newCardBuilder();
+  card.setHeader(CardService.newCardHeader().setTitle('Checking PDF ...').setSubtitle(job.fileName));
+  var section = CardService.newCardSection();
+  var pagesDone = job.next > 0 ? parts[job.next - 1].to : 0;
+  var pagesTotal = parts[parts.length - 1].to;
+  var intro = job.imagesRemoved
+    ? 'Prepared: ' + job.imagesKept + ' images kept, ' + job.imagesRemoved + ' large images left out to reduce the size.<br>'
+    : '';
+  section.addWidget(CardService.newTextParagraph().setText(
+    (job.next === 0 ? intro + 'The PDF (' + pagesTotal + ' pages) is ready to be checked.' 
+                    : 'Checked <b>' + pagesDone + ' of ' + pagesTotal + ' pages</b>, ' + job.issues.length + ' issue(s) so far.') + '<br>' +
+    'Large PDFs are checked in several steps so that no step runs into Google\'s time limit. Click <b>' +
+    (job.next === 0 ? 'Start check' : 'Continue') + '</b> for the next step. ' +
+    'If a step is ever interrupted, simply click the button again - the next step will be smaller.'));
+  section.addWidget(CardService.newTextButton()
+    .setText(job.next === 0 ? 'Start check' : 'Continue')
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('apiCheckDrivePdfContinue')
+      .setParameters({ stateId: job.stateId })
+      .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
+  card.addSection(section);
+  return card.build();
+}
+
+function _drivePdfPrompt_(job) {
+  var language = job.language;
+  var promptParts = _buildAuthorCheckPromptParts_(language, {
+    noGlossary: '(no specific entries found for this language)',
+    valueLabel: 'Value',
+    specificCheckPrefix: 'SPECIFIC CHECK',
+    noStandardRules: '(No standard rules)',
+    additionalChecksHeader: 'ADDITIONAL SPECIFIC PROMPTS/CHECKS'
+  });
+  var termListStr = promptParts.termListStr;
+  var rulesStr = promptParts.rulesStr;
+
+  var targetLanguageName = _drivePdfLanguageName_(language);
+
+  var prompt =
+    'You are a proofreading assistant for Kärcher texts (manufacturer of cleaning equipment: ' +
+    'high-pressure cleaners, sweepers, vacuum cleaners, accessories).\n\n' +
+    'IMPORTANT: The attached PDF document may contain text in multiple languages (e.g. a multilingual manual with several language sections). ' +
+    'Check ONLY the passages that are written in ' + targetLanguageName + '. ' +
+    'Completely ignore and skip any passages written in other languages, even if they appear right next to or interleaved with ' + targetLanguageName + ' text. ' +
+    'Do not report any issue whose "original" quote is not itself in ' + targetLanguageName + '.\n\n' +
+    (job.imagesRemoved ? 'NOTE: To reduce the file size, some large images were removed from this PDF. Empty areas where images used to be are expected - do not report them.\n\n' : '') +
+    'Within the ' + targetLanguageName + ' passages, check for these error types:\n' +
+    '1. GRAMMAR AND SPELLING ERRORS\n' +
+    '2. INCORRECT OR INCONSISTENT KÄRCHER TERMINOLOGY - compare against this list ' +
+    '"incorrect term -> correct term":\n' + termListStr + '\n' +
+    '3. SPECIFIC WRITING AND STYLE RULES:\n' + rulesStr + '\n\n' +
+    'Respond EXCLUSIVELY with valid JSON in exactly this structure, without markdown formatting, without code block:\n' +
+    '{"issues":[{"type":"grammar|terminology|style","location":"...","original":"...","suggestion":"...","explanation":"..."}]}\n\n' +
+    'Rules:\n' +
+    '- "type" is either "grammar", "terminology" or "style".\n' +
+    '- "location" is a short hint where in the document the passage can be found (e.g. page number, chapter, or language section), if identifiable, otherwise leave empty.\n' +
+    '- "original" must be an EXACT, contiguous quote from the document, and must itself be written in ' + targetLanguageName + '.\n' +
+    '- Only return genuine errors found in ' + targetLanguageName + ' passages. If no errors are found, return {"issues":[]}.';
+
+  return prompt;
 }
 
 function _drivePdfErrorResponse_(err) {
@@ -186,23 +430,6 @@ function _drivePdfErrorResponse_(err) {
     .build();
 }
 
-function _buildDrivePdfContinueCard_(job) {
-  var card = CardService.newCardBuilder();
-  card.setHeader(CardService.newCardHeader().setTitle('PDF prepared').setSubtitle(job.fileName));
-  var section = CardService.newCardSection();
-  section.addWidget(CardService.newTextParagraph().setText(
-    'This PDF (' + _driveMb_(job.fileSize) + ' MB) took a while to prepare' +
-    (job.imagesRemoved ? ' (' + job.imagesKept + ' images kept, ' + job.imagesRemoved + ' large images left out)' : '') +
-    '. Click <b>Continue check</b> to send it to the AI.'));
-  section.addWidget(CardService.newTextButton()
-    .setText('Continue check')
-    .setOnClickAction(CardService.newAction()
-      .setFunctionName('apiCheckDrivePdfContinue')
-      .setParameters({ job: JSON.stringify(job) })
-      .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
-  card.addSection(section);
-  return card.build();
-}
 
 function _driveGeminiConfig_() {
   var props = PropertiesService.getScriptProperties();
@@ -253,106 +480,6 @@ function _drivePdfPrepare_(fileId, fileName) {
   return { fileSize: fileSize, model: model, imagesRemoved: model.imagesRemoved, imagesKept: model.imagesKept };
 }
 
-/** Schickt die Seitenpakete (parallel) an Gemini und zeigt das Ergebnis. */
-function _drivePdfRunCheck_(job, parts) {
-  var cfg = _driveGeminiConfig_();
-  var language = job.language;
-  var promptParts = _buildAuthorCheckPromptParts_(language, {
-    noGlossary: '(no specific entries found for this language)',
-    valueLabel: 'Value',
-    specificCheckPrefix: 'SPECIFIC CHECK',
-    noStandardRules: '(No standard rules)',
-    additionalChecksHeader: 'ADDITIONAL SPECIFIC PROMPTS/CHECKS'
-  });
-  var termListStr = promptParts.termListStr;
-  var rulesStr = promptParts.rulesStr;
-
-  var targetLanguageName = _drivePdfLanguageName_(language);
-
-  var prompt =
-    'You are a proofreading assistant for Kärcher texts (manufacturer of cleaning equipment: ' +
-    'high-pressure cleaners, sweepers, vacuum cleaners, accessories).\n\n' +
-    'IMPORTANT: The attached PDF document may contain text in multiple languages (e.g. a multilingual manual with several language sections). ' +
-    'Check ONLY the passages that are written in ' + targetLanguageName + '. ' +
-    'Completely ignore and skip any passages written in other languages, even if they appear right next to or interleaved with ' + targetLanguageName + ' text. ' +
-    'Do not report any issue whose "original" quote is not itself in ' + targetLanguageName + '.\n\n' +
-    (job.imagesRemoved ? 'NOTE: To reduce the file size, some large images were removed from this PDF. Empty areas where images used to be are expected - do not report them.\n\n' : '') +
-    'Within the ' + targetLanguageName + ' passages, check for these error types:\n' +
-    '1. GRAMMAR AND SPELLING ERRORS\n' +
-    '2. INCORRECT OR INCONSISTENT KÄRCHER TERMINOLOGY - compare against this list ' +
-    '"incorrect term -> correct term":\n' + termListStr + '\n' +
-    '3. SPECIFIC WRITING AND STYLE RULES:\n' + rulesStr + '\n\n' +
-    'Respond EXCLUSIVELY with valid JSON in exactly this structure, without markdown formatting, without code block:\n' +
-    '{"issues":[{"type":"grammar|terminology|style","location":"...","original":"...","suggestion":"...","explanation":"..."}]}\n\n' +
-    'Rules:\n' +
-    '- "type" is either "grammar", "terminology" or "style".\n' +
-    '- "location" is a short hint where in the document the passage can be found (e.g. page number, chapter, or language section), if identifiable, otherwise leave empty.\n' +
-    '- "original" must be an EXACT, contiguous quote from the document, and must itself be written in ' + targetLanguageName + '.\n' +
-    '- Only return genuine errors found in ' + targetLanguageName + ' passages. If no errors are found, return {"issues":[]}.';
-
-  // Seitenpakete parallel prüfen (eine Add-on-Aktion darf nur ca. 30-45 s laufen).
-  var requests = parts.map(function(part) {
-    var partPrompt = prompt;
-    if (parts.length > 1) {
-      partPrompt += '\n\nThis file contains only pages ' + (part.from + 1) + ' to ' + part.to + ' of the original document ' +
-        '(the first page in this file is page ' + (part.from + 1) + '). In "location", always use these ORIGINAL page numbers.';
-    }
-    var call = _buildGeminiRequest_(cfg.apiUrl, cfg.model, cfg.apiKey, {
-      contents: [{
-        role: 'user',
-        parts: [
-          { text: partPrompt },
-          { inlineData: { mimeType: 'application/pdf', data: Utilities.base64Encode(_pdfBinaryStringToBytes_(part.text)) } }
-        ]
-      }],
-      generationConfig: { temperature: cfg.temperature }
-    });
-    part.text = null;
-    return {
-      url: call.url, method: 'post', contentType: 'application/json',
-      headers: call.headers, payload: JSON.stringify(call.body), muteHttpExceptions: true
-    };
-  });
-  var responses = requests.length === 1
-    ? [_fetchGeminiWithRetry_(requests[0].url, requests[0])]
-    : UrlFetchApp.fetchAll(requests);
-
-  var issues = [], seen = {}, failedParts = 0, firstError = null, failedRanges = [];
-  responses.forEach(function(res, idx) {
-    if (requests.length > 1 && GEMINI_RETRYABLE_CODES.indexOf(res.getResponseCode()) !== -1) {
-      res = _fetchGeminiWithRetry_(requests[idx].url, requests[idx], 2);
-    }
-    try {
-      _parseGeminiIssuesResponse_(res, 'AI request failed').forEach(function(issue) {
-        var key = issue.original + '\u0000' + issue.suggestion;
-        if (seen[key]) return;
-        seen[key] = true;
-        issues.push(issue);
-      });
-    } catch (partErr) {
-      failedParts++;
-      if (!firstError) firstError = partErr;
-      failedRanges.push((parts[idx].from + 1) + '-' + parts[idx].to);
-      Logger.log('_drivePdfRunCheck_: Seiten ' + (parts[idx].from + 1) + '-' + parts[idx].to + ' fehlgeschlagen: ' + partErr.message);
-    }
-  });
-  if (failedParts === responses.length) throw firstError;
-
-  logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_CHECK_RUN', job.fileName + ' - ' + issues.length + ' issue(s), ' + parts.length + ' part(s)' + (failedParts ? ', failed pages ' + failedRanges.join(',') : ''));
-
-  var resultId = Utilities.getUuid();
-  var cachePayload = { fileId: job.fileId, fileName: job.fileName, language: language, issues: issues, fileSize: job.fileSize };
-  try {
-    CacheService.getUserCache().put(_drivePdfResultCacheKey_(resultId), JSON.stringify(cachePayload), DRIVE_PDF_RESULT_CACHE_TTL);
-  } catch (cacheErr) {
-    Logger.log('_drivePdfRunCheck_: result cache failed (result possibly too large): ' + cacheErr);
-  }
-
-  return CardService.newActionResponseBuilder()
-    .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfResultsCard_(resultId, job.fileName, issues,
-      { fileSize: job.fileSize, imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept, failedRanges: failedRanges })))
-    .build();
-}
 
 /**
  * Baut die interaktive Ergebnis-Card: Zusammenfassung oben, darunter pro Fund
@@ -442,8 +569,8 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
 // Liefert [{from, to, text}] (Seiten 0-basiert, to exklusiv). Kleine PDFs oder
 // PDFs, die sich nicht aufteilen lassen, gehen als ein Paket raus.
 // Kleine Pakete = kurze Antwortzeit pro Gemini-Anfrage (alle laufen parallel).
-var DRIVE_PDF_PAGES_PER_PART = 6;
-var DRIVE_PDF_MAX_PARTS = 25;
+var DRIVE_PDF_PAGES_PER_PART = 4;
+var DRIVE_PDF_MAX_PARTS = 60;
 function _drivePdfPlanParts_(prep) {
   if (!prep.model) return [{ from: 0, to: 0, text: prep.text }];
   var whole = [{ from: 0, to: 0, text: prep.model.text }];
