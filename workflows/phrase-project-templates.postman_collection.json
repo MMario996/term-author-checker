@@ -1,0 +1,66 @@
+{
+  "info": {
+    "name": "Phrase TMS - Project Templates",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://cloud.memsource.com/web" },
+    { "key": "userName", "value": "" },
+    { "key": "password", "value": "" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const res = pm.response.json();",
+              "pm.collectionVariables.set('token', res.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api2/v1/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userName\": \"{{userName}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "2. List Review Campus templates",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const res = pm.response.json();",
+              "(res.content || []).forEach(t => console.log(t.uid + '  ' + t.templateName));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "ApiToken {{token}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/api2/v1/projectTemplates?name=Review Campus&pageSize=50",
+          "host": ["{{baseUrl}}"],
+          "path": ["api2", "v1", "projectTemplates"],
+          "query": [
+            { "key": "name", "value": "Review Campus" },
+            { "key": "pageSize", "value": "50" }
+          ]
+        }
+      }
+    }
+  ]
+}
