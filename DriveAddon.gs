@@ -30,6 +30,23 @@ var DRIVE_PDF_LANGUAGES = [
   ['et', 'Estonian'], ['sl', 'Slovenian'], ['nb', 'Norwegian']
 ];
 
+// Seit der granularen OAuth-Zustimmung kann ein Nutzer bei der Installation
+// einzelne Berechtigungen abwählen (z.B. Google Drive). Dann schlägt jeder
+// DriveApp-Aufruf fehl ("Sie haben nicht die erforderliche Berechtigung,
+// DriveApp.getFileById anzurufen"), auch nach Neuinstallation. requireScopes
+// bricht in dem Fall ab und zeigt stattdessen die Autorisierungs-Card, mit der
+// genau die fehlenden Berechtigungen nachträglich erteilt werden.
+// Wichtig: nie innerhalb eines try/catch aufrufen, sonst wird der Abbruch verschluckt.
+var DRIVE_ADDON_REQUIRED_SCOPES = [
+  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/script.external_request'
+];
+
+function _driveRequireScopes_() {
+  ScriptApp.requireScopes(ScriptApp.AuthMode.FULL, DRIVE_ADDON_REQUIRED_SCOPES);
+}
+
 function onDriveHomepage(e) {
   var card = CardService.newCardBuilder();
   card.setHeader(CardService.newCardHeader()
@@ -42,6 +59,7 @@ function onDriveHomepage(e) {
 }
 
 function onDriveItemsSelected(e) {
+  _driveRequireScopes_();
   var items = (e.drive && e.drive.selectedItems) || [];
 
   if (items.length !== 1) {
@@ -127,6 +145,7 @@ function _drivePdfResultCacheKey_(resultId) {
 
 
 function apiCheckDrivePdf(e) {
+  _driveRequireScopes_();
   var started = Date.now();
   var fileId = e.parameters.fileId;
   var fileName = e.parameters.fileName || 'PDF';
@@ -181,6 +200,7 @@ function apiCheckDrivePdf(e) {
  * bisheriger Funde) liegt in einer Temp-Datei, deren ID der Button mitschickt.
  */
 function apiCheckDrivePdfContinue(e) {
+  _driveRequireScopes_();
   var started = Date.now();
   try {
     var job = _drivePdfLoadJob_(e.parameters.stateId);
@@ -660,6 +680,7 @@ function _drivePdfLastResultKey_(fileId) {
 
 /** Card-Action: zeigt das zuletzt gespeicherte Prüfergebnis einer Datei wieder an. */
 function apiShowDrivePdfResult(e) {
+  _driveRequireScopes_();
   try {
     var resultId = e.parameters.resultId;
     var data = _loadDrivePdfResult_(resultId);
@@ -685,6 +706,7 @@ function _loadDrivePdfResult_(resultId) {
  * gecachte Prüfergebnis (kein erneuter Gemini-Call nötig) und öffnet das Sheet.
  */
 function apiExportDrivePdfResultToSheet(e) {
+  _driveRequireScopes_();
   try {
     var data = _loadDrivePdfResult_(e.parameters.resultId);
     var sheetUrl = _buildDrivePdfReportSheet_(data.issues, data.fileName, data.language);
@@ -706,6 +728,7 @@ function apiExportDrivePdfResultToSheet(e) {
  * mit in den Cache passen.
  */
 function apiExportDrivePdfAnnotated(e) {
+  _driveRequireScopes_();
   var started = Date.now();
   try {
     var data = _loadDrivePdfResult_(e.parameters.resultId);
@@ -975,6 +998,7 @@ function _buildDrivePdfAnnotatedDoneCard_(fileName, url) {
 
 /** Card-Action: setzt den Upload einer großen annotierten PDF fort. */
 function apiExportDrivePdfAnnotatedContinue(e) {
+  _driveRequireScopes_();
   var started = Date.now();
   try {
     var state = JSON.parse(e.parameters.state);
