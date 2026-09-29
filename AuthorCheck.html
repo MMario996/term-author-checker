@@ -179,6 +179,11 @@ button, select, input, textarea{ font-family:inherit; }
 #toast a{ color:var(--yellow); margin-left:8px; text-decoration:underline; }
 /* Regel-Popup: Seitenleisten-Bereich gar nicht erst anzeigen (kein Aufblitzen) */
 body.rules-only #app{ display:none; }
+/* Im Popup füllt das Regelfenster den ganzen Dialog (kein grauer Rahmen) */
+body.rules-only .modal-bg{ padding:0; background:var(--white); }
+body.rules-only .modal{ height:100vh; max-height:none; border:none; box-shadow:none; }
+.gem-row{ display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.gem-row .btn-mini{ flex:1 1 220px; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px; }
 .ctx-loading{ display:flex; justify-content:center; padding:40px 0; }
 /* Settings Gear & Modal */
 #settingsGear {
@@ -456,6 +461,26 @@ var I18N_INITIAL_LANG = <?!= JSON.stringify(uiLang) ?>;
 var HOST_APP = <?!= JSON.stringify(hostApp) ?>;
 // true = als großes Regel-Popup geöffnet (apiOpenRulesModal), sonst Seitenleiste.
 var RULES_ONLY = <?!= JSON.stringify(!!rulesOnly) ?>;
+// Gemini-Gems: eigene Regel formulieren bzw. Leitfaden (PDF) -> Import-JSON
+var GEM_URLS = {
+  rule: 'https://gemini.google.com/gem/1U9keOE3XPTPG3QEq63ZCYZ-5EOTruqgC?usp=sharing',
+  json: 'https://gemini.google.com/gem/1bgoe1LSjDPZMId5lf98dBbVQp1KMH2CO?usp=sharing'
+};
+function openGem(kind) {
+  var w = window.open(GEM_URLS[kind], '_blank', 'noopener');
+  if (w) try { w.opener = null; } catch (e) {}
+}
+// Dialog wird gross geoeffnet und hier auf den Bildschirm verkleinert.
+function fitRulesDialog_() {
+  try {
+    var sw = (window.screen && screen.availWidth) || 1366;
+    var sh = (window.screen && screen.availHeight) || 768;
+    var w = Math.max(700, Math.min(1900, sw - 80));
+    var h = Math.max(450, Math.min(1150, sh - 190));
+    if (w < 1900) google.script.host.setWidth(w);
+    if (h < 1150) google.script.host.setHeight(h);
+  } catch (e) {}
+}
 function I18N_PERSIST(lang){ google.script.run.apiSetUiLang(lang); }
 </script>
 <?!= include('I18n'); ?>
@@ -478,7 +503,7 @@ function onUiLangChanged(){
 document.addEventListener('DOMContentLoaded', function(){
   initUiLangSelects();
   // Regel-Popup: Regeln sofort laden, nicht erst auf den Kontext warten.
-  if (RULES_ONLY) initRulesModalUI();
+  if (RULES_ONLY) { fitRulesDialog_(); initRulesModalUI(); }
   loadContext();
 });
 
@@ -906,7 +931,10 @@ function renderRulesUI(rules) {
     return '<option value="' + esc(t) + '">' + esc(t) + '</option>';
   }).join('');
   var topAddHeader = '<div style="margin-bottom:12px; padding:10px; background:var(--gray-50); border:1px solid var(--gray-200);">' +
-    '<a href="https://gemini.google.com/gem/1U9keOE3XPTPG3QEq63ZCYZ-5EOTruqgC?usp=sharing" target="_blank" class="btn-mini ghost" style="width:100%; margin-bottom:8px; text-decoration:none; display:flex; align-items:center; justify-content:center;">'+tl('ac.prepareGemini')+'</a>' +
+    '<div class="gem-row">' +
+      '<button type="button" class="btn-mini ghost" onclick="openGem(\'rule\')">🤖 '+tl('ac.prepareGemini')+'</button>' +
+      '<button type="button" class="btn-mini ghost" onclick="openGem(\'json\')">🤖 '+tl('ac.jsonGemini')+'</button>' +
+    '</div>' +
     '<button class="btn-mini primary" style="width:100%; font-weight:bold;" onclick="toggleAddCustomRuleForm()">'+tl('ac.createRule')+'</button>' +
     '<div id="addCustomRuleForm" style="display:none; margin-top:10px; border-top:1px solid var(--gray-200); padding-top:10px;">' +
       '<label style="font-size:10px; font-weight:bold; color:var(--gray-500); text-transform:uppercase;">'+tl('ac.categoryLabel')+'</label>' +

@@ -15,8 +15,9 @@ eingelesen wird.
    was der Author Check schon als Standardregel kennt, und erzeugt keine Dubletten.
 6. Speichern. Zum Teilen mit dem Team: Gem → **Teilen**.
 
-Optional: Den Link im Regel-Popup („Regel mit Gemini vorbereiten“, `AuthorCheck.html`)
-auf den Freigabe-Link des neuen Gems umstellen.
+Im Regel-Popup öffnen zwei 🤖-Buttons die Gems: „Regel mit Gemini vorbereiten“ (eine
+einzelne Regel formulieren) und „JSON-Regelsatz aus Leitfaden (PDF)“ (dieser Gem). Die
+Freigabe-Links stehen in `GEM_URLS` in `AuthorCheck.html`.
 
 ## Benutzen
 

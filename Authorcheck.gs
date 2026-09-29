@@ -35,13 +35,14 @@ function showAuthorCheckSidebar(e) {
 
 // hostApp: 'docs' | 'sheets' | 'slides' - wird von der Seitenleiste mitgeschickt
 // (HOST_APP), weil google.script.run kein Event-Objekt liefert.
-// Groesse bewusst unter 1366x768 (haeufige Laptop-Aufloesung) - frueher 1350x900,
-// dann war der Speichern-Button unten abgeschnitten.
+// Gross geoeffnet (1900x1150); der Dialog verkleinert sich beim Laden selbst auf
+// die Bildschirmgroesse (fitRulesDialog_ in AuthorCheck.html), damit der
+// Speichern-Button auf kleinen Laptops (1366x768) nicht abgeschnitten wird.
 function apiOpenRulesModal(hostApp) {
   var host = _resolveHost_(hostApp);
   var ui = renderWithI18n_('AuthorCheck', host.app, true)
-    .setWidth(1100)
-    .setHeight(640);
+    .setWidth(1900)
+    .setHeight(1150);
 
   host.ui.showModalDialog(ui, 'Kärcher TermCheck – Rules & Custom Prompts');
 }
