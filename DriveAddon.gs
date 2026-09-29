@@ -161,14 +161,19 @@ function apiCheckDrivePdf(e) {
                 next: 0, batch: DRIVE_PDF_BATCH_PARTS, lastBatchMs: 0, inflight: null, issues: [], failedRanges: [] };
     var parts = _drivePdfPlanParts_(prep);
     prep = null;
+    Logger.log('apiCheckDrivePdf: ' + _driveMb_(job.fileSize) + ' MB, ' + parts.length + ' Paket(e), vorbereitet nach ' +
+      Math.round((Date.now() - started) / 100) / 10 + ' s');
     parts.forEach(function(part) {
       if (part.text.length > DRIVE_PDF_MAX_BYTES) {
         throw new Error('Pages ' + (part.from + 1) + '-' + part.to + ' are still ' + _driveMb_(part.text.length) + ' MB after reduction (limit: ' + _driveMb_(DRIVE_PDF_MAX_BYTES) + ' MB). Please split the PDF.');
       }
     });
 
-    // Kleine PDF in einem Paket: direkt prüfen, ohne Zwischenspeicher.
-    if (parts.length === 1 && Date.now() - started < DRIVE_PDF_START_BATCH_BEFORE_MS) {
+    // Kleine PDF in einem Paket: direkt prüfen, ohne Zwischenspeicher - aber nur,
+    // wenn die Vorbereitung schnell war und das Paket klein ist. Sonst reicht die
+    // Restzeit bis zum 30-s-Limit nicht sicher für die Gemini-Anfrage.
+    if (parts.length === 1 && parts[0].text.length <= DRIVE_PDF_DIRECT_MAX_BYTES &&
+        Date.now() - started < DRIVE_PDF_DIRECT_BEFORE_MS) {
       return _drivePdfWork_(job, parts, started);
     }
 
@@ -231,6 +236,12 @@ function apiCheckDrivePdfContinue(e) {
       Logger.log('apiCheckDrivePdfContinue: Etappe ab Paket ' + (inf.next + 1) + ' (' + inf.size + ' Paket(e)) am Zeitlimit abgebrochen -> ' +
         (inf.size > 1 ? job.batch + ' pro Etappe' : (entry.to - entry.from > 1 ? 'restliche Pakete in Einzelseiten zerlegt' : 'Seite übersprungen')));
     }
+    // Die letzte Etappe war knapp am Limit -> vorsorglich kleinere Etappen,
+    // bevor Google die nächste Aktion hart abbricht.
+    if (job.lastBatchMs > DRIVE_PDF_BATCH_SLOW_MS && job.batch > 1) {
+      job.batch = Math.ceil(job.batch / 2);
+      Logger.log('apiCheckDrivePdfContinue: letzte Etappe ' + Math.round(job.lastBatchMs / 100) / 10 + ' s -> ' + job.batch + ' Paket(e) pro Etappe');
+    }
     // Pakete NICHT alle vorab laden (das kostete bei großen PDFs ~20 s pro Klick):
     // _drivePdfWork_ holt pro Etappe nur die benötigten Bytes per Range-Anfrage.
     var parts = job.parts.map(function(p) { return { from: p.from, to: p.to, entry: p }; });
@@ -247,14 +258,18 @@ function apiCheckDrivePdfContinue(e) {
 }
 
 // ─── ETAPPENWEISE PRÜFUNG ─────────────────────────────────────────────────
-// Eine Add-on-Aktion wird nach ca. 45 s hart abgebrochen, und eine laufende
+// Eine Add-on-Aktion wird nach 30 s hart abgebrochen (Google: Card-Service-
+// Callbacks max. 30 s, "Maximale Ausführungszeit überschritten"), und eine laufende
 // Gemini-Anfrage lässt sich nicht unterbrechen. Deshalb wird pro Aktion nur
 // eine Etappe nach der anderen gestartet (DRIVE_PDF_BATCH_PARTS Pakete parallel),
 // solange die gemessene Dauer der letzten Etappe noch sicher in die Restzeit
 // passt. Danach zeigt die Card den Fortschritt und einen "Continue"-Button.
 var DRIVE_PDF_BATCH_PARTS = 8;               // Seitenpakete pro Etappe (parallel)
-var DRIVE_PDF_START_BATCH_BEFORE_MS = 15000; // neue Etappe nur, wenn so viel Zeit noch nicht verbraucht ist ...
-var DRIVE_PDF_ACTION_LIMIT_MS = 38000;       // ... und die letzte Etappendauer darunter bleiben würde
+var DRIVE_PDF_START_BATCH_BEFORE_MS = 8000;  // neue Etappe nur, wenn so viel Zeit noch nicht verbraucht ist ...
+var DRIVE_PDF_ACTION_LIMIT_MS = 24000;       // ... und die letzte Etappendauer darunter bleiben würde (Limit 30 s)
+var DRIVE_PDF_BATCH_SLOW_MS = 16000;         // dauerte eine Etappe länger, wird die nächste halbiert
+var DRIVE_PDF_DIRECT_BEFORE_MS = 5000;       // Ein-Paket-PDF nur direkt prüfen, wenn die Vorbereitung so schnell war ...
+var DRIVE_PDF_DIRECT_MAX_BYTES = 4 * 1024 * 1024; // ... und das Paket höchstens so groß ist
 
 function _drivePdfSaveJob_(job) {
   if (!job.stateId) {
@@ -442,7 +457,8 @@ function _buildDrivePdfProgressCard_(job, parts) {
                     : 'Checked <b>' + pagesDone + ' of ' + pagesTotal + ' pages</b>, ' + job.issues.length + ' issue(s) so far.') + '<br>' +
     'Large PDFs are checked in several steps so that no step runs into Google\'s time limit. Click <b>' +
     (job.next === 0 ? 'Start check' : 'Continue') + '</b> for the next step. ' +
-    'If a step is ever interrupted, simply click the button again - the next step will be smaller.'));
+    'If a step is ever interrupted ("Exceeded maximum execution time"), click the <b>&larr;</b> arrow at the top ' +
+    'to return here and click the button again - the next step will be smaller.'));
   section.addWidget(CardService.newTextButton()
     .setText(job.next === 0 ? 'Start check' : 'Continue')
     .setOnClickAction(CardService.newAction()
@@ -876,7 +892,7 @@ function _drivePdfComputeAnnotations_(doc, pages, issues) {
 // Reicht die Zeit einer Aktion nicht, wird der Upload in der nächsten Aktion
 // fortgesetzt ("Continue"), die Upload-Sitzung bleibt bei Google eine Woche gültig.
 var DRIVE_UPLOAD_CHUNK = 16 * 1024 * 1024;     // Vielfaches von 256 KiB (Vorgabe von Drive)
-var DRIVE_ACTION_BUDGET_MS = 25000;            // danach Fortsetzung in der nächsten Aktion
+var DRIVE_ACTION_BUDGET_MS = 15000;            // danach Fortsetzung in der nächsten Aktion (Limit 30 s, ein Stück dauert mehrere s)
 
 function _driveLargeAnnotatedStart_(fileId, fileName, issues, started) {
   var fileSize = DriveApp.getFileById(fileId).getSize();
