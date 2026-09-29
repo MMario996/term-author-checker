@@ -245,13 +245,20 @@ function triggerSearch(){
     .withSuccessHandler(function(res){
       if (myToken !== _requestToken) return;
       stopLoading();
-      saveRecent(q);
-      renderResults($rw, res.concepts, q);
-      // Hinweis statt stillem "Keine Treffer", wenn Phrase nicht (ganz) erreichbar war.
-      var notes = [];
-      if (res.failed) notes.push('⚠️ ' + tl('search.partialFail', { n: res.failed }));
-      if (res.truncated) notes.push('💡 ' + tl('search.truncated'));
-      if (notes.length) $rw.insertAdjacentHTML('afterbegin', '<div class="search-notice">' + notes.join('<br>') + '</div>');
+      // Fehler beim Anzeigen nie still schlucken (sonst bleibt die Ladeanzeige stehen).
+      try {
+        res = normalizeSearchResponse(res);
+        saveRecent(q);
+        renderResults($rw, res.concepts, q);
+        // Hinweis statt stillem "Keine Treffer", wenn Phrase nicht (ganz) erreichbar war.
+        var notes = [];
+        if (res.failed) notes.push('⚠️ ' + tl('search.partialFail', { n: res.failed }));
+        if (res.truncated) notes.push('💡 ' + tl('search.truncated'));
+        if (notes.length) $rw.insertAdjacentHTML('afterbegin', '<div class="search-notice">' + notes.join('<br>') + '</div>');
+      } catch (e) {
+        console.error('Search rendering failed', e);
+        showState($rw, 'error', { key:'err.generic' }, (e && e.message) ? e.message : String(e));
+      }
     })
     .withFailureHandler(function(err){
       if (myToken !== _requestToken) return;
@@ -259,6 +266,17 @@ function triggerSearch(){
       showState($rw, 'error', { key:'err.generic' }, (err && err.message) ? err.message : String(err));
     })
     .apiSearchTerms(q, src);
+}
+
+// Antwort von apiSearchTerms vereinheitlichen (alte Server: Liste, neue: Objekt).
+function normalizeSearchResponse(res){
+  var r = Array.isArray(res) ? { concepts: res } : (res && typeof res === 'object' ? res : {});
+  var concepts = Array.isArray(r.concepts) ? r.concepts : [];
+  return {
+    concepts: concepts.filter(function(c){ return c && typeof c === 'object' && c.sourceTerm && typeof c.sourceTerm === 'object'; }),
+    failed: Number(r.failed) || 0,
+    truncated: !!r.truncated
+  };
 }
 
 function startLoading(wrap){
