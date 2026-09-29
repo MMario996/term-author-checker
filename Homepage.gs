@@ -12,11 +12,11 @@ function onHomepage(e) {
     .addWidget(CardService.newTextParagraph()
       .setText(_ct_('home.intro')));
 
-  section.addWidget(CardService.newTextButton()
+  section.addWidget(_cardButton_(true)
     .setText('🔍 ' + _ct_('home.openTs'))
     .setOnClickAction(CardService.newAction().setFunctionName('showSidebar')));
 
-  section.addWidget(CardService.newTextButton()
+  section.addWidget(_cardButton_(true)
     .setText('✍️ ' + _ct_('home.openAc'))
     .setOnClickAction(CardService.newAction().setFunctionName('showAuthorCheckSidebar')));
 

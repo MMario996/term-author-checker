@@ -19,8 +19,26 @@ h1{ font-family:var(--ff-head); font-size:22px; font-weight:600; letter-spacing:
 .file{ font-size:14px; color:var(--gray-600); word-break:break-word; }
 .file b{ color:var(--ink); }
 .box{ border:1px solid var(--gray-200); padding:18px; margin-top:18px; }
-.bar{ height:10px; background:var(--gray-150); margin:14px 0 10px; overflow:hidden; }
-.bar > div{ height:100%; width:0; background:var(--yellow); box-shadow:inset 0 0 0 1px var(--yellow-dim); transition:width .6s ease; }
+.steps{ display:flex; align-items:center; gap:10px; list-style:none; margin-bottom:18px; }
+.steps li{ display:flex; align-items:center; gap:8px; font-family:var(--ff-head); font-size:13px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--gray-400); }
+.steps .dot{ width:24px; height:24px; border-radius:50%; border:2px solid var(--gray-300); display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--gray-400); background:var(--white); }
+.steps li.active{ color:var(--ink); }
+.steps li.active .dot{ border-color:var(--ink); background:var(--yellow); color:var(--ink); }
+.steps li.done{ color:var(--gray-600); }
+.steps li.done .dot{ border-color:var(--ink); background:var(--ink); color:var(--yellow); }
+.steps .line{ flex:1; height:2px; background:var(--gray-200); min-width:24px; }
+.steps .line.done{ background:var(--ink); }
+.prog-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.pct{ font-family:var(--ff-head); font-size:34px; font-weight:600; line-height:1; }
+.eta{ text-align:right; }
+.eta-main{ font-size:16px; font-weight:600; }
+.eta-sub{ font-size:12.5px; color:var(--gray-500); margin-top:2px; }
+.bar{ position:relative; height:14px; background:var(--gray-150); margin:12px 0 12px; overflow:hidden; border-radius:7px; }
+.bar > div{ height:100%; width:0; border-radius:7px; background:var(--yellow); box-shadow:inset 0 0 0 1px var(--yellow-dim);
+  background-image:linear-gradient(45deg, rgba(58,58,58,.10) 25%, transparent 25%, transparent 50%, rgba(58,58,58,.10) 50%, rgba(58,58,58,.10) 75%, transparent 75%);
+  background-size:20px 20px; animation:stripes 1s linear infinite; transition:width 1s linear; }
+@keyframes stripes{ to{ background-position:20px 0; } }
+@media (prefers-reduced-motion: reduce){ .bar > div{ animation:none; transition:none; } }
 .status{ font-size:14px; line-height:1.5; }
 .hint{ font-size:13px; color:var(--gray-500); margin-top:8px; line-height:1.45; }
 .spinner{ display:inline-block; width:14px; height:14px; border:2px solid var(--gray-300); border-top-color:var(--ink); border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; margin-right:6px; }
@@ -61,8 +79,22 @@ h1{ font-family:var(--ff-head); font-size:22px; font-weight:600; letter-spacing:
   <div class="file" id="fileLine"></div>
 
   <div class="box" id="progressBox">
+    <ol class="steps">
+      <li id="step1" class="active"><span class="dot">1</span><span id="step1Lbl"></span></li>
+      <li class="line" id="line1" aria-hidden="true"></li>
+      <li id="step2"><span class="dot">2</span><span id="step2Lbl"></span></li>
+      <li class="line" id="line2" aria-hidden="true"></li>
+      <li id="step3"><span class="dot">3</span><span id="step3Lbl"></span></li>
+    </ol>
+    <div class="prog-head">
+      <div class="pct" id="pctText">0 %</div>
+      <div class="eta">
+        <div class="eta-main" id="etaText" aria-live="polite"></div>
+        <div class="eta-sub" id="elapsedText"></div>
+      </div>
+    </div>
+    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="bar"><div id="barFill"></div></div>
     <div class="status" id="statusText"><span class="spinner"></span><span id="statusMsg"></span></div>
-    <div class="bar"><div id="barFill"></div></div>
     <div class="hint" id="keepOpen"></div>
   </div>
 
@@ -120,22 +152,65 @@ document.addEventListener('DOMContentLoaded', function(){
   $('annotBtn').textContent = '🖍️ ' + T['d.openAnnotated'];
   $('sheetBtn').textContent = '📊 ' + T['d.exportSheet'];
   $('closeBtn').textContent = T['w.close'];
-  $('retryBtn').onclick = function(){ _retries = 0; show('errorBox', false); show('progressBox', true); _stateId ? next() : start(); };
+  $('retryBtn').onclick = function(){
+    _retries = 0; show('errorBox', false); show('progressBox', true);
+    if (!_ticker) _ticker = setInterval(tick, 1000);
+    _stateId ? next() : start();
+  };
   $('sheetBtn').onclick = exportSheet;
   $('annotBtn').onclick = annotate;
   $('closeBtn').onclick = closeWindow;
-  setStatus(T['w.working'], 0);
+  $('step1Lbl').textContent = T['w.stepPrep'];
+  $('step2Lbl').textContent = T['w.stepCheck'];
+  $('step3Lbl').textContent = T['w.stepDone'];
+  setStatus(T['w.working']);
   if (!FILE_ID) { showError('No file selected.'); return; }
+  _t0 = Date.now();
+  tick();
+  _ticker = setInterval(tick, 1000);
   run('apiPdfWebFileInfo', [FILE_ID], function(info){
     _fileName = info.name;
+    if (_eta === null && info.etaSec) setEta(info.etaSec);
     $('fileLine').innerHTML = '<b>' + esc(info.name) + '</b> · ' + esc(info.mb) + ' MB · ' + esc(T['d.language']) + ': ' + esc(CHECK_LANG_NAME);
   }, function(){});
   start();
 });
 
-function setStatus(html, pct){
+function setStatus(html){
   $('statusMsg').innerHTML = html;
-  $('barFill').style.width = Math.max(2, Math.min(100, pct || 0)) + '%';
+}
+
+// ─── Fortschritt und Restzeit ───────────────────────────────────────────
+// Der Server schätzt nach jeder Etappe die Restzeit (etaSec, aus den gemessenen
+// Dauern). Dazwischen zählt die Anzeige jede Sekunde herunter; der Balken zeigt
+// vergangene Zeit / (vergangene + verbleibende Zeit) und läuft nie rückwärts.
+var _t0 = 0, _eta = null, _etaAt = 0, _pctShown = 0, _ticker = null;
+function fmtTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  var m = Math.floor(sec / 60), s = sec % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s + ' min';
+}
+function setEta(sec){ _eta = sec; _etaAt = Date.now(); tick(); }
+function tick(){
+  var elapsed = (Date.now() - _t0) / 1000;
+  $('elapsedText').innerHTML = t('w.elapsed', { t: fmtTime(elapsed) });
+  if (_eta === null) { $('etaText').textContent = T['w.estimating']; return; }
+  var rem = _eta - (Date.now() - _etaAt) / 1000;
+  if (rem <= 3) { $('etaText').textContent = T['w.almost']; rem = 3; }
+  else $('etaText').innerHTML = t('w.eta', { t: fmtTime(rem) });
+  _pctShown = Math.max(_pctShown, Math.min(99, 100 * elapsed / (elapsed + rem)));
+  setPct(_pctShown);
+}
+function setPct(p){
+  $('pctText').textContent = Math.floor(p) + ' %';
+  $('barFill').style.width = p + '%';
+  $('bar').setAttribute('aria-valuenow', String(Math.floor(p)));
+}
+function setStep(n){
+  for (var i = 1; i <= 3; i++) {
+    $('step' + i).className = i < n ? 'done' : (i === n ? 'active' : '');
+    if (i < 3) $('line' + i).className = 'line' + (i < n ? ' done' : '');
+  }
 }
 
 function start(){
@@ -149,13 +224,15 @@ function next(){
 function onStatus(st){
   _retries = 0;
   if (st.stateId) _stateId = st.stateId;
-  if (st.done) { showResult(st.result); return; }
+  if (st.done) { finishProgress(); showResult(st.result); return; }
+  setStep(st.step || 1);
+  if (typeof st.etaSec === 'number') setEta(st.etaSec);
   if (st.phase === 'check') {
     setStatus(st.pagesTotal
       ? t('d.progress', { done: st.pagesDone, total: st.pagesTotal, n: st.issuesSoFar })
-      : esc(T['d.checking']), st.pct);
+      : esc(T['d.checking']));
   } else {
-    setStatus(t('d.prepProgress', { mb: st.fileMb, pct: Math.round(st.pct / 30 * 100) }), st.pct);
+    setStatus(t('d.prepProgress', { mb: st.fileMb, pct: Math.round(st.pct / 30 * 100) }));
   }
   next();
 }
@@ -167,13 +244,22 @@ function onFail(err){
   var msg = (err && err.message) ? err.message : String(err);
   if (_stateId && _retries < MAX_AUTO_RETRIES) {
     _retries++;
-    setStatus('⚠️ ' + t('w.retrying'), parseFloat($('barFill').style.width) || 0);
+    setStatus('⚠️ ' + t('w.retrying'));
     setTimeout(next, 2000 * _retries);
     return;
   }
   showError(msg);
 }
+function finishProgress(){
+  if (_ticker) { clearInterval(_ticker); _ticker = null; }
+  setStep(3);
+  setPct(100);
+  _duration = (Date.now() - _t0) / 1000;
+}
+var _duration = 0;
+
 function showError(msg){
+  if (_ticker) { clearInterval(_ticker); _ticker = null; }
   show('progressBox', false);
   show('errorBox', true);
   $('errorText').innerHTML = '⚠️ <b>' + esc(T['d.error']) + ':</b> ' + esc(msg);
@@ -185,7 +271,7 @@ function showResult(res){
   show('resultBox', true);
   var issues = res.issues || [], info = res.info || {};
   $('summary').textContent = (issues.length ? '🔎 ' : '🎉 ') + t('d.issuesFound', { n: issues.length }).replace(/<[^>]+>/g, '');
-  var notes = '';
+  var notes = _duration ? '<div class="small" style="margin-top:4px;">⏱️ ' + esc(T['w.stepDone']) + ' · ' + esc(fmtTime(_duration)) + '</div>' : '';
   if (info.imagesRemoved) notes += '<div class="note">ℹ️ ' + t('d.shrunk', { mb: (info.fileSize / 1048576).toFixed(1), kept: info.imagesKept, removed: info.imagesRemoved }) + '</div>';
   if (info.failedRanges && info.failedRanges.length) notes += '<div class="note">⚠️ ' + t('d.failedPages', { pages: info.failedRanges.join(', ') }) + '</div>';
   if (!issues.length) notes += '<div class="note">✅ ' + t('d.noErrors') + '</div>';

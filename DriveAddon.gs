@@ -86,7 +86,7 @@ function onDriveItemsSelected(e) {
   if (lastData) {
     var lastSection = CardService.newCardSection().setHeader('🕘 ' + _ct_('d.lastCheck'));
     lastSection.addWidget(CardService.newTextParagraph().setText(_ct_('d.lastCheckText', { n: lastData.issues.length })));
-    lastSection.addWidget(CardService.newTextButton()
+    lastSection.addWidget(_cardButton_(false)
       .setText(_ct_('d.showLast'))
       .setOnClickAction(CardService.newAction()
         .setFunctionName('apiShowDrivePdfResult')
@@ -115,17 +115,15 @@ function onDriveItemsSelected(e) {
   // (DrivePdfWeb.gs). Ohne Web-App-URL: wie bisher schrittweise im Seitenbereich.
   var params = { fileId: item.id, fileName: item.title };
   var hasWindow = !!_drivePdfWebAppUrl_();
-  section.addWidget(CardService.newTextButton()
+  section.addWidget(_cardButton_(true)
     .setText('✅ ' + _ct_('d.checkPdf'))
-    .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
     .setOnClickAction(CardService.newAction()
       .setFunctionName(hasWindow ? 'apiOpenDrivePdfWindow' : 'apiCheckDrivePdf')
       .setParameters(params)
       .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
   if (hasWindow) {
-    section.addWidget(CardService.newTextButton()
+    section.addWidget(_cardButton_(false)
       .setText(_ct_('d.checkInPanel'))
-      .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
       .setOnClickAction(CardService.newAction()
         .setFunctionName('apiCheckDrivePdf')
         .setParameters(params)
@@ -134,6 +132,15 @@ function onDriveItemsSelected(e) {
 
   card.addSection(section);
   return card.build();
+}
+
+// Einheitliche Buttons in allen Karten: Hauptaktion gefuellt, Nebenaktion getoent.
+function _cardButton_(primary) {
+  var b = CardService.newTextButton();
+  var st = CardService.TextButtonStyle || {};
+  var style = primary ? st.FILLED : (st.FILLED_TONAL || st.OUTLINED);
+  try { if (style) b.setTextButtonStyle(style); } catch (e) {}
+  return b;
 }
 
 function _buildDriveInfoCard_(title, message) {
@@ -195,7 +202,9 @@ function _drivePdfNewJob_(fileId, fileName, language) {
  */
 function _drivePdfLimits_(web) {
   return web
-    ? { web: true, prepStart: 170000, prepLimit: 230000, checkStart: 170000, checkLimit: 240000 }
+    // Im Fenster kurze Aufrufe (~20-45 s), damit Fortschritt und Restzeit laufend
+    // aktualisiert werden; das Limit dort (6 min) wird damit nie knapp.
+    ? { web: true, prepStart: 20000, prepLimit: 40000, checkStart: 25000, checkLimit: 55000 }
     : { web: false, prepStart: DRIVE_PREP_START_BEFORE_MS, prepLimit: DRIVE_PREP_LIMIT_MS,
         checkStart: DRIVE_PDF_START_BATCH_BEFORE_MS, checkLimit: DRIVE_PDF_ACTION_LIMIT_MS };
 }
@@ -376,6 +385,7 @@ function _drivePdfWork_(job, parts, started, lim, loadBatch) {
     batchesHere++;
 
     var batch = parts.slice(job.next, job.next + job.batch);
+    var wallStart = Date.now(); // komplette Etappe inkl. Laden/Speichern (fuer die Restzeit-Schaetzung)
     if (job.stateId) {
       // Vor dem Start vermerken: bricht diese Etappe am Zeitlimit ab, nimmt der
       // nächste "Continue"-Klick automatisch kleinere Etappen.
@@ -399,6 +409,7 @@ function _drivePdfWork_(job, parts, started, lim, loadBatch) {
     job.failedRanges = job.failedRanges.concat(result.failedRanges);
     job.next += batch.length;
     job.inflight = null;
+    job.lastBatchWallMs = Date.now() - wallStart;
   }
 
   if (job.next < parts.length) {
@@ -480,7 +491,7 @@ function _buildDrivePdfProgressCard_(job, parts) {
     (job.next === 0 ? intro + _ct_('d.ready', { pages: pagesTotal })
                     : _ct_('d.progress', { done: pagesDone, total: pagesTotal, n: job.issues.length })) + '<br>' +
     _ct_('d.stepsHelp', { btn: btnLabel })));
-  section.addWidget(CardService.newTextButton()
+  section.addWidget(_cardButton_(true)
     .setText((job.next === 0 ? '▶️ ' : '⏩ ') + btnLabel)
     .setOnClickAction(CardService.newAction()
       .setFunctionName('apiCheckDrivePdfContinue')
@@ -592,13 +603,13 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
     return card.build();
   }
 
-  topSection.addWidget(CardService.newTextButton()
+  topSection.addWidget(_cardButton_(true)
     .setText('🖍️ ' + _ct_('d.openAnnotated'))
     .setOnClickAction(CardService.newAction()
       .setFunctionName('apiExportDrivePdfAnnotated')
       .setParameters({ resultId: resultId })
       .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
-  topSection.addWidget(CardService.newTextButton()
+  topSection.addWidget(_cardButton_(false)
     .setText('📊 ' + _ct_('d.exportSheet'))
     .setOnClickAction(CardService.newAction().setFunctionName('apiExportDrivePdfResultToSheet').setParameters({ resultId: resultId })));
   topSection.addWidget(CardService.newTextParagraph()
@@ -947,7 +958,7 @@ function _buildDrivePdfAnnotateProgressCard_(state) {
   var section = CardService.newCardSection();
   section.addWidget(CardService.newTextParagraph().setText(
     _ct_('d.annotLarge', { mb: _driveMb_(state.fileSize), pct: pct })));
-  section.addWidget(CardService.newTextButton()
+  section.addWidget(_cardButton_(true)
     .setText('⏩ ' + _ct_('d.continue'))
     .setOnClickAction(CardService.newAction()
       .setFunctionName('apiExportDrivePdfAnnotatedContinue')
@@ -960,7 +971,7 @@ function _buildDrivePdfAnnotateProgressCard_(state) {
 function _buildDrivePdfAnnotatedDoneCard_(fileName, url) {
   var card = CardService.newCardBuilder();
   card.setHeader(CardService.newCardHeader().setTitle('🎉 ' + _ct_('d.annotReady')).setSubtitle(fileName));
-  card.addSection(CardService.newCardSection().addWidget(CardService.newTextButton()
+  card.addSection(CardService.newCardSection().addWidget(_cardButton_(true)
     .setText('🖍️ ' + _ct_('d.openAnnotated'))
     .setOpenLink(CardService.newOpenLink().setUrl(url))));
   return card.build();
