@@ -6058,7 +6058,9 @@ function _cacheGetCompressed_(cache, key) {
 // Ergebnis daher pro Nutzer cachen (UserCache, da Overrides userspezifisch sind).
 var AUTHORCHECK_RULES_CACHE_TTL = 3600;
 function _rulesConfigCacheKey_(language) {
-  return 'AUTHORCHECK_RULES_CONFIG_GZ_' + language;
+  // V2: Regeln tragen zusaetzlich DefaultSection/DefaultSubsection (alte Cache-
+  // Eintraege ohne diese Felder werden so nicht mehr verwendet).
+  return 'AUTHORCHECK_RULES_CONFIG_GZ_V2_' + language;
 }
 
 function apiGetRulesConfig(language) {
@@ -6080,8 +6082,12 @@ function apiGetRulesConfig(language) {
     var r = Object.assign({}, rule);
     var o = overrides[r.Name];
     r.Language = language;
-    r.Section = (o && o.Section) || _getSectionForRule_(_ruleForMapping_(r));
-    r.Subsection = (o && o.Subsection) || _getSubsectionForRule_(_ruleForMapping_(r));
+    // Urspruengliche Kategorie: dorthin kehrt eine Standardregel zurueck, wenn die
+    // Kategorie, in die sie verschoben/importiert wurde, geloescht wird.
+    r.DefaultSection = _getSectionForRule_(_ruleForMapping_(r));
+    r.DefaultSubsection = _getSubsectionForRule_(_ruleForMapping_(r));
+    r.Section = (o && o.Section) || r.DefaultSection;
+    r.Subsection = (o && o.Subsection) || r.DefaultSubsection;
     if (o) {
       if (typeof o.IsEnabled === "boolean") r.IsEnabled = o.IsEnabled;
       if (r.IsConfigurable && o.Parameter) {
@@ -6141,6 +6147,22 @@ function apiSaveRulesConfig(updatedRules, language) {
   _writeActiveRulesFile_(updatedRules, language);
   try { CacheService.getUserCache().remove(_rulesConfigCacheKey_(language)); } catch (e) {}
   return { success: true };
+}
+
+/**
+ * "Standard wiederherstellen": setzt die Regeln der Sprache auf den
+ * Auslieferungszustand zurueck - alle eigenen Regeln werden entfernt, alle
+ * Standardregeln wieder an/aus, Kategorie und Wert wie ausgeliefert.
+ * Liefert die frische Regelliste.
+ */
+function apiResetRulesConfig(language) {
+  language = language === "en" ? "en" : "de";
+  var props = PropertiesService.getUserProperties();
+  _writeChunkedUserProp_(props, _getOverridesPropertyKey_(language), "{}");
+  _writeActiveRulesFile_([], language);
+  try { CacheService.getUserCache().remove(_rulesConfigCacheKey_(language)); } catch (e) {}
+  logAuditEvent_(getUserEmail_(), 'AUTHORCHECK_RULES_RESET', 'language=' + language);
+  return apiGetRulesConfig(language);
 }
 
 /**

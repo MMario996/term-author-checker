@@ -216,6 +216,13 @@ body.popup-mode .rule-subgroup-header h4 { font-size: 14px; }
 .rule-item select { font-size:11px; padding:2px 4px; border:1px solid var(--gray-300); background:var(--white); margin-left:10px;}
 .btn-move { background:none; border:none; cursor:pointer; color:var(--gray-400); padding:3px; margin-left:6px; flex-shrink:0; display:flex; }
 .btn-move:hover { color:var(--ink); }
+.btn-del { background:none; border:none; cursor:pointer; color:var(--gray-400); padding:3px; margin-left:6px; flex-shrink:0; display:flex; }
+.btn-del:hover { color:var(--red); }
+body.popup-mode .btn-del svg { width:15px; height:15px; }
+.rule-group-header .btn-del { margin-left:auto; margin-right:8px; }
+.std-tag { font-family:var(--ff-head); font-size:10px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; border:1px solid var(--gray-300); color:var(--gray-500); padding:0 5px; margin-left:6px; white-space:nowrap; }
+.custom-tag { font-family:var(--ff-head); font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; background:var(--yellow); color:var(--ink); padding:1px 6px; margin-left:8px; }
+.btn-mini.danger:hover { border-color:var(--red); color:var(--red); }
 body.popup-mode .btn-move svg { width:15px; height:15px; }
 .move-dialog-overlay { display:none; position:absolute; inset:0; background:rgba(58,58,58,.55); z-index:260; align-items:center; justify-content:center; padding:20px; }
 .move-dialog-overlay.open { display:flex; }
@@ -405,6 +412,7 @@ body.popup-mode .ui-lang-select{ font-size:13px; max-width:none; }
         <button class="btn-mini ghost" style="padding:6px 10px;" onclick="exportRulesOverview()" data-i18n-title="ac.overviewTitle"><span data-i18n="ac.overview">Overview (Sheet)</span></button>
         <button class="btn-mini ghost" id="exportAllToLogBtn" style="padding:6px 10px; display:none;" onclick="exportAllRulesToLogSheet()" data-i18n-title="ac.exportAllLogTitle"><span data-i18n="ac.exportAllLog">Export All to Log</span></button>
         <button class="btn-mini ghost" style="padding:6px 10px;" onclick="exportRulesToDrive()" data-i18n-title="ac.jsonExportTitle"><span data-i18n="ac.jsonExport">JSON Export</span></button>
+        <button class="btn-mini ghost danger" style="padding:6px 10px;" onclick="restoreDefaultRules()" data-i18n-title="ac.restoreDefaultsTitle"><span data-i18n="ac.restoreDefaults">Restore defaults</span></button>
         <label class="btn-mini ghost" style="padding:6px 10px; cursor:pointer;" data-i18n-title="ac.jsonImportTitle">
           <span data-i18n="ac.jsonImport">JSON Import</span>
           <input type="file" id="importRulesInput" accept=".json,application/json" style="display:none" onchange="importRulesFile(event)">
@@ -936,7 +944,13 @@ function renderRulesUI(rules) {
     html +=     '<label style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="event.stopPropagation();">';
     html +=       '<input type="checkbox" class="select-all-checkbox" data-group="'+esc(section)+'" onclick="toggleGroupAll(\''+escJsAttr(section)+'\', this.checked)">';
     html +=       '<h3 style="margin:0;">' + esc(section) + '</h3>';
+    var secInfo = sectionDeleteInfo(section);
+    // Etikett nur, wenn der Name es nicht schon sagt (ältere eigene Regeln ohne "Custom"-Kategorie).
+    if (secInfo.custom && !/^Custom\b/i.test(section)) html += '<span class="custom-tag">Custom</span>';
     html +=     '</label>';
+    if (secInfo.custom || secInfo.moved) {
+      html +=   '<button type="button" class="btn-del"'+tAttrTitle('ac.deleteSection')+' aria-label="'+esc(t('ac.deleteSection'))+'" onclick="event.stopPropagation(); deleteRuleSection(\''+escJsAttr(section)+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>';
+    }
     html +=     '<span class="rule-group-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></span>';
     html +=   '</div>';
     html +=   '<div class="rule-group-body">';
@@ -968,12 +982,15 @@ function renderRulesUI(rules) {
           '</a>'
         ) : '';
         html += '<div class="rule-item">' +
-                '<label><input type="checkbox" class="rule-checkbox" data-name="'+esc(r.Name)+'" data-group="'+esc(section)+'" data-subgroup="'+esc(subId)+'" onchange="updateGroupSelectAllState(\''+escJsAttr(section)+'\'); updateSubgroupSelectAllState(\''+escJsAttr(subId)+'\')" '+checked+'> ' + esc(r.Description) + '</label>' +
+                '<label><input type="checkbox" class="rule-checkbox" data-name="'+esc(r.Name)+'" data-group="'+esc(section)+'" data-subgroup="'+esc(subId)+'" onchange="updateGroupSelectAllState(\''+escJsAttr(section)+'\'); updateSubgroupSelectAllState(\''+escJsAttr(subId)+'\')" '+checked+'> ' + esc(r.Description) +
+                  // Standardregel in einer Custom-Kategorie kenntlich machen (hat keinen Papierkorb).
+                  (!isCustomRule(r) && r.DefaultSection && r.DefaultSection !== section ? ' <span class="std-tag"'+tAttrTitle('ac.stdTagTitle')+'>Standard</span>' : '') + '</label>' +
                 inputHtml +
                 refLinkHtml +
                 '<button class="btn-move"'+tAttrTitle('ac.moveRuleTitle')+' onclick="openMoveRuleDialog(\''+escJsAttr(r.Name)+'\')">' +
                   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 6h18M3 12h18M3 18h18"/></svg>' +
                 '</button>' +
+                (isCustomRule(r) ? '<button type="button" class="btn-del"'+tAttrTitle('ac.deleteRule')+' aria-label="'+esc(t('ac.deleteRule'))+'" onclick="deleteCustomRule(\''+escJsAttr(r.Name)+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>' : '') +
                 '</div>';
       });
       html += '</div></div>';
@@ -1202,6 +1219,8 @@ function addNewCustomRule() {
     "Name": ruleName,
     "Description": desc,
     "Type": finalGroup,
+    "Section": "Custom",
+    "Subsection": finalGroup,
     "RuleKind": kind,
     "CustomPrompt": kind === 'PROMPT' ? (prompt || desc) : '',
     "ReferenceUrl": refUrl || null,
@@ -1284,6 +1303,126 @@ function exportRulesToDrive() {
     .apiExportRulesToDrive(_currentRulesData, _currentRulesLang);
 }
 
+// Eigene Regel = Name beginnt mit CUSTOM_ (nur diese lädt der Server aus der
+// Regeldatei wieder; Standardregeln kommen aus Rules.gs).
+function isCustomRule(r) { return !!(r && typeof r.Name === 'string' && r.Name.indexOf('CUSTOM_') === 0); }
+
+var RULE_TYPES = ['Style', 'Grammar', 'Spelling', 'Terminology', 'Abbreviation'];
+
+// Eine importierte Regel übernehmen:
+//  - Name einer vorhandenen STANDARDregel: nur an/aus, Wert und Kategorie
+//    übernehmen (Beschreibung usw. bleiben wie ausgeliefert) - keine Dublette.
+//  - sonst: als EIGENE Regel (Name mit CUSTOM_, Kategorie unter "Custom").
+//    Früher wurde jedes importierte Objekt ungeprüft übernommen; Regeln ohne
+//    CUSTOM_-Präfix waren nach dem Speichern verschwunden.
+function importOneRule(imp, SAFE_RULE_NAME, res) {
+  if (!imp || typeof imp !== 'object' || !imp.Name) { res.skipped++; return; }
+  var name = String(imp.Name).trim();
+  var idx = _currentRulesData.findIndex(function(r) { return r.Name === name; });
+  var existing = idx !== -1 ? _currentRulesData[idx] : null;
+
+  if (existing && !isCustomRule(existing)) {
+    if (typeof imp.IsEnabled === 'boolean') existing.IsEnabled = imp.IsEnabled;
+    if (existing.IsConfigurable && imp.Parameter != null &&
+        (existing.AllowedParameterValues || []).map(String).indexOf(String(imp.Parameter)) !== -1) {
+      existing.Parameter = String(imp.Parameter);
+    }
+    if (imp.Section) existing.Section = String(imp.Section).slice(0, 120);
+    if (imp.Subsection) existing.Subsection = String(imp.Subsection).slice(0, 120);
+    res.std++;
+    return;
+  }
+
+  if (!SAFE_RULE_NAME.test(name)) { res.skipped++; return; }
+  var desc = String(imp.Description || '').trim();
+  if (!desc) { res.skipped++; return; }
+  if (!isCustomRule({ Name: name })) {
+    var base = 'CUSTOM_' + (name.toUpperCase().replace(/[^A-Z0-9]/g, '_').replace(/^_+|_+$/g, '') || 'RULE');
+    name = base;
+    for (var n = 2; _currentRulesData.some(function(r) { return r.Name === name; }); n++) name = base + '_' + n;
+    idx = -1;
+  }
+  var kind = imp.RuleKind === 'PROMPT' || imp.RuleKind === 'RULE' ? imp.RuleKind : (imp.CustomPrompt ? 'PROMPT' : 'RULE');
+  var section = String(imp.Section || '').trim().slice(0, 120);
+  // Alle neuen Regeln stehen unter "Custom" (bzw. "Custom: <Kategorie>").
+  if (!/^Custom\b/i.test(section)) section = section ? 'Custom: ' + section : 'Custom';
+  var rule = {
+    Name: name,
+    Description: desc.slice(0, 1000),
+    Type: RULE_TYPES.indexOf(imp.Type) !== -1 ? imp.Type : 'Style',
+    RuleKind: kind,
+    CustomPrompt: kind === 'PROMPT' ? String(imp.CustomPrompt || desc).slice(0, 5000) : '',
+    Section: section,
+    Subsection: String(imp.Subsection || 'General').trim().slice(0, 120) || 'General',
+    ReferenceUrl: safeHref(imp.ReferenceUrl) || null,
+    IsEnabled: imp.IsEnabled !== false,
+    IsConfigurable: false,
+    Parameter: '-1',
+    AllowedParameterValues: []
+  };
+  if (idx !== -1) { _currentRulesData[idx] = rule; res.updated++; }
+  else { _currentRulesData.push(rule); _pendingNewCustomRules.push(rule); res.added++; }
+}
+
+// Was beim Löschen einer Kategorie passiert: eigene Regeln werden gelöscht,
+// dorthin verschobene Standardregeln kommen in ihre ursprüngliche Kategorie zurück.
+function sectionDeleteInfo(section) {
+  var info = { custom: 0, moved: 0 };
+  _currentRulesData.forEach(function(r) {
+    if ((r.Section || r.Type || 'Other') !== section) return;
+    if (isCustomRule(r)) info.custom++;
+    else if (r.DefaultSection && r.DefaultSection !== section) info.moved++;
+  });
+  return info;
+}
+
+function deleteRuleSection(section) {
+  syncRulesFromDom();
+  var info = sectionDeleteInfo(section);
+  if (!confirm(t('ac.confirmDeleteSection', { name: section, n: info.custom, m: info.moved }))) return;
+  _currentRulesData = _currentRulesData.filter(function(r) {
+    if ((r.Section || r.Type || 'Other') !== section) return true;
+    if (isCustomRule(r)) return false;
+    if (r.DefaultSection) { r.Section = r.DefaultSection; r.Subsection = r.DefaultSubsection; }
+    return true;
+  });
+  _pendingNewCustomRules = _pendingNewCustomRules.filter(function(p) { return _currentRulesData.indexOf(p) !== -1; });
+  _rulesDirty = true;
+  renderRulesUI(_currentRulesData);
+  showToast('🗑️ ' + t('ac.deleted'));
+}
+
+function deleteCustomRule(name) {
+  syncRulesFromDom();
+  var rule = _currentRulesData.find(function(r) { return r.Name === name; });
+  if (!rule || !isCustomRule(rule)) return;
+  if (!confirm(t('ac.confirmDeleteRule', { name: rule.Description }))) return;
+  _currentRulesData = _currentRulesData.filter(function(r) { return r !== rule; });
+  _pendingNewCustomRules = _pendingNewCustomRules.filter(function(p) { return p !== rule; });
+  _rulesDirty = true;
+  renderRulesUI(_currentRulesData);
+  showToast('🗑️ ' + t('ac.deleted'));
+}
+
+// Auslieferungszustand der aktuellen Regelsprache: ohne eigene Regeln, alle
+// Standardregeln an/aus, Kategorie und Wert wie ausgeliefert. Wird sofort gespeichert.
+function restoreDefaultRules() {
+  if (!confirm(t('ac.confirmRestore', { lang: langName(_currentRulesLang, _currentRulesLang) }))) return;
+  showToast('⏳ ' + t('ac.saving'));
+  google.script.run
+    .withSuccessHandler(function(rules) {
+      _currentRulesData = rules;
+      _pendingNewCustomRules = [];
+      _rulesDirty = false;
+      renderRulesUI(rules);
+      showToast('♻️ ' + t('ac.restored'));
+    })
+    .withFailureHandler(function(err) {
+      showToast('⚠️ ' + t('ac.error', { msg: err && err.message ? err.message : String(err) }));
+    })
+    .apiResetRulesConfig(_currentRulesLang);
+}
+
 function importRulesFile(event) {
   var input = event.target;
   var file = input.files[0];
@@ -1299,23 +1438,14 @@ function importRulesFile(event) {
       
       // Namen aus importierten Dateien (z.B. von einem Kollegen geteilt, siehe Hilfetext)
       // sind nicht vertrauenswürdig: ein manipuliertes JSON könnte sonst über den Namen
-      // Skript-Code in dieses Sidebar-UI einschleusen. "Name" wird daher auf ein
+      // Skript-Code in dieses Sidebar-UI einschleusen. Neue Namen werden daher auf ein
       // sicheres Muster geprüft; alles andere wird übersprungen statt gerendert.
       var SAFE_RULE_NAME = /^[A-Za-z0-9_.\- ]{1,100}$/;
-      var skipped = 0;
-      imported.forEach(function(imp) {
-        if (!imp || !imp.Name || !SAFE_RULE_NAME.test(String(imp.Name))) { skipped++; return; }
-        var idx = _currentRulesData.findIndex(function(r) { return r.Name === imp.Name; });
-        if (idx !== -1) {
-          _currentRulesData[idx] = imp;
-        } else {
-          _currentRulesData.push(imp);
-          if (imp.Name && imp.Name.indexOf('CUSTOM_') === 0) _pendingNewCustomRules.push(imp);
-        }
-      });
+      var res = { std: 0, added: 0, updated: 0, skipped: 0 };
+      imported.forEach(function(imp) { importOneRule(imp, SAFE_RULE_NAME, res); });
       _rulesDirty = true;
       renderRulesUI(_currentRulesData);
-      showToast(skipped ? '⚠️ ' + t('ac.importedSkipped', { n: skipped }) : '📥 ' + t('ac.imported'));
+      showToast((res.skipped ? '⚠️ ' : '📥 ') + t('ac.importSummary', { std: res.std, added: res.added + res.updated, skipped: res.skipped }));
     } catch(err) {
       showToast('⚠️ ' + t('ac.invalidJson'));
     }

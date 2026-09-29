@@ -22,23 +22,42 @@ auf den Freigabe-Link des neuen Gems umstellen.
 
 1. Den Gem öffnen, den Leitfaden als PDF hochladen, z. B. mit
    „Bitte in Regeln umwandeln, Regelsprache Deutsch.“
-2. Der Gem fragt fehlende Angaben nach (Regelsprache DE/EN, Kurzname, Sektion) und
-   liefert einen **Kurzbericht** sowie einen **JSON-Codeblock**.
-3. Den Inhalt des Codeblocks (nur das `[ … ]`) in eine Textdatei kopieren und als
-   `.json` speichern, z. B. `RL2026_de.json`.
-4. Im Author Check (Docs, Sheets oder Slides): **Regeln** → oben die passende
-   **Regelsprache** wählen → **JSON-Import** → Datei wählen → **Einstellungen speichern**.
-   Die Regeln erscheinen in der Sektion „Leitfaden: …“ und lassen sich dort einzeln
-   ein- und ausschalten.
+2. **Runde 1:** Der Gem liest den ganzen Leitfaden Punkt für Punkt und antwortet
+   noch ohne JSON, in dieser Reihenfolge:
+   1. ⚠️ **bereits vorhandene Standardregeln**, mit der Frage, ob sie in die neue
+      Kategorie übernommen werden sollen (A alle / B keine / C einzeln). Übernommene
+      Standardregeln werden verschoben und eingeschaltet, nicht doppelt angelegt.
+   2. **Übersicht** der neuen Regeln pro Kapitel, dazu die Bilanz (alle Vorgaben =
+      neu + Standard + nicht übernommen + Fragen)
+   3. **offene Fragen**
+   4. **nicht übernommen** (mit Grund)
+3. Frage 1 und die offenen Fragen beantworten.
+4. **Runde 2:** Erst jetzt liefert der Gem den JSON-Codeblock, bei großen Leitfäden in
+   Teilen mit je höchstens 40 Einträgen.
+5. Den Inhalt des Codeblocks (nur das `[ … ]`) als `.json` speichern, z. B. `KFT_de.json`.
+6. Im Author Check (Docs, Sheets oder Slides): **Regeln** → **Regelsprache** wählen →
+   **JSON-Import** → Datei wählen → **Einstellungen speichern**.
 
-Bei großen Leitfäden liefert der Gem mehrere Teile mit je höchstens 40 Regeln. Jeden Teil
-als eigene Datei speichern und nacheinander importieren, dann einmal speichern.
+Nach dem Import meldet der Author Check, wie viele Standardregeln angepasst und wie
+viele eigene Regeln übernommen wurden. Alle eigenen Regeln stehen unter **„Custom: …“**.
+
+## Regeln verwalten
+
+- **Papierkorb an einer eigenen Regel:** löscht diese Regel.
+- **Papierkorb an einer Kategorie:** löscht alle eigenen Regeln darin. Dorthin
+  übernommene Standardregeln (Kennzeichen „Standard“) kommen in ihre ursprüngliche
+  Kategorie zurück.
+- **Standard wiederherstellen:** setzt die gewählte Regelsprache auf den
+  Auslieferungszustand zurück, ohne eigene Regeln. Vorher am besten „JSON-Export“.
 
 ## Was das Format voraussetzt (geprüft gegen den Code)
 
-- `Name` beginnt mit `CUSTOM_` und enthält nur `A–Z 0–9 _`. Nur solche Regeln lädt
-  `apiGetRulesConfig` nach dem Speichern wieder. Andere Namen werden vom Import zwar
-  angenommen, sind nach dem Speichern aber weg.
+- Neue Regeln: `Name` beginnt mit `CUSTOM_` und enthält nur `A–Z 0–9 _`. Nur solche
+  Regeln lädt `apiGetRulesConfig` nach dem Speichern wieder. Der Import ergänzt ein
+  fehlendes `CUSTOM_` automatisch und legt Regeln ohne Custom-Kategorie unter
+  „Custom: …“ ab.
+- Einträge mit dem `Name` einer Standardregel ändern nur deren An/Aus, Wert und
+  Kategorie. Es entsteht keine Dublette.
 - Regelsätze gibt es nur für **Deutsch** und **Englisch**. Die Prüfung verwendet eigene
   Regeln nur in diesen Sprachen.
 - `RuleKind: "RULE"` mit leerem `CustomPrompt` geht als `- [Typ] Beschreibung` an die KI.
