@@ -1,0 +1,5 @@
+# Nur Code und Manifest nach Apps Script übertragen
+**/**
+!*.gs
+!*.html
+!appsscript.json

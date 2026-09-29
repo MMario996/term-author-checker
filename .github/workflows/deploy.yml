@@ -1,0 +1,73 @@
+name: Deploy to Apps Script
+
+# Überträgt den Stand von main per clasp in das Apps-Script-Projekt, legt eine
+# neue Version an und hängt sie (optional) an ein bestehendes Deployment.
+# Benötigte Secrets (Settings > Secrets and variables > Actions):
+#   CLASPRC_JSON   Inhalt von ~/.clasprc.json nach "clasp login"
+#   SCRIPT_ID      Skript-ID des Apps-Script-Projekts
+#   DEPLOYMENT_ID  (optional) Deployment, das auf die neue Version zeigen soll
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-apps-script
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+      SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+      DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Prüfen
+        run: node ci/check.js
+
+      - name: Secrets vorhanden?
+        id: cfg
+        run: |
+          if [ -z "$CLASPRC_JSON" ] || [ -z "$SCRIPT_ID" ]; then
+            echo "::warning::CLASPRC_JSON oder SCRIPT_ID fehlt - Deployment übersprungen."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: clasp einrichten
+        if: steps.cfg.outputs.ready == 'true'
+        run: |
+          npm install -g @google/clasp@2.4.2
+          printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+          printf '{"scriptId":"%s","rootDir":"."}' "$SCRIPT_ID" > .clasp.json
+
+      - name: Code übertragen (clasp push)
+        if: steps.cfg.outputs.ready == 'true'
+        run: clasp push --force
+
+      - name: Version anlegen und Deployment aktualisieren
+        if: steps.cfg.outputs.ready == 'true'
+        run: |
+          DESC="GitHub ${GITHUB_SHA::7}: $(git log -1 --pretty=%s | cut -c1-80)"
+          OUT=$(clasp version "$DESC")
+          echo "$OUT"
+          VERSION=$(echo "$OUT" | grep -oE '[0-9]+' | tail -1)
+          echo "Neue Version: $VERSION" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$DEPLOYMENT_ID" ]; then
+            clasp deploy --deploymentId "$DEPLOYMENT_ID" --versionNumber "$VERSION" --description "$DESC"
+            echo "Deployment $DEPLOYMENT_ID zeigt jetzt auf Version $VERSION" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Zugangsdaten entfernen
+        if: always()
+        run: rm -f ~/.clasprc.json .clasp.json
