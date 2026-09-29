@@ -17,13 +17,22 @@
 var DRIVE_PDF_WEB_ANNOTATE_BUDGET_MS = 200000; // kommentierte PDF: Upload-Stuecke bis ca. 3,3 min pro Aufruf
 
 // URL der Web-App (…/exec) oder '' - dann bleibt es bei der Pruefung im Seitenbereich.
+// Bewusst NUR aus der Skripteigenschaft WEBAPP_URL: ScriptApp.getService().getUrl()
+// lieferte im Add-on die Adresse einer Bereitstellung ohne Web-App-Zugang, das
+// Fenster zeigte dann Googles 404-Seite ("Sorry, unable to open the file").
 function _drivePdfWebAppUrl_() {
   var url = String(PropertiesService.getScriptProperties().getProperty('WEBAPP_URL') || '').trim();
-  if (!url) {
-    try { url = ScriptApp.getService().getUrl() || ''; } catch (e) { url = ''; }
-  }
   // Nur eine veroeffentlichte Bereitstellung (/exec) taugt fuer alle Nutzer.
   return /^https:\/\/script\.google\.com\/.+\/exec$/.test(url) ? url : '';
+}
+
+// Zum Pruefen der Einrichtung im Skript-Editor ausfuehren (Protokoll ansehen).
+function checkPdfWindowSetup() {
+  var raw = PropertiesService.getScriptProperties().getProperty('WEBAPP_URL');
+  var url = _drivePdfWebAppUrl_();
+  Logger.log('WEBAPP_URL (Skripteigenschaft): ' + (raw || '(nicht gesetzt)'));
+  Logger.log(url ? 'OK: Das PDF-Fenster wird mit dieser Adresse geoeffnet. Test im Browser: ' + url + '?page=pdfcheck'
+                 : 'Nicht nutzbar - die Drive-Pruefung laeuft im Seitenbereich (mit "Weiter"). Wert muss eine .../exec-Adresse einer Web-App-Bereitstellung sein.');
 }
 
 // Card-Action "PDF prüfen": oeffnet das PDF-Fenster. Ohne Web-App-URL: wie

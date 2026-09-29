@@ -19,8 +19,13 @@ Neue Texte bitte in beiden Fällen für alle Sprachen ergänzen (Englisch ist Fa
 - Web-App-Einstellungen im Manifest: *Ausführen als: Nutzer, der zugreift*,
   *Zugriff: Domain* (`appsscript.json`). Beim ersten Öffnen bestätigt jede
   Person einmal die Berechtigungen.
-- Skripteigenschaft `WEBAPP_URL` = die `…/exec`-URL der Bereitstellung
-  (Bereitstellen > Bereitstellungen verwalten > Web-App-URL).
+- Skripteigenschaft `WEBAPP_URL` = die `…/exec`-URL einer Bereitstellung vom
+  Typ **Web-App** (Bereitstellen > Neue Bereitstellung > Typ „Web-App“,
+  Ausführen als „Nutzer, der auf die Web-App zugreift“, Zugriff „Jeder in
+  karcher.com“). Die Add-on-Bereitstellung (`DEPLOYMENT_ID` im Workflow) hat
+  keinen Web-App-Zugang – deren Adresse liefert Googles 404-Seite. Nach dem
+  Setzen im Editor `checkPdfWindowSetup` ausführen und die dort genannte
+  Adresse im Browser testen.
 
 Ohne gültige `WEBAPP_URL` (oder über den Link „Stattdessen schrittweise im
 Seitenbereich prüfen“) läuft die Prüfung wie bisher im Seitenbereich mit „Weiter“.
