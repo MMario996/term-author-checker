@@ -1369,12 +1369,12 @@ var I18N_APPS = {
       '<li>The categories (Abbreviation, Grammar, ...) can be expanded. Each rule has a checkbox to turn it on or off. Only enabled rules are actually used the next time you run a check.</li>' +
       '<li><b>Save Settings</b> saves your changes permanently: it stores which rules are on/off for your account, and it writes the full rule set, including any custom rules, to a file called <b>active_rules.json</b> in a Google Drive folder named <b>"TermCheck Rules"</b> in your own Google Drive.</li></ul>' +
       '<h3 style="margin-top:16px;">Export, Import & sharing with a colleague</h3><ul class="help-list">' +
-      '<li><b>JSON Export</b> writes your current rule set, exactly as shown right now in this popup, to that same <b>active_rules.json</b> file in the <b>"TermCheck Rules"</b> folder in your Drive. This folder is created automatically the first time you save or export, it is private to your own account, not shared automatically.</li>' +
+      '<li><b>JSON Export</b> creates a new file <b>rules_export_….json</b> (with language and date) in the <b>"TermCheck Rules"</b> folder in your Drive, containing your rule set exactly as shown in this popup. It does not change your active rules – only <b>Save Settings</b> does that. The folder is private to your account and not shared automatically.</li>' +
       '<li><b>JSON Import</b> lets you pick a JSON file from your computer and load its rules into this popup. Rules with the same internal name overwrite the existing one, rules with a new name are added. Import only changes what you see here, nothing is saved yet at this point.</li>' +
       '<li>Important: an import only takes effect once you click <b>Save Settings</b> afterwards. If you close the popup without saving, the imported rules are discarded.</li>' +
       '<li><b>To share your rules with a colleague:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Click <b>JSON Export</b> (or Save Settings) to make sure your Drive file is up to date.</li>' +
-      '<li>Open Google Drive, find the <b>"TermCheck Rules"</b> folder in your My Drive, and either share the <b>active_rules.json</b> file directly with your colleague, or download it and send it however you like, e.g. email or Teams.</li>' +
+      '<li>Click <b>JSON Export</b>. A notice with a link to the new file appears.</li>' +
+      '<li>Share this <b>rules_export_….json</b> file with your colleague directly in Google Drive, or download it and send it however you like, e.g. by email or Teams.</li>' +
       '<li>Your colleague opens their own Rules & Custom Prompts popup, clicks <b>JSON Import</b>, selects the file you sent, checks that it looks right, and clicks <b>Save Settings</b>. This saves it into their own account and their own Drive folder.</li></ol></li>' +
       '<li>This is a one-time snapshot, not a live sync. If you change your rules later, you need to export and share the file again for your colleague to get the update.</li></ul>',
     'ac.help.dontShow': 'Don\'t show this automatically next time',
@@ -1471,7 +1471,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Imported (skipped {n} invalid entries)',
     'ac.imported': 'Rules imported successfully!',
     'ac.invalidJson': 'Invalid JSON file!',
-    'ac.switchingView': 'Switching view mode…'
+    'ac.switchingView': 'Switching view mode…',
+    'ac.discardChanges': 'You have unsaved changes. Discard them?',
+    'link.open': 'Open',
+    'ac.jsonExported': 'Exported to Drive: {name}',
+    'search.partialFail': 'Some termbases could not be searched ({n} request(s) failed). Results may be incomplete.',
+    'search.truncated': 'Many matches – only the first results per termbase are shown. Refine your search for more precise results.'
   },
 
   // ── DEUTSCH ─────────────────────────────────────────────────────────────
@@ -1529,12 +1534,12 @@ var I18N_APPS = {
       '<li>Die Kategorien (Abkürzungen, Grammatik, …) lassen sich aufklappen. Jede Regel hat ein Kontrollkästchen zum Ein- und Ausschalten. Nur aktivierte Regeln werden bei der nächsten Prüfung verwendet.</li>' +
       '<li><b>Einstellungen speichern</b> sichert deine Änderungen dauerhaft: Es speichert, welche Regeln für dein Konto an oder aus sind, und schreibt den kompletten Regelsatz inklusive eigener Regeln in eine Datei <b>active_rules.json</b> im Google-Drive-Ordner <b>„TermCheck Rules“</b> in deinem eigenen Drive.</li></ul>' +
       '<h3 style="margin-top:16px;">Export, Import & mit Kolleg:innen teilen</h3><ul class="help-list">' +
-      '<li><b>JSON-Export</b> schreibt deinen aktuellen Regelsatz, genau so wie er gerade in diesem Popup angezeigt wird, in dieselbe Datei <b>active_rules.json</b> im Ordner <b>„TermCheck Rules“</b> in deinem Drive. Der Ordner wird beim ersten Speichern oder Export automatisch angelegt, ist privat und wird nicht automatisch geteilt.</li>' +
+      '<li><b>JSON-Export</b> legt eine neue Datei <b>rules_export_….json</b> (mit Sprache und Datum) im Ordner <b>„TermCheck Rules“</b> in deinem Drive an – mit deinem Regelsatz genau so, wie er gerade in diesem Popup angezeigt wird. Deine aktiven Regeln ändert das nicht, das macht nur <b>Einstellungen speichern</b>. Der Ordner ist privat und wird nicht automatisch geteilt.</li>' +
       '<li><b>JSON-Import</b> lädt eine JSON-Datei von deinem Computer und übernimmt ihre Regeln in dieses Popup. Regeln mit gleichem internem Namen überschreiben die bestehende, Regeln mit neuem Namen werden ergänzt. Der Import ändert nur die Anzeige hier, gespeichert ist noch nichts.</li>' +
       '<li>Wichtig: Ein Import wird erst wirksam, wenn du danach auf <b>Einstellungen speichern</b> klickst. Schließt du das Popup ohne Speichern, werden die importierten Regeln verworfen.</li>' +
       '<li><b>So teilst du deine Regeln mit Kolleg:innen:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Klicke auf <b>JSON-Export</b> (oder Einstellungen speichern), damit deine Drive-Datei aktuell ist.</li>' +
-      '<li>Öffne Google Drive, suche in „Meine Ablage“ den Ordner <b>„TermCheck Rules“</b> und teile die Datei <b>active_rules.json</b> direkt oder lade sie herunter und verschicke sie beliebig, z. B. per E-Mail oder Teams.</li>' +
+      '<li>Klicke auf <b>JSON-Export</b>. Es erscheint ein Hinweis mit einem Link zur neuen Datei.</li>' +
+      '<li>Teile diese Datei <b>rules_export_….json</b> direkt in Google Drive mit deinem Kollegen oder lade sie herunter und schicke sie auf beliebigem Weg, z. B. per E-Mail oder Teams.</li>' +
       '<li>Die Kollegin bzw. der Kollege öffnet das eigene Popup „Regeln & eigene Prompts“, klickt auf <b>JSON-Import</b>, wählt die Datei, prüft sie und klickt auf <b>Einstellungen speichern</b>. Damit landet sie im eigenen Konto und im eigenen Drive-Ordner.</li></ol></li>' +
       '<li>Das ist eine einmalige Momentaufnahme, keine Live-Synchronisierung. Änderst du deine Regeln später, musst du die Datei erneut exportieren und teilen.</li></ul>',
     'ac.help.dontShow': 'Beim nächsten Mal nicht automatisch anzeigen',
@@ -1631,7 +1636,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Importiert ({n} ungültige Einträge übersprungen)',
     'ac.imported': 'Regeln erfolgreich importiert!',
     'ac.invalidJson': 'Ungültige JSON-Datei!',
-    'ac.switchingView': 'Ansicht wird gewechselt…'
+    'ac.switchingView': 'Ansicht wird gewechselt…',
+    'ac.discardChanges': 'Es gibt ungespeicherte Änderungen. Verwerfen?',
+    'link.open': 'Öffnen',
+    'ac.jsonExported': 'In Drive exportiert: {name}',
+    'search.partialFail': 'Einige Termbanken konnten nicht durchsucht werden ({n} Anfrage(n) fehlgeschlagen). Die Ergebnisse sind eventuell unvollständig.',
+    'search.truncated': 'Sehr viele Treffer – pro Termbank werden nur die ersten Ergebnisse angezeigt. Verfeinere die Suche für genauere Ergebnisse.'
   },
 
   // ── FRANÇAIS ────────────────────────────────────────────────────────────
@@ -1689,12 +1699,12 @@ var I18N_APPS = {
       '<li>Les catégories (abréviations, grammaire, …) peuvent être dépliées. Chaque règle possède une case à cocher pour l’activer ou la désactiver. Seules les règles activées sont utilisées lors de la prochaine vérification.</li>' +
       '<li><b>Enregistrer les paramètres</b> sauvegarde vos modifications durablement : les règles activées/désactivées sont enregistrées pour votre compte et l’ensemble complet des règles, y compris les règles personnalisées, est écrit dans un fichier <b>active_rules.json</b> du dossier Google Drive <b>« TermCheck Rules »</b> de votre propre Drive.</li></ul>' +
       '<h3 style="margin-top:16px;">Export, import & partage avec un collègue</h3><ul class="help-list">' +
-      '<li><b>Export JSON</b> écrit votre jeu de règles actuel, tel qu’il est affiché dans cette fenêtre, dans ce même fichier <b>active_rules.json</b> du dossier <b>« TermCheck Rules »</b> de votre Drive. Ce dossier est créé automatiquement lors du premier enregistrement ou export ; il est privé et n’est pas partagé automatiquement.</li>' +
+      '<li><b>Export JSON</b> crée un nouveau fichier <b>rules_export_….json</b> (avec langue et date) dans le dossier <b>« TermCheck Rules »</b> de votre Drive, contenant votre jeu de règles tel qu’il est affiché dans cette fenêtre. Vos règles actives ne sont pas modifiées – seul <b>Enregistrer les paramètres</b> le fait. Le dossier est privé et n’est pas partagé automatiquement.</li>' +
       '<li><b>Import JSON</b> permet de choisir un fichier JSON sur votre ordinateur et d’en charger les règles dans cette fenêtre. Les règles portant le même nom interne remplacent l’existante, les nouvelles sont ajoutées. L’import ne modifie que l’affichage ; rien n’est encore enregistré.</li>' +
       '<li>Important : un import ne prend effet qu’après un clic sur <b>Enregistrer les paramètres</b>. Si vous fermez la fenêtre sans enregistrer, les règles importées sont perdues.</li>' +
       '<li><b>Pour partager vos règles avec un collègue :</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Cliquez sur <b>Export JSON</b> (ou Enregistrer les paramètres) pour que votre fichier Drive soit à jour.</li>' +
-      '<li>Ouvrez Google Drive, trouvez le dossier <b>« TermCheck Rules »</b> dans Mon Drive et partagez directement le fichier <b>active_rules.json</b>, ou téléchargez-le et envoyez-le comme vous le souhaitez, p. ex. par e-mail ou Teams.</li>' +
+      '<li>Cliquez sur <b>Export JSON</b>. Un message avec un lien vers le nouveau fichier s’affiche.</li>' +
+      '<li>Partagez ce fichier <b>rules_export_….json</b> directement dans Google Drive avec votre collègue, ou téléchargez-le et envoyez-le comme vous le souhaitez, p. ex. par e-mail ou Teams.</li>' +
       '<li>Votre collègue ouvre sa propre fenêtre « Règles & prompts personnalisés », clique sur <b>Import JSON</b>, sélectionne le fichier, le vérifie puis clique sur <b>Enregistrer les paramètres</b>. Les règles sont alors enregistrées dans son compte et son dossier Drive.</li></ol></li>' +
       '<li>Il s’agit d’un instantané ponctuel, pas d’une synchronisation en direct. Si vous modifiez vos règles plus tard, vous devez exporter et partager à nouveau le fichier.</li></ul>',
     'ac.help.dontShow': 'Ne plus afficher automatiquement',
@@ -1791,7 +1801,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Importé ({n} entrées non valides ignorées)',
     'ac.imported': 'Règles importées avec succès !',
     'ac.invalidJson': 'Fichier JSON non valide !',
-    'ac.switchingView': 'Changement de mode d’affichage…'
+    'ac.switchingView': 'Changement de mode d’affichage…',
+    'ac.discardChanges': 'Vous avez des modifications non enregistrées. Les abandonner ?',
+    'link.open': 'Ouvrir',
+    'ac.jsonExported': 'Exporté vers Drive : {name}',
+    'search.partialFail': 'Certaines bases terminologiques n’ont pas pu être interrogées ({n} requête(s) en échec). Les résultats peuvent être incomplets.',
+    'search.truncated': 'Nombreux résultats – seuls les premiers par base terminologique sont affichés. Affinez votre recherche.'
   },
 
   // ── ESPAÑOL ─────────────────────────────────────────────────────────────
@@ -1849,12 +1864,12 @@ var I18N_APPS = {
       '<li>Las categorías (abreviaturas, gramática, …) se pueden desplegar. Cada regla tiene una casilla para activarla o desactivarla. Solo las reglas activadas se usan en la siguiente revisión.</li>' +
       '<li><b>Guardar ajustes</b> guarda tus cambios de forma permanente: registra qué reglas están activadas para tu cuenta y escribe el conjunto completo de reglas, incluidas las propias, en un archivo <b>active_rules.json</b> de la carpeta de Google Drive <b>«TermCheck Rules»</b> en tu propio Drive.</li></ul>' +
       '<h3 style="margin-top:16px;">Exportar, importar y compartir con un compañero</h3><ul class="help-list">' +
-      '<li><b>Exportar JSON</b> escribe tu conjunto de reglas actual, tal como se muestra ahora en esta ventana, en ese mismo archivo <b>active_rules.json</b> de la carpeta <b>«TermCheck Rules»</b> de tu Drive. La carpeta se crea automáticamente la primera vez que guardas o exportas; es privada y no se comparte automáticamente.</li>' +
+      '<li><b>Exportar JSON</b> crea un archivo nuevo <b>rules_export_….json</b> (con idioma y fecha) en la carpeta <b>«TermCheck Rules»</b> de tu Drive, con tu conjunto de reglas tal como se muestra en esta ventana. No cambia tus reglas activas: eso solo lo hace <b>Guardar ajustes</b>. La carpeta es privada y no se comparte automáticamente.</li>' +
       '<li><b>Importar JSON</b> te permite elegir un archivo JSON de tu ordenador y cargar sus reglas en esta ventana. Las reglas con el mismo nombre interno sustituyen a la existente; las de nombre nuevo se añaden. La importación solo cambia lo que ves aquí; todavía no se guarda nada.</li>' +
       '<li>Importante: una importación solo surte efecto cuando haces clic después en <b>Guardar ajustes</b>. Si cierras la ventana sin guardar, las reglas importadas se descartan.</li>' +
       '<li><b>Para compartir tus reglas con un compañero:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Haz clic en <b>Exportar JSON</b> (o Guardar ajustes) para que tu archivo de Drive esté actualizado.</li>' +
-      '<li>Abre Google Drive, busca la carpeta <b>«TermCheck Rules»</b> en Mi unidad y comparte directamente el archivo <b>active_rules.json</b>, o descárgalo y envíalo como prefieras, p. ej. por correo o Teams.</li>' +
+      '<li>Haz clic en <b>Exportar JSON</b>. Aparece un aviso con un enlace al archivo nuevo.</li>' +
+      '<li>Comparte este archivo <b>rules_export_….json</b> con tu compañero directamente en Google Drive, o descárgalo y envíalo como prefieras, p. ej. por correo o Teams.</li>' +
       '<li>Tu compañero abre su propia ventana «Reglas y prompts propios», hace clic en <b>Importar JSON</b>, selecciona el archivo, comprueba que es correcto y hace clic en <b>Guardar ajustes</b>. Así se guarda en su cuenta y en su carpeta de Drive.</li></ol></li>' +
       '<li>Es una instantánea puntual, no una sincronización en directo. Si cambias tus reglas más adelante, tendrás que exportar y compartir el archivo de nuevo.</li></ul>',
     'ac.help.dontShow': 'No mostrar automáticamente la próxima vez',
@@ -1951,7 +1966,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Importado (se omitieron {n} entradas no válidas)',
     'ac.imported': '¡Reglas importadas correctamente!',
     'ac.invalidJson': '¡Archivo JSON no válido!',
-    'ac.switchingView': 'Cambiando el modo de vista…'
+    'ac.switchingView': 'Cambiando el modo de vista…',
+    'ac.discardChanges': 'Tienes cambios sin guardar. ¿Descartarlos?',
+    'link.open': 'Abrir',
+    'ac.jsonExported': 'Exportado a Drive: {name}',
+    'search.partialFail': 'No se pudieron consultar algunas bases terminológicas ({n} solicitud(es) fallida(s)). Los resultados pueden estar incompletos.',
+    'search.truncated': 'Muchas coincidencias: solo se muestran los primeros resultados por base terminológica. Afina la búsqueda.'
   },
 
   // ── ITALIANO ────────────────────────────────────────────────────────────
@@ -2009,12 +2029,12 @@ var I18N_APPS = {
       '<li>Le categorie (abbreviazioni, grammatica, …) possono essere espanse. Ogni regola ha una casella per attivarla o disattivarla. Solo le regole attive vengono usate al controllo successivo.</li>' +
       '<li><b>Salva impostazioni</b> salva le modifiche in modo permanente: memorizza quali regole sono attive per il tuo account e scrive l’intero set di regole, incluse quelle personalizzate, in un file <b>active_rules.json</b> nella cartella Google Drive <b>«TermCheck Rules»</b> del tuo Drive.</li></ul>' +
       '<h3 style="margin-top:16px;">Esportazione, importazione e condivisione con un collega</h3><ul class="help-list">' +
-      '<li><b>Esporta JSON</b> scrive il set di regole attuale, esattamente come appare ora in questa finestra, nello stesso file <b>active_rules.json</b> della cartella <b>«TermCheck Rules»</b> nel tuo Drive. La cartella viene creata automaticamente al primo salvataggio o esportazione; è privata e non viene condivisa automaticamente.</li>' +
+      '<li><b>Esporta JSON</b> crea un nuovo file <b>rules_export_….json</b> (con lingua e data) nella cartella <b>«TermCheck Rules»</b> del tuo Drive, con il set di regole esattamente come appare in questa finestra. Le regole attive non cambiano: lo fa solo <b>Salva impostazioni</b>. La cartella è privata e non viene condivisa automaticamente.</li>' +
       '<li><b>Importa JSON</b> ti permette di scegliere un file JSON dal computer e caricarne le regole in questa finestra. Le regole con lo stesso nome interno sostituiscono quella esistente, quelle con un nome nuovo vengono aggiunte. L’importazione cambia solo ciò che vedi qui; non viene ancora salvato nulla.</li>' +
       '<li>Importante: un’importazione ha effetto solo dopo aver fatto clic su <b>Salva impostazioni</b>. Se chiudi la finestra senza salvare, le regole importate vengono scartate.</li>' +
       '<li><b>Per condividere le regole con un collega:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Fai clic su <b>Esporta JSON</b> (o Salva impostazioni) per aggiornare il file su Drive.</li>' +
-      '<li>Apri Google Drive, trova la cartella <b>«TermCheck Rules»</b> in Il mio Drive e condividi direttamente il file <b>active_rules.json</b>, oppure scaricalo e invialo come preferisci, ad es. via e-mail o Teams.</li>' +
+      '<li>Fai clic su <b>Esporta JSON</b>. Compare un avviso con un link al nuovo file.</li>' +
+      '<li>Condividi questo file <b>rules_export_….json</b> con il collega direttamente in Google Drive, oppure scaricalo e invialo come preferisci, ad es. via e-mail o Teams.</li>' +
       '<li>Il collega apre la propria finestra «Regole e prompt personalizzati», fa clic su <b>Importa JSON</b>, seleziona il file, lo verifica e fa clic su <b>Salva impostazioni</b>. Così viene salvato nel suo account e nella sua cartella Drive.</li></ol></li>' +
       '<li>Si tratta di un’istantanea una tantum, non di una sincronizzazione in tempo reale. Se in seguito modifichi le regole, devi esportare e condividere di nuovo il file.</li></ul>',
     'ac.help.dontShow': 'Non mostrare automaticamente la prossima volta',
@@ -2111,7 +2131,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Importato ({n} voci non valide saltate)',
     'ac.imported': 'Regole importate correttamente!',
     'ac.invalidJson': 'File JSON non valido!',
-    'ac.switchingView': 'Cambio modalità di visualizzazione…'
+    'ac.switchingView': 'Cambio modalità di visualizzazione…',
+    'ac.discardChanges': 'Ci sono modifiche non salvate. Scartarle?',
+    'link.open': 'Apri',
+    'ac.jsonExported': 'Esportato su Drive: {name}',
+    'search.partialFail': 'Non è stato possibile cercare in alcune basi terminologiche ({n} richieste non riuscite). I risultati potrebbero essere incompleti.',
+    'search.truncated': 'Molti risultati: vengono mostrati solo i primi per ogni base terminologica. Affina la ricerca.'
   },
 
   // ── PORTUGUÊS ───────────────────────────────────────────────────────────
@@ -2169,12 +2194,12 @@ var I18N_APPS = {
       '<li>As categorias (abreviaturas, gramática, …) podem ser expandidas. Cada regra tem uma caixa de verificação para a ativar ou desativar. Só as regras ativadas são usadas na próxima verificação.</li>' +
       '<li><b>Guardar definições</b> guarda as alterações de forma permanente: regista quais as regras ativas para a sua conta e escreve o conjunto completo de regras, incluindo as personalizadas, num ficheiro <b>active_rules.json</b> na pasta do Google Drive <b>«TermCheck Rules»</b> no seu próprio Drive.</li></ul>' +
       '<h3 style="margin-top:16px;">Exportar, importar e partilhar com um colega</h3><ul class="help-list">' +
-      '<li><b>Exportar JSON</b> escreve o seu conjunto de regras atual, exatamente como aparece agora nesta janela, nesse mesmo ficheiro <b>active_rules.json</b> da pasta <b>«TermCheck Rules»</b> no seu Drive. A pasta é criada automaticamente na primeira vez que guarda ou exporta; é privada e não é partilhada automaticamente.</li>' +
+      '<li><b>Exportar JSON</b> cria um novo ficheiro <b>rules_export_….json</b> (com idioma e data) na pasta <b>«TermCheck Rules»</b> do seu Drive, com o conjunto de regras exatamente como aparece nesta janela. Não altera as regras ativas – isso só acontece com <b>Guardar definições</b>. A pasta é privada e não é partilhada automaticamente.</li>' +
       '<li><b>Importar JSON</b> permite escolher um ficheiro JSON do seu computador e carregar as respetivas regras nesta janela. Regras com o mesmo nome interno substituem a existente; regras com nome novo são adicionadas. A importação só altera o que vê aqui; ainda nada é guardado.</li>' +
       '<li>Importante: uma importação só produz efeito depois de clicar em <b>Guardar definições</b>. Se fechar a janela sem guardar, as regras importadas são descartadas.</li>' +
       '<li><b>Para partilhar as suas regras com um colega:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Clique em <b>Exportar JSON</b> (ou Guardar definições) para que o ficheiro no Drive esteja atualizado.</li>' +
-      '<li>Abra o Google Drive, encontre a pasta <b>«TermCheck Rules»</b> em O meu disco e partilhe diretamente o ficheiro <b>active_rules.json</b>, ou transfira-o e envie-o como preferir, p. ex. por e-mail ou Teams.</li>' +
+      '<li>Clique em <b>Exportar JSON</b>. Aparece um aviso com uma ligação para o novo ficheiro.</li>' +
+      '<li>Partilhe este ficheiro <b>rules_export_….json</b> com o colega diretamente no Google Drive, ou transfira-o e envie-o como preferir, p. ex. por e-mail ou Teams.</li>' +
       '<li>O seu colega abre a própria janela «Regras e prompts personalizados», clica em <b>Importar JSON</b>, seleciona o ficheiro, confirma que está correto e clica em <b>Guardar definições</b>. Assim fica guardado na conta e na pasta do Drive dele.</li></ol></li>' +
       '<li>Trata-se de um instantâneo pontual, não de uma sincronização em tempo real. Se alterar as regras mais tarde, tem de exportar e partilhar o ficheiro novamente.</li></ul>',
     'ac.help.dontShow': 'Não mostrar automaticamente da próxima vez',
@@ -2271,7 +2296,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Importado ({n} entradas inválidas ignoradas)',
     'ac.imported': 'Regras importadas com sucesso!',
     'ac.invalidJson': 'Ficheiro JSON inválido!',
-    'ac.switchingView': 'A mudar o modo de visualização…'
+    'ac.switchingView': 'A mudar o modo de visualização…',
+    'ac.discardChanges': 'Tem alterações por guardar. Descartá-las?',
+    'link.open': 'Abrir',
+    'ac.jsonExported': 'Exportado para o Drive: {name}',
+    'search.partialFail': 'Não foi possível pesquisar algumas bases terminológicas ({n} pedido(s) falhado(s)). Os resultados podem estar incompletos.',
+    'search.truncated': 'Muitos resultados – só são mostrados os primeiros por base terminológica. Refine a pesquisa.'
   },
 
   // ── 中文 (简体) ──────────────────────────────────────────────────────────
@@ -2329,12 +2359,12 @@ var I18N_APPS = {
       '<li>类别（缩写、语法……）可以展开。每条规则都有一个复选框用于启用或停用。只有启用的规则会在下次检查时使用。</li>' +
       '<li><b>保存设置</b> 会永久保存你的更改：记录你账户中哪些规则已启用，并将完整规则集（包括自定义规则）写入你自己的 Google Drive 中 <b>“TermCheck Rules”</b> 文件夹里的 <b>active_rules.json</b> 文件。</li></ul>' +
       '<h3 style="margin-top:16px;">导出、导入以及与同事共享</h3><ul class="help-list">' +
-      '<li><b>JSON 导出</b> 会将你当前的规则集（与此弹窗中显示的完全一致）写入 Drive 中 <b>“TermCheck Rules”</b> 文件夹里的同一个 <b>active_rules.json</b> 文件。该文件夹在首次保存或导出时自动创建，仅你自己可见，不会自动共享。</li>' +
+      '<li><b>JSON 导出</b> 会在你 Drive 的 <b>“TermCheck Rules”</b> 文件夹中新建一个文件 <b>rules_export_….json</b>（包含语言和日期），内容与此弹窗中当前显示的规则集完全一致。它不会更改你的生效规则——只有 <b>保存设置</b> 才会。该文件夹仅你自己可见，不会自动共享。</li>' +
       '<li><b>JSON 导入</b> 可从你的电脑选择一个 JSON 文件并将其规则加载到此弹窗中。内部名称相同的规则会覆盖现有规则，名称不同的规则会被添加。导入只改变这里的显示，此时尚未保存任何内容。</li>' +
       '<li>重要：导入只有在之后点击 <b>保存设置</b> 才会生效。如果不保存就关闭弹窗，导入的规则将被丢弃。</li>' +
       '<li><b>与同事共享规则：</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>点击 <b>JSON 导出</b>（或保存设置），确保 Drive 中的文件是最新的。</li>' +
-      '<li>打开 Google Drive，在“我的云端硬盘”中找到 <b>“TermCheck Rules”</b> 文件夹，直接将 <b>active_rules.json</b> 共享给同事，或下载后通过电子邮件、Teams 等方式发送。</li>' +
+      '<li>点击 <b>JSON 导出</b>，会出现一条带有新文件链接的提示。</li>' +
+      '<li>在 Google Drive 中直接与同事共享这个 <b>rules_export_….json</b> 文件，或下载后通过电子邮件、Teams 等任意方式发送。</li>' +
       '<li>同事打开自己的“规则与自定义提示词”弹窗，点击 <b>JSON 导入</b>，选择收到的文件，确认无误后点击 <b>保存设置</b>。这样规则就会保存到对方的账户和 Drive 文件夹中。</li></ol></li>' +
       '<li>这是一次性快照，而不是实时同步。如果你之后修改了规则，需要重新导出并共享文件，同事才能获得更新。</li></ul>',
     'ac.help.dontShow': '下次不再自动显示',
@@ -2428,7 +2458,12 @@ var I18N_APPS = {
     'ac.importedSkipped': '已导入（跳过 {n} 个无效条目）',
     'ac.imported': '规则导入成功！',
     'ac.invalidJson': 'JSON 文件无效！',
-    'ac.switchingView': '正在切换视图模式…'
+    'ac.switchingView': '正在切换视图模式…',
+    'ac.discardChanges': '有未保存的更改。要放弃吗？',
+    'link.open': '打开',
+    'ac.jsonExported': '已导出到 Drive：{name}',
+    'search.partialFail': '部分术语库无法搜索（{n} 个请求失败），结果可能不完整。',
+    'search.truncated': '匹配项很多——每个术语库只显示前几条结果。请细化搜索以获得更精确的结果。'
   },
 
   // ── 日本語 ──────────────────────────────────────────────────────────────
@@ -2486,12 +2521,12 @@ var I18N_APPS = {
       '<li>カテゴリ（略語、文法など）は展開できます。各ルールにはオン/オフを切り替えるチェックボックスがあります。次回のチェックでは有効なルールだけが使われます。</li>' +
       '<li><b>設定を保存</b> で変更が永続的に保存されます。どのルールがオン/オフかがアカウントに記録され、カスタムルールを含むルール一式が、ご自身の Google ドライブ内の <b>「TermCheck Rules」</b> フォルダにある <b>active_rules.json</b> というファイルに書き込まれます。</li></ul>' +
       '<h3 style="margin-top:16px;">エクスポート、インポート、同僚との共有</h3><ul class="help-list">' +
-      '<li><b>JSON エクスポート</b> は、現在このポップアップに表示されているとおりのルール一式を、ドライブ内の <b>「TermCheck Rules」</b> フォルダにある同じ <b>active_rules.json</b> ファイルに書き込みます。フォルダは初回の保存またはエクスポート時に自動作成され、あなた専用で自動的には共有されません。</li>' +
+      '<li><b>JSON エクスポート</b> を押すと、ドライブの <b>「TermCheck Rules」</b> フォルダに新しいファイル <b>rules_export_….json</b>（言語と日付付き）が作成され、このウィンドウに表示されているルール一式がそのまま保存されます。有効なルールは変更されません（変更されるのは <b>設定を保存</b> のときだけです）。フォルダは非公開で、自動的に共有されることはありません。</li>' +
       '<li><b>JSON インポート</b> では、パソコンから JSON ファイルを選び、そのルールをこのポップアップに読み込めます。内部名が同じルールは既存のものを上書きし、新しい名前のルールは追加されます。インポートはここでの表示を変えるだけで、この時点ではまだ何も保存されません。</li>' +
       '<li>重要：インポートは、その後 <b>設定を保存</b> をクリックして初めて反映されます。保存せずにポップアップを閉じると、インポートしたルールは破棄されます。</li>' +
       '<li><b>同僚とルールを共有するには：</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li><b>JSON エクスポート</b>（または設定を保存）をクリックして、ドライブのファイルを最新にします。</li>' +
-      '<li>Google ドライブを開き、マイドライブで <b>「TermCheck Rules」</b> フォルダを探し、<b>active_rules.json</b> を同僚と直接共有するか、ダウンロードしてメールや Teams などで送ります。</li>' +
+      '<li><b>JSON エクスポート</b> をクリックします。新しいファイルへのリンク付きのお知らせが表示されます。</li>' +
+      '<li>この <b>rules_export_….json</b> ファイルを Google ドライブで同僚と直接共有するか、ダウンロードしてメールや Teams など好きな方法で送ります。</li>' +
       '<li>同僚は自分の「ルールとカスタムプロンプト」ポップアップを開き、<b>JSON インポート</b> をクリックして受け取ったファイルを選び、内容を確認して <b>設定を保存</b> をクリックします。これで同僚のアカウントとドライブフォルダに保存されます。</li></ol></li>' +
       '<li>これは1回限りのスナップショットで、リアルタイム同期ではありません。後でルールを変更した場合は、もう一度エクスポートして共有する必要があります。</li></ul>',
     'ac.help.dontShow': '次回から自動で表示しない',
@@ -2585,7 +2620,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'インポートしました（無効なエントリ {n} 件をスキップ）',
     'ac.imported': 'ルールをインポートしました。',
     'ac.invalidJson': 'JSON ファイルが無効です。',
-    'ac.switchingView': '表示モードを切り替えています…'
+    'ac.switchingView': '表示モードを切り替えています…',
+    'ac.discardChanges': '保存されていない変更があります。破棄しますか？',
+    'link.open': '開く',
+    'ac.jsonExported': 'ドライブにエクスポートしました：{name}',
+    'search.partialFail': '一部の用語ベースを検索できませんでした（{n} 件のリクエストが失敗）。結果が不完全な可能性があります。',
+    'search.truncated': '一致件数が多いため、用語ベースごとに最初の結果のみ表示しています。検索語を絞り込んでください。'
   },
 
   // ── NORSK (bokmål) ──────────────────────────────────────────────────────
@@ -2643,12 +2683,12 @@ var I18N_APPS = {
       '<li>Kategoriene (forkortelser, grammatikk, …) kan utvides. Hver regel har en avmerkingsboks for å slå den av eller på. Bare aktiverte regler brukes neste gang du kjører en kontroll.</li>' +
       '<li><b>Lagre innstillinger</b> lagrer endringene permanent: Det lagrer hvilke regler som er på/av for kontoen din, og skriver hele regelsettet, inkludert egne regler, til filen <b>active_rules.json</b> i Google Disk-mappen <b>«TermCheck Rules»</b> i din egen Disk.</li></ul>' +
       '<h3 style="margin-top:16px;">Eksport, import og deling med en kollega</h3><ul class="help-list">' +
-      '<li><b>JSON-eksport</b> skriver det gjeldende regelsettet ditt, nøyaktig slik det vises i dette vinduet nå, til den samme filen <b>active_rules.json</b> i mappen <b>«TermCheck Rules»</b> i Disk. Mappen opprettes automatisk første gang du lagrer eller eksporterer; den er privat og deles ikke automatisk.</li>' +
+      '<li><b>JSON-eksport</b> lager en ny fil <b>rules_export_….json</b> (med språk og dato) i mappen <b>«TermCheck Rules»</b> på Disken din, med regelsettet nøyaktig slik det vises i dette vinduet. De aktive reglene dine endres ikke – det gjør bare <b>Lagre innstillinger</b>. Mappen er privat og deles ikke automatisk.</li>' +
       '<li><b>JSON-import</b> lar deg velge en JSON-fil fra datamaskinen og laste reglene inn i dette vinduet. Regler med samme interne navn overskriver den eksisterende, regler med nytt navn legges til. Importen endrer bare det du ser her; ingenting er lagret ennå.</li>' +
       '<li>Viktig: En import trer først i kraft når du deretter klikker <b>Lagre innstillinger</b>. Lukker du vinduet uten å lagre, forkastes de importerte reglene.</li>' +
       '<li><b>Slik deler du reglene med en kollega:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Klikk <b>JSON-eksport</b> (eller Lagre innstillinger) slik at Disk-filen er oppdatert.</li>' +
-      '<li>Åpne Google Disk, finn mappen <b>«TermCheck Rules»</b> i Min disk, og del filen <b>active_rules.json</b> direkte med kollegaen, eller last den ned og send den slik du vil, f.eks. på e-post eller Teams.</li>' +
+      '<li>Klikk på <b>JSON-eksport</b>. Det vises en melding med en lenke til den nye filen.</li>' +
+      '<li>Del filen <b>rules_export_….json</b> direkte med kollegaen i Google Disk, eller last den ned og send den slik du vil, f.eks. på e-post eller Teams.</li>' +
       '<li>Kollegaen åpner sitt eget vindu «Regler og egne prompter», klikker <b>JSON-import</b>, velger filen, sjekker at den ser riktig ut og klikker <b>Lagre innstillinger</b>. Da lagres den i kollegaens konto og Disk-mappe.</li></ol></li>' +
       '<li>Dette er et øyeblikksbilde, ikke en direkte synkronisering. Endrer du reglene senere, må du eksportere og dele filen på nytt.</li></ul>',
     'ac.help.dontShow': 'Ikke vis automatisk neste gang',
@@ -2745,7 +2785,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Importert ({n} ugyldige oppføringer hoppet over)',
     'ac.imported': 'Reglene ble importert!',
     'ac.invalidJson': 'Ugyldig JSON-fil!',
-    'ac.switchingView': 'Bytter visningsmodus…'
+    'ac.switchingView': 'Bytter visningsmodus…',
+    'ac.discardChanges': 'Du har ulagrede endringer. Forkaste dem?',
+    'link.open': 'Åpne',
+    'ac.jsonExported': 'Eksportert til Disk: {name}',
+    'search.partialFail': 'Noen termbaser kunne ikke søkes i ({n} forespørsel(er) mislyktes). Resultatene kan være ufullstendige.',
+    'search.truncated': 'Mange treff – bare de første resultatene per termbase vises. Avgrens søket for mer presise resultater.'
   },
 
   // ── SVENSKA ─────────────────────────────────────────────────────────────
@@ -2803,12 +2848,12 @@ var I18N_APPS = {
       '<li>Kategorierna (förkortningar, grammatik, …) kan fällas ut. Varje regel har en kryssruta för att slå på eller av den. Endast aktiverade regler används nästa gång du kör en kontroll.</li>' +
       '<li><b>Spara inställningar</b> sparar ändringarna permanent: det sparar vilka regler som är på/av för ditt konto och skriver hela regeluppsättningen, inklusive egna regler, till filen <b>active_rules.json</b> i Google Drive-mappen <b>”TermCheck Rules”</b> i din egen Drive.</li></ul>' +
       '<h3 style="margin-top:16px;">Export, import och delning med en kollega</h3><ul class="help-list">' +
-      '<li><b>JSON-export</b> skriver din nuvarande regeluppsättning, exakt som den visas i det här fönstret just nu, till samma fil <b>active_rules.json</b> i mappen <b>”TermCheck Rules”</b> i din Drive. Mappen skapas automatiskt första gången du sparar eller exporterar; den är privat och delas inte automatiskt.</li>' +
+      '<li><b>JSON-export</b> skapar en ny fil <b>rules_export_….json</b> (med språk och datum) i mappen <b>”TermCheck Rules”</b> i din Drive, med din regeluppsättning exakt som den visas i det här fönstret. Dina aktiva regler ändras inte – det gör bara <b>Spara inställningar</b>. Mappen är privat och delas inte automatiskt.</li>' +
       '<li><b>JSON-import</b> låter dig välja en JSON-fil från datorn och läsa in dess regler i det här fönstret. Regler med samma interna namn skriver över den befintliga, regler med nytt namn läggs till. Importen ändrar bara det du ser här; inget är sparat ännu.</li>' +
       '<li>Viktigt: en import börjar gälla först när du därefter klickar på <b>Spara inställningar</b>. Stänger du fönstret utan att spara kasseras de importerade reglerna.</li>' +
       '<li><b>Så delar du dina regler med en kollega:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Klicka på <b>JSON-export</b> (eller Spara inställningar) så att Drive-filen är aktuell.</li>' +
-      '<li>Öppna Google Drive, hitta mappen <b>”TermCheck Rules”</b> i Min enhet och dela filen <b>active_rules.json</b> direkt med kollegan, eller ladda ner den och skicka den som du vill, t.ex. via e-post eller Teams.</li>' +
+      '<li>Klicka på <b>JSON-export</b>. Ett meddelande med en länk till den nya filen visas.</li>' +
+      '<li>Dela filen <b>rules_export_….json</b> med din kollega direkt i Google Drive, eller ladda ned den och skicka den som du vill, t.ex. via e-post eller Teams.</li>' +
       '<li>Kollegan öppnar sitt eget fönster ”Regler och egna promptar”, klickar på <b>JSON-import</b>, väljer filen, kontrollerar att den ser rätt ut och klickar på <b>Spara inställningar</b>. Då sparas den i kollegans konto och Drive-mapp.</li></ol></li>' +
       '<li>Detta är en ögonblicksbild, ingen direktsynkronisering. Om du ändrar dina regler senare måste du exportera och dela filen igen.</li></ul>',
     'ac.help.dontShow': 'Visa inte automatiskt nästa gång',
@@ -2905,7 +2950,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Importerat ({n} ogiltiga poster hoppades över)',
     'ac.imported': 'Reglerna har importerats!',
     'ac.invalidJson': 'Ogiltig JSON-fil!',
-    'ac.switchingView': 'Byter visningsläge…'
+    'ac.switchingView': 'Byter visningsläge…',
+    'ac.discardChanges': 'Du har osparade ändringar. Vill du ignorera dem?',
+    'link.open': 'Öppna',
+    'ac.jsonExported': 'Exporterat till Drive: {name}',
+    'search.partialFail': 'Vissa termbaser kunde inte genomsökas ({n} förfrågning(ar) misslyckades). Resultaten kan vara ofullständiga.',
+    'search.truncated': 'Många träffar – bara de första resultaten per termbas visas. Förfina sökningen för mer exakta resultat.'
   },
 
   // ── SUOMI ───────────────────────────────────────────────────────────────
@@ -2963,12 +3013,12 @@ var I18N_APPS = {
       '<li>Luokat (lyhenteet, kielioppi, …) voi laajentaa. Jokaisella säännöllä on valintaruutu, jolla sen voi ottaa käyttöön tai poistaa käytöstä. Seuraavassa tarkistuksessa käytetään vain käytössä olevia sääntöjä.</li>' +
       '<li><b>Tallenna asetukset</b> tallentaa muutokset pysyvästi: se tallentaa, mitkä säännöt ovat tililläsi päällä tai pois, ja kirjoittaa koko sääntöjoukon, myös omat säännöt, tiedostoon <b>active_rules.json</b> oman Google Drivesi kansioon <b>”TermCheck Rules”</b>.</li></ul>' +
       '<h3 style="margin-top:16px;">Vienti, tuonti ja jakaminen kollegan kanssa</h3><ul class="help-list">' +
-      '<li><b>JSON-vienti</b> kirjoittaa nykyisen sääntöjoukkosi täsmälleen sellaisena kuin se nyt näkyy tässä ikkunassa samaan tiedostoon <b>active_rules.json</b> Drivesi kansiossa <b>”TermCheck Rules”</b>. Kansio luodaan automaattisesti ensimmäisellä tallennus- tai vientikerralla; se on yksityinen eikä sitä jaeta automaattisesti.</li>' +
+      '<li><b>JSON-vienti</b> luo Driveesi kansioon <b>”TermCheck Rules”</b> uuden tiedoston <b>rules_export_….json</b> (kieli ja päivämäärä), jossa on sääntösi täsmälleen siten kuin ne näkyvät tässä ikkunassa. Käytössä olevat sääntösi eivät muutu – sen tekee vain <b>Tallenna asetukset</b>. Kansio on yksityinen eikä sitä jaeta automaattisesti.</li>' +
       '<li><b>JSON-tuonti</b> antaa valita JSON-tiedoston tietokoneelta ja ladata sen säännöt tähän ikkunaan. Samannimiset säännöt korvaavat olemassa olevan, uudet nimet lisätään. Tuonti muuttaa vain tässä näkyvää; mitään ei ole vielä tallennettu.</li>' +
       '<li>Tärkeää: tuonti tulee voimaan vasta, kun napsautat sen jälkeen <b>Tallenna asetukset</b>. Jos suljet ikkunan tallentamatta, tuodut säännöt hylätään.</li>' +
       '<li><b>Näin jaat sääntösi kollegan kanssa:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Napsauta <b>JSON-vienti</b> (tai Tallenna asetukset), jotta Drive-tiedosto on ajan tasalla.</li>' +
-      '<li>Avaa Google Drive, etsi kansio <b>”TermCheck Rules”</b> Oma Drive -kohdasta ja jaa tiedosto <b>active_rules.json</b> suoraan kollegalle tai lataa se ja lähetä haluamallasi tavalla, esim. sähköpostilla tai Teamsissa.</li>' +
+      '<li>Valitse <b>JSON-vienti</b>. Näkyviin tulee ilmoitus, jossa on linkki uuteen tiedostoon.</li>' +
+      '<li>Jaa tämä <b>rules_export_….json</b>-tiedosto kollegallesi suoraan Google Drivessa tai lataa se ja lähetä haluamallasi tavalla, esim. sähköpostilla tai Teamsissa.</li>' +
       '<li>Kollega avaa oman ”Säännöt ja omat kehotteet” -ikkunansa, napsauttaa <b>JSON-tuonti</b>, valitsee tiedoston, tarkistaa sen ja napsauttaa <b>Tallenna asetukset</b>. Näin se tallentuu kollegan tilille ja Drive-kansioon.</li></ol></li>' +
       '<li>Kyseessä on kertaluonteinen tilannekuva, ei reaaliaikainen synkronointi. Jos muutat sääntöjä myöhemmin, tiedosto on vietävä ja jaettava uudelleen.</li></ul>',
     'ac.help.dontShow': 'Älä näytä automaattisesti ensi kerralla',
@@ -3065,7 +3115,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Tuotu ({n} virheellistä merkintää ohitettiin)',
     'ac.imported': 'Säännöt tuotu onnistuneesti!',
     'ac.invalidJson': 'Virheellinen JSON-tiedosto!',
-    'ac.switchingView': 'Vaihdetaan näkymätilaa…'
+    'ac.switchingView': 'Vaihdetaan näkymätilaa…',
+    'ac.discardChanges': 'Sinulla on tallentamattomia muutoksia. Hylätäänkö ne?',
+    'link.open': 'Avaa',
+    'ac.jsonExported': 'Viety Driveen: {name}',
+    'search.partialFail': 'Joitakin termipankkeja ei voitu hakea ({n} pyyntöä epäonnistui). Tulokset voivat olla puutteellisia.',
+    'search.truncated': 'Paljon osumia – kustakin termipankista näytetään vain ensimmäiset tulokset. Tarkenna hakua.'
   },
 
   // ── TÜRKÇE ──────────────────────────────────────────────────────────────
@@ -3123,12 +3178,12 @@ var I18N_APPS = {
       '<li>Kategoriler (kısaltmalar, dil bilgisi, …) genişletilebilir. Her kuralın açıp kapatmak için bir onay kutusu vardır. Bir sonraki kontrolde yalnızca etkin kurallar kullanılır.</li>' +
       '<li><b>Ayarları kaydet</b> değişikliklerinizi kalıcı olarak kaydeder: hesabınız için hangi kuralların açık/kapalı olduğunu saklar ve özel kurallar dahil tüm kural setini kendi Google Drive’ınızdaki <b>"TermCheck Rules"</b> klasöründe bulunan <b>active_rules.json</b> dosyasına yazar.</li></ul>' +
       '<h3 style="margin-top:16px;">Dışa aktarma, içe aktarma ve bir iş arkadaşıyla paylaşma</h3><ul class="help-list">' +
-      '<li><b>JSON dışa aktar</b>, geçerli kural setinizi tam olarak bu pencerede şu an göründüğü haliyle Drive’ınızdaki <b>"TermCheck Rules"</b> klasöründeki aynı <b>active_rules.json</b> dosyasına yazar. Klasör, ilk kaydetme veya dışa aktarma sırasında otomatik oluşturulur; size özeldir ve otomatik olarak paylaşılmaz.</li>' +
+      '<li><b>JSON dışa aktar</b>, Drive’ınızdaki <b>"TermCheck Rules"</b> klasöründe, kural setinizi tam olarak bu pencerede göründüğü haliyle içeren yeni bir <b>rules_export_….json</b> dosyası (dil ve tarih ile) oluşturur. Etkin kurallarınızı değiştirmez – bunu yalnızca <b>Ayarları kaydet</b> yapar. Klasör size özeldir ve otomatik olarak paylaşılmaz.</li>' +
       '<li><b>JSON içe aktar</b>, bilgisayarınızdan bir JSON dosyası seçip kurallarını bu pencereye yüklemenizi sağlar. Aynı dahili ada sahip kurallar mevcut olanın üzerine yazar, yeni adlı kurallar eklenir. İçe aktarma yalnızca burada gördüğünüzü değiştirir; henüz hiçbir şey kaydedilmez.</li>' +
       '<li>Önemli: içe aktarma ancak ardından <b>Ayarları kaydet</b>’e tıkladığınızda geçerli olur. Pencereyi kaydetmeden kapatırsanız içe aktarılan kurallar silinir.</li>' +
       '<li><b>Kurallarınızı bir iş arkadaşınızla paylaşmak için:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Drive dosyanızın güncel olması için <b>JSON dışa aktar</b>’a (veya Ayarları kaydet’e) tıklayın.</li>' +
-      '<li>Google Drive’ı açın, Drive’ım içinde <b>"TermCheck Rules"</b> klasörünü bulun ve <b>active_rules.json</b> dosyasını doğrudan paylaşın ya da indirip e-posta veya Teams gibi istediğiniz yolla gönderin.</li>' +
+      '<li><b>JSON dışa aktar</b>’a tıklayın. Yeni dosyaya bağlantı içeren bir bildirim görünür.</li>' +
+      '<li>Bu <b>rules_export_….json</b> dosyasını Google Drive’da doğrudan paylaşın ya da indirip e-posta veya Teams gibi istediğiniz yolla gönderin.</li>' +
       '<li>İş arkadaşınız kendi "Kurallar ve özel istemler" penceresini açar, <b>JSON içe aktar</b>’a tıklar, gönderdiğiniz dosyayı seçer, doğru göründüğünü kontrol eder ve <b>Ayarları kaydet</b>’e tıklar. Böylece kurallar kendi hesabına ve Drive klasörüne kaydedilir.</li></ol></li>' +
       '<li>Bu tek seferlik bir anlık görüntüdür, canlı senkronizasyon değildir. Kurallarınızı daha sonra değiştirirseniz dosyayı yeniden dışa aktarıp paylaşmanız gerekir.</li></ul>',
     'ac.help.dontShow': 'Bir dahaki sefere otomatik gösterme',
@@ -3222,7 +3277,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'İçe aktarıldı ({n} geçersiz kayıt atlandı)',
     'ac.imported': 'Kurallar başarıyla içe aktarıldı!',
     'ac.invalidJson': 'Geçersiz JSON dosyası!',
-    'ac.switchingView': 'Görünüm modu değiştiriliyor…'
+    'ac.switchingView': 'Görünüm modu değiştiriliyor…',
+    'ac.discardChanges': 'Kaydedilmemiş değişiklikler var. Atılsın mı?',
+    'link.open': 'Aç',
+    'ac.jsonExported': 'Drive’a aktarıldı: {name}',
+    'search.partialFail': 'Bazı terim bankalarında arama yapılamadı ({n} istek başarısız). Sonuçlar eksik olabilir.',
+    'search.truncated': 'Çok sayıda eşleşme – her terim bankası için yalnızca ilk sonuçlar gösteriliyor. Daha kesin sonuçlar için aramayı daraltın.'
   },
 
   // ── MAGYAR ──────────────────────────────────────────────────────────────
@@ -3280,12 +3340,12 @@ var I18N_APPS = {
       '<li>A kategóriák (rövidítések, nyelvtan, …) kibonthatók. Minden szabálynak van egy jelölőnégyzete a be- és kikapcsoláshoz. A következő ellenőrzéskor csak a bekapcsolt szabályok számítanak.</li>' +
       '<li>A <b>Beállítások mentése</b> véglegesen menti a módosításokat: rögzíti, mely szabályok vannak be- vagy kikapcsolva a fiókjában, és a teljes szabálykészletet – az egyéni szabályokkal együtt – a saját Google Drive-ja <b>„TermCheck Rules”</b> mappájában lévő <b>active_rules.json</b> fájlba írja.</li></ul>' +
       '<h3 style="margin-top:16px;">Exportálás, importálás és megosztás egy kollégával</h3><ul class="help-list">' +
-      '<li>A <b>JSON-exportálás</b> a jelenlegi szabálykészletet – pontosan úgy, ahogy most ebben az ablakban látható – ugyanabba az <b>active_rules.json</b> fájlba írja a Drive <b>„TermCheck Rules”</b> mappájában. A mappa az első mentéskor vagy exportáláskor automatikusan létrejön; privát, és nem kerül automatikusan megosztásra.</li>' +
+      '<li>A <b>JSON-exportálás</b> új <b>rules_export_….json</b> fájlt hoz létre (nyelvvel és dátummal) a Drive-ja <b>„TermCheck Rules”</b> mappájában, pontosan azzal a szabálykészlettel, amely ebben az ablakban látható. Az aktív szabályokat nem módosítja – ezt csak a <b>Beállítások mentése</b> teszi. A mappa privát, és nem kerül automatikusan megosztásra.</li>' +
       '<li>A <b>JSON-importálás</b> segítségével kiválaszthat egy JSON-fájlt a számítógépéről, és betöltheti a szabályait ebbe az ablakba. Az azonos belső nevű szabályok felülírják a meglévőt, az új nevűek bekerülnek. Az importálás csak az itt láthatót módosítja, ekkor még semmi sincs mentve.</li>' +
       '<li>Fontos: az importálás csak akkor lép életbe, ha utána a <b>Beállítások mentése</b> gombra kattint. Ha mentés nélkül zárja be az ablakot, az importált szabályok elvesznek.</li>' +
       '<li><b>Szabályai megosztása egy kollégával:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Kattintson a <b>JSON-exportálás</b> (vagy Beállítások mentése) gombra, hogy a Drive-fájl naprakész legyen.</li>' +
-      '<li>Nyissa meg a Google Drive-ot, keresse meg a <b>„TermCheck Rules”</b> mappát a Saját meghajtón, és ossza meg közvetlenül az <b>active_rules.json</b> fájlt, vagy töltse le és küldje el tetszés szerint, pl. e-mailben vagy Teamsen.</li>' +
+      '<li>Kattintson a <b>JSON-exportálás</b> gombra. Megjelenik egy értesítés az új fájlra mutató hivatkozással.</li>' +
+      '<li>Ossza meg ezt a <b>rules_export_….json</b> fájlt közvetlenül a Google Drive-ban a kollégájával, vagy töltse le, és küldje el tetszés szerint, pl. e-mailben vagy Teamsen.</li>' +
       '<li>Kollégája megnyitja a saját „Szabályok és egyéni promptok” ablakát, a <b>JSON-importálás</b> gombra kattint, kiválasztja a fájlt, ellenőrzi, majd a <b>Beállítások mentése</b> gombra kattint. Így a szabályok az ő fiókjába és Drive-mappájába kerülnek.</li></ol></li>' +
       '<li>Ez egyszeri pillanatkép, nem élő szinkronizálás. Ha később módosítja a szabályokat, a fájlt újra exportálnia és meg kell osztania.</li></ul>',
     'ac.help.dontShow': 'Legközelebb ne jelenjen meg automatikusan',
@@ -3379,7 +3439,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Importálva ({n} érvénytelen bejegyzés kihagyva)',
     'ac.imported': 'A szabályok importálása sikerült!',
     'ac.invalidJson': 'Érvénytelen JSON-fájl!',
-    'ac.switchingView': 'Nézet váltása…'
+    'ac.switchingView': 'Nézet váltása…',
+    'ac.discardChanges': 'Nem mentett módosításai vannak. Elveti őket?',
+    'link.open': 'Megnyitás',
+    'ac.jsonExported': 'Exportálva a Drive-ba: {name}',
+    'search.partialFail': 'Néhány terminológiai adatbázisban nem sikerült keresni ({n} kérés sikertelen). Az eredmények hiányosak lehetnek.',
+    'search.truncated': 'Sok találat – adatbázisonként csak az első eredmények láthatók. Pontosítsa a keresést.'
   },
 
   // ── HRVATSKI ────────────────────────────────────────────────────────────
@@ -3437,12 +3502,12 @@ var I18N_APPS = {
       '<li>Kategorije (kratice, gramatika, …) mogu se proširiti. Svako pravilo ima potvrdni okvir za uključivanje ili isključivanje. Pri sljedećoj provjeri koriste se samo uključena pravila.</li>' +
       '<li><b>Spremi postavke</b> trajno sprema promjene: bilježi koja su pravila uključena za vaš račun i zapisuje cijeli skup pravila, uključujući vlastita, u datoteku <b>active_rules.json</b> u mapi <b>„TermCheck Rules”</b> na vašem Google Driveu.</li></ul>' +
       '<h3 style="margin-top:16px;">Izvoz, uvoz i dijeljenje s kolegom</h3><ul class="help-list">' +
-      '<li><b>JSON izvoz</b> zapisuje vaš trenutačni skup pravila, točno kako je sada prikazan u ovom prozoru, u istu datoteku <b>active_rules.json</b> u mapi <b>„TermCheck Rules”</b> na vašem Driveu. Mapa se stvara automatski pri prvom spremanju ili izvozu; privatna je i ne dijeli se automatski.</li>' +
+      '<li><b>JSON izvoz</b> stvara novu datoteku <b>rules_export_….json</b> (s jezikom i datumom) u mapi <b>„TermCheck Rules”</b> na vašem Driveu, sa skupom pravila točno onako kako je prikazan u ovom prozoru. Aktivna pravila se ne mijenjaju – to čini samo <b>Spremi postavke</b>. Mapa je privatna i ne dijeli se automatski.</li>' +
       '<li><b>JSON uvoz</b> omogućuje odabir JSON datoteke s računala i učitavanje njezinih pravila u ovaj prozor. Pravila s istim internim nazivom zamjenjuju postojeće, a ona s novim nazivom se dodaju. Uvoz mijenja samo prikaz ovdje; još ništa nije spremljeno.</li>' +
       '<li>Važno: uvoz stupa na snagu tek kada nakon toga kliknete <b>Spremi postavke</b>. Ako zatvorite prozor bez spremanja, uvezena se pravila odbacuju.</li>' +
       '<li><b>Kako podijeliti pravila s kolegom:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Kliknite <b>JSON izvoz</b> (ili Spremi postavke) kako bi datoteka na Driveu bila ažurna.</li>' +
-      '<li>Otvorite Google Drive, pronađite mapu <b>„TermCheck Rules”</b> u odjeljku Moj disk i izravno podijelite datoteku <b>active_rules.json</b> ili je preuzmite i pošaljite kako želite, npr. e-poštom ili putem Teamsa.</li>' +
+      '<li>Kliknite <b>JSON izvoz</b>. Pojavit će se obavijest s poveznicom na novu datoteku.</li>' +
+      '<li>Podijelite datoteku <b>rules_export_….json</b> s kolegom izravno u Google Driveu ili je preuzmite i pošaljite kako želite, npr. e-poštom ili putem Teamsa.</li>' +
       '<li>Kolega otvara vlastiti prozor „Pravila i vlastiti upiti”, klikne <b>JSON uvoz</b>, odabere datoteku, provjeri je i klikne <b>Spremi postavke</b>. Tako se sprema u njegov račun i njegovu mapu na Driveu.</li></ol></li>' +
       '<li>Ovo je jednokratna snimka, a ne sinkronizacija uživo. Ako kasnije promijenite pravila, datoteku morate ponovno izvesti i podijeliti.</li></ul>',
     'ac.help.dontShow': 'Ne prikazuj automatski sljedeći put',
@@ -3539,7 +3604,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Uvezeno (preskočeno nevaljanih unosa: {n})',
     'ac.imported': 'Pravila su uspješno uvezena!',
     'ac.invalidJson': 'Nevaljana JSON datoteka!',
-    'ac.switchingView': 'Promjena načina prikaza…'
+    'ac.switchingView': 'Promjena načina prikaza…',
+    'ac.discardChanges': 'Imate nespremljene promjene. Odbaciti ih?',
+    'link.open': 'Otvori',
+    'ac.jsonExported': 'Izvezeno na Drive: {name}',
+    'search.partialFail': 'Neke terminološke baze nije bilo moguće pretražiti ({n} zahtjev(a) nije uspjelo). Rezultati možda nisu potpuni.',
+    'search.truncated': 'Mnogo rezultata – za svaku bazu prikazuju se samo prvi rezultati. Suzite pretragu za preciznije rezultate.'
   },
 
   // ── ΕΛΛΗΝΙΚΑ ───────────────────────────────────────────────────────────
@@ -3597,12 +3667,12 @@ var I18N_APPS = {
       '<li>Οι κατηγορίες (συντομογραφίες, γραμματική, …) μπορούν να αναπτυχθούν. Κάθε κανόνας έχει ένα πλαίσιο ελέγχου για ενεργοποίηση ή απενεργοποίηση. Στον επόμενο έλεγχο χρησιμοποιούνται μόνο οι ενεργοί κανόνες.</li>' +
       '<li>Η <b>Αποθήκευση ρυθμίσεων</b> αποθηκεύει μόνιμα τις αλλαγές σας: καταγράφει ποιοι κανόνες είναι ενεργοί για τον λογαριασμό σας και γράφει ολόκληρο το σύνολο κανόνων, μαζί με τους δικούς σας, στο αρχείο <b>active_rules.json</b> στον φάκελο <b>«TermCheck Rules»</b> του δικού σας Google Drive.</li></ul>' +
       '<h3 style="margin-top:16px;">Εξαγωγή, εισαγωγή & κοινή χρήση με συνάδελφο</h3><ul class="help-list">' +
-      '<li>Η <b>Εξαγωγή JSON</b> γράφει το τρέχον σύνολο κανόνων σας, ακριβώς όπως εμφανίζεται τώρα σε αυτό το παράθυρο, στο ίδιο αρχείο <b>active_rules.json</b> στον φάκελο <b>«TermCheck Rules»</b> του Drive σας. Ο φάκελος δημιουργείται αυτόματα την πρώτη φορά που αποθηκεύετε ή εξάγετε· είναι ιδιωτικός και δεν κοινοποιείται αυτόματα.</li>' +
+      '<li>Η <b>Εξαγωγή JSON</b> δημιουργεί νέο αρχείο <b>rules_export_….json</b> (με γλώσσα και ημερομηνία) στον φάκελο <b>«TermCheck Rules»</b> του Drive σας, με το σύνολο κανόνων ακριβώς όπως εμφανίζεται σε αυτό το παράθυρο. Δεν αλλάζει τους ενεργούς κανόνες σας – αυτό το κάνει μόνο η <b>Αποθήκευση ρυθμίσεων</b>. Ο φάκελος είναι ιδιωτικός και δεν κοινοποιείται αυτόματα.</li>' +
       '<li>Η <b>Εισαγωγή JSON</b> σάς επιτρέπει να επιλέξετε ένα αρχείο JSON από τον υπολογιστή σας και να φορτώσετε τους κανόνες του σε αυτό το παράθυρο. Κανόνες με το ίδιο εσωτερικό όνομα αντικαθιστούν τον υπάρχοντα, ενώ κανόνες με νέο όνομα προστίθενται. Η εισαγωγή αλλάζει μόνο ό,τι βλέπετε εδώ· τίποτα δεν έχει αποθηκευτεί ακόμη.</li>' +
       '<li>Σημαντικό: μια εισαγωγή ισχύει μόνο αφού κάνετε κλικ στην <b>Αποθήκευση ρυθμίσεων</b>. Αν κλείσετε το παράθυρο χωρίς αποθήκευση, οι εισαγόμενοι κανόνες απορρίπτονται.</li>' +
       '<li><b>Για να μοιραστείτε τους κανόνες σας με συνάδελφο:</b><ol style="margin:6px 0 0 18px; padding:0;">' +
-      '<li>Κάντε κλικ στην <b>Εξαγωγή JSON</b> (ή στην Αποθήκευση ρυθμίσεων) ώστε το αρχείο στο Drive να είναι ενημερωμένο.</li>' +
-      '<li>Ανοίξτε το Google Drive, βρείτε τον φάκελο <b>«TermCheck Rules»</b> στο Ο Δίσκος μου και μοιραστείτε απευθείας το αρχείο <b>active_rules.json</b> ή κατεβάστε το και στείλτε το όπως θέλετε, π.χ. με email ή Teams.</li>' +
+      '<li>Κάντε κλικ στην <b>Εξαγωγή JSON</b>. Εμφανίζεται μήνυμα με σύνδεσμο προς το νέο αρχείο.</li>' +
+      '<li>Μοιραστείτε αυτό το αρχείο <b>rules_export_….json</b> απευθείας στο Google Drive με τον συνάδελφό σας ή κατεβάστε το και στείλτε το όπως θέλετε, π.χ. με email ή Teams.</li>' +
       '<li>Ο συνάδελφος ανοίγει το δικό του παράθυρο «Κανόνες & προσαρμοσμένες εντολές», κάνει κλικ στην <b>Εισαγωγή JSON</b>, επιλέγει το αρχείο, ελέγχει ότι είναι σωστό και κάνει κλικ στην <b>Αποθήκευση ρυθμίσεων</b>. Έτσι αποθηκεύεται στον δικό του λογαριασμό και φάκελο Drive.</li></ol></li>' +
       '<li>Πρόκειται για ένα στιγμιότυπο, όχι για ζωντανό συγχρονισμό. Αν αλλάξετε τους κανόνες αργότερα, πρέπει να εξαγάγετε και να μοιραστείτε ξανά το αρχείο.</li></ul>',
     'ac.help.dontShow': 'Να μην εμφανίζεται αυτόματα την επόμενη φορά',
@@ -3699,7 +3769,12 @@ var I18N_APPS = {
     'ac.importedSkipped': 'Εισήχθη (παραλείφθηκαν {n} μη έγκυρες καταχωρίσεις)',
     'ac.imported': 'Οι κανόνες εισήχθησαν επιτυχώς!',
     'ac.invalidJson': 'Μη έγκυρο αρχείο JSON!',
-    'ac.switchingView': 'Αλλαγή λειτουργίας προβολής…'
+    'ac.switchingView': 'Αλλαγή λειτουργίας προβολής…',
+    'ac.discardChanges': 'Υπάρχουν μη αποθηκευμένες αλλαγές. Να απορριφθούν;',
+    'link.open': 'Άνοιγμα',
+    'ac.jsonExported': 'Εξήχθη στο Drive: {name}',
+    'search.partialFail': 'Ορισμένες βάσεις ορολογίας δεν ήταν δυνατό να αναζητηθούν ({n} αιτήματα απέτυχαν). Τα αποτελέσματα ίσως είναι ελλιπή.',
+    'search.truncated': 'Πολλά αποτελέσματα – εμφανίζονται μόνο τα πρώτα ανά βάση ορολογίας. Περιορίστε την αναζήτηση.'
   }
 };
 Object.keys(I18N_APPS).forEach(function(lang){

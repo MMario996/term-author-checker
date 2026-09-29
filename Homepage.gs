@@ -6,18 +6,18 @@ function onHomepage(e) {
 
   card.setHeader(CardService.newCardHeader()
     .setTitle('Kärcher TermCheck')
-    .setSubtitle('Terminology Search & Authoring-Tool Check'));
+    .setSubtitle(_ct_('home.subtitle')));
 
   var section = CardService.newCardSection()
     .addWidget(CardService.newTextParagraph()
-      .setText('Open the <b>Terminology Search</b> to browse for terminology or <b>Author Check</b> to check your document.'));
+      .setText(_ct_('home.intro')));
 
   section.addWidget(CardService.newTextButton()
-    .setText('Open Terminology Search')
+    .setText('🔍 ' + _ct_('home.openTs'))
     .setOnClickAction(CardService.newAction().setFunctionName('showSidebar')));
 
   section.addWidget(CardService.newTextButton()
-    .setText('Open Author Check')
+    .setText('✍️ ' + _ct_('home.openAc'))
     .setOnClickAction(CardService.newAction().setFunctionName('showAuthorCheckSidebar')));
 
   card.addSection(section);

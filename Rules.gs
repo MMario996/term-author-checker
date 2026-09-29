@@ -6138,16 +6138,16 @@ function apiSaveRulesConfig(updatedRules, language) {
   });
 
   _writeChunkedUserProp_(props, _getOverridesPropertyKey_(language), JSON.stringify(overrides));
-  apiExportRulesToDrive(updatedRules, language);
+  _writeActiveRulesFile_(updatedRules, language);
   try { CacheService.getUserCache().remove(_rulesConfigCacheKey_(language)); } catch (e) {}
   return { success: true };
 }
 
 /**
- * Saves the rules as JSON in the "TermCheck Rules" Drive folder.
- * One file per language, overwritten if it already exists.
+ * Schreibt die aktive Regeldatei (nur beim Speichern). Aus ihr liest
+ * apiGetRulesConfig die Custom-Regeln.
  */
-function apiExportRulesToDrive(rules, language) {
+function _writeActiveRulesFile_(rules, language) {
   language = language || "de";
   var folder = _getOrCreateRulesFolder_();
   var fileName = _getActiveRulesFileName_(language);
@@ -6155,13 +6155,25 @@ function apiExportRulesToDrive(rules, language) {
 
   var existingFiles = folder.getFilesByName(fileName);
   if (existingFiles.hasNext()) {
-    var file = existingFiles.next();
-    file.setContent(jsonContent);
+    existingFiles.next().setContent(jsonContent);
   } else {
     folder.createFile(fileName, jsonContent, MimeType.PLAIN_TEXT);
   }
+}
 
-  return { success: true };
+/**
+ * "JSON Export": legt eine NEUE Exportdatei (mit Datum) im Ordner "TermCheck Rules"
+ * an, z.B. zum Teilen mit Kollegen. Frueher wurde dabei die aktive Regeldatei
+ * ueberschrieben - ein "Export" aktivierte so ungespeicherte Custom-Regeln, und
+ * wegen des Caches wirkte das erst bis zu einer Stunde spaeter.
+ */
+function apiExportRulesToDrive(rules, language) {
+  language = language || "de";
+  if (!Array.isArray(rules) || !rules.length) throw new Error("No rules to export.");
+  var stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd_HH-mm");
+  var fileName = "rules_export_" + language + "_" + stamp + ".json";
+  var file = _getOrCreateRulesFolder_().createFile(fileName, JSON.stringify(rules, null, 2), MimeType.PLAIN_TEXT);
+  return { success: true, name: fileName, url: file.getUrl() };
 }
 
 var CUSTOM_RULES_LOG_HEADERS = ["Timestamp", "Creator", "Language", "Origin", "Section", "Subsection", "Type", "Name", "Description", "Prompt", "Reference URL"];

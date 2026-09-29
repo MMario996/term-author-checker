@@ -367,6 +367,9 @@ button, input, select, textarea{ font-family:inherit; }
   padding:10px 18px; opacity:0; pointer-events:none; transition:opacity .2s var(--ease), transform .2s var(--ease); z-index:100;
 }
 #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+#toast.has-link{ pointer-events:auto; }
+#toast a{ color:var(--yellow); margin-left:8px; text-decoration:underline; }
+.search-notice{ margin:0 0 10px; padding:8px 10px; background:#FFF8D6; border-left:3px solid var(--yellow); font-size:12.5px; line-height:1.45; color:var(--ink); }
 
 /* ── FOOTER LINKS (Buttons) ─────────────────────────────────────────────── */
 .support-footer {
@@ -667,7 +670,7 @@ function copySearchLink(){
   var link = getSearchLink(_searchLangQuery);
   if (!link) return;
   copyText(link);
-  showToast(t('toast.linkCopied'));
+  showToast('🔗 ' + t('toast.linkCopied'));
 }
 
 // ─── UI LANGUAGE (Texte in I18n.html) ────────────────────────────────────
@@ -690,10 +693,10 @@ function populateLangSelect(selectEl, opts){
 }
 // ─── HELPER: GET FLAG HTML ──────────────────────────────────────────────
 function getFlagHtml(lang) {
-  var l = String(lang||'').toLowerCase().replace('_', '-');
+  var l = String(lang||'').toLowerCase().replace(/_/g, '-');
   var map = {
     'en': 'gb', 'en-gb': 'gb', 'en-us': 'us',
-    'cs': 'cz', 'zh': 'cn', 'zh-cn': 'cn', 'zh-tw': 'cn',
+    'cs': 'cz', 'zh': 'cn', 'zh-cn': 'cn', 'zh-tw': 'tw',
     'ja': 'jp', 'ko': 'kr', 'ar': 'sa', 'da': 'dk',
     'el': 'gr', 'et': 'ee', 'bs': 'ba', 'vi': 'vn',
     'sv': 'se', 'ka': 'ge', 'uk': 'ua', 'sl': 'si',
@@ -772,13 +775,12 @@ function runSheetExport(btn, concepts) {
         .withSuccessHandler(function(url) {
             btn.innerHTML = origHtml;
             btn.disabled = false;
-            showToast(t('toast.exportOk'));
-            window.open(url, '_blank');
+            openUrlOrOffer(url, '📊 ' + t('toast.exportOk'));
         })
         .withFailureHandler(function(err) {
             btn.innerHTML = origHtml;
             btn.disabled = false;
-            showToast(t('toast.exportFailed', { msg: (err && err.message) ? err.message : String(err) }));
+            showToast('⚠️ ' + t('toast.exportFailed', { msg: (err && err.message) ? err.message : String(err) }));
         })
         .apiExportToSheet(rows);
 }
@@ -865,12 +867,13 @@ function triggerSearch(){
   var myToken = ++_requestToken;
   startLoading($rw, t('load.search'));
   google.script.run
-    .withSuccessHandler(function(concepts){
+    .withSuccessHandler(function(res){
       if (myToken !== _requestToken) return;
       stopLoading();
       saveRecent(q);
       syncUrlQuery(q);
-      renderResultsInto($rw, concepts, q, true);
+      renderResultsInto($rw, res.concepts, q, true);
+      prependSearchNotice($rw, res.failed, res.truncated);
     })
     .withFailureHandler(function(err){
       if (myToken !== _requestToken) return;
@@ -1055,6 +1058,16 @@ function appendAiResultBlock($rw, res, followup){
   wrap.appendChild(body);
   $rw.appendChild(wrap);
   renderResultsInto(resultsDiv, res.results, (res.suggestedTerms||[]).join(' '));
+  prependSearchNotice(resultsDiv, res.searchFailed, res.searchTruncated);
+}
+
+// Hinweis über den Ergebnissen: Termbanken nicht erreichbar / Treffer gekürzt.
+// Früher zeigte ein Rate-Limit von Phrase einfach "Keine Treffer".
+function prependSearchNotice(wrap, failed, truncated){
+  var parts = [];
+  if (failed) parts.push('⚠️ ' + tl('search.partialFail', { n: failed }));
+  if (truncated) parts.push('💡 ' + tl('search.truncated'));
+  if (parts.length) wrap.insertAdjacentHTML('afterbegin', '<div class="search-notice">' + parts.join('<br>') + '</div>');
 }
 
 function mergeIntoAiAllResults(newResults){
@@ -1403,7 +1416,7 @@ function copyText(text){
 }
 function copyTerm(btn, text){
   copyText(text);
-  showToast(t('toast.copied', { term: text }));
+  showToast('📋 ' + t('toast.copied', { term: text }));
 }
 
 // title/sub: entweder Rohtext (z.B. Server-Fehlermeldung) oder { key, vars } für i18n
@@ -1423,9 +1436,24 @@ function showStateIn(wrap, type, title, sub){
     '</div>';
 }
 function showToast(msg){
-  $toast.textContent = msg; $toast.classList.add('show');
+  $toast.textContent = msg; $toast.classList.remove('has-link'); $toast.classList.add('show');
   clearTimeout($toast._t);
   $toast._t = setTimeout(function(){ $toast.classList.remove('show'); }, 1700);
+}
+// Toast mit anklickbarem Link, bleibt länger stehen.
+function showLinkToast(msg, url){
+  var href = /^https?:\/\//i.test(String(url||'')) ? String(url) : '';
+  $toast.innerHTML = esc(msg) + (href ? '<a href="'+esc(href)+'" target="_blank" rel="noopener noreferrer">'+tl('link.open')+' ↗</a>' : '');
+  $toast.classList.add('show', 'has-link');
+  clearTimeout($toast._t);
+  $toast._t = setTimeout(function(){ $toast.classList.remove('show', 'has-link'); }, 10000);
+}
+// Neuen Tab öffnen; der Aufruf kommt erst mit der Server-Antwort (nicht direkt
+// vom Klick), daher blockiert der Browser ihn oft - dann den Link anbieten.
+function openUrlOrOffer(url, msg){
+  var w = null;
+  try { w = window.open(url, '_blank', 'noopener'); } catch(e) {}
+  if (w) showToast(msg); else showLinkToast(msg, url);
 }
 
 // ─── ADMIN MODAL ────────────────────────────────────────────────────────
@@ -1512,6 +1540,8 @@ function escJs(str){
   return String(str||'')
     .replace(/\\/g,'\\\\')
     .replace(/'/g,"\\'")
+    .replace(/\n/g,'\\n')
+    .replace(/\r/g,'\\r')
     .replace(/&/g,'&amp;')
     .replace(/"/g,'&quot;')
     .replace(/</g,'&lt;')
