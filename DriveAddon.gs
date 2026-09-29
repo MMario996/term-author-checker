@@ -154,46 +154,14 @@ function apiCheckDrivePdf(e) {
     try { PropertiesService.getUserProperties().setProperty(DRIVE_PDF_LAST_LANG_KEY, language); } catch (propErr) {}
     _driveGeminiConfig_(); // bricht früh ab, wenn kein API-Key konfiguriert ist
 
-    var prep = _drivePdfPrepare_(fileId, fileName);
-    var job = { fileId: fileId, fileName: fileName, language: language, fileSize: prep.fileSize,
-                imagesRemoved: prep.imagesRemoved, imagesKept: prep.imagesKept,
-                next: 0, batch: DRIVE_PDF_BATCH_PARTS, lastBatchMs: 0, inflight: null, issues: [], failedRanges: [] };
-    var parts = _drivePdfPlanParts_(prep);
-    prep = null;
-    Logger.log('apiCheckDrivePdf: ' + _driveMb_(job.fileSize) + ' MB, ' + parts.length + ' Paket(e), vorbereitet nach ' +
-      Math.round((Date.now() - started) / 100) / 10 + ' s');
-    parts.forEach(function(part) {
-      if (part.text.length > DRIVE_PDF_MAX_BYTES) {
-        throw new Error('Pages ' + (part.from + 1) + '-' + part.to + ' are still ' + _driveMb_(part.text.length) + ' MB after reduction (limit: ' + _driveMb_(DRIVE_PDF_MAX_BYTES) + ' MB). Please split the PDF.');
-      }
-    });
-
-    // Kleine PDF in einem Paket: direkt prüfen, ohne Zwischenspeicher - aber nur,
-    // wenn die Vorbereitung schnell war und das Paket klein ist. Sonst reicht die
-    // Restzeit bis zum 30-s-Limit nicht sicher für die Gemini-Anfrage.
-    if (parts.length === 1 && parts[0].text.length <= DRIVE_PDF_DIRECT_MAX_BYTES &&
-        Date.now() - started < DRIVE_PDF_DIRECT_BEFORE_MS) {
-      return _drivePdfWork_(job, parts, started);
+    var fileSize = DriveApp.getFileById(fileId).getSize();
+    if (fileSize > DRIVE_PDF_SHRINK_MAX_BYTES) {
+      throw new Error('The PDF file is too large (' + _driveMb_(fileSize) + ' MB, limit: ' + _driveMb_(DRIVE_PDF_SHRINK_MAX_BYTES) + ' MB). Please split it, e.g. into the pages of one language.');
     }
-
-    // Sonst: Seitenpakete hintereinander in EINER Temp-Datei ablegen (Positionen
-    // in job.parts), damit die Prüfung über mehrere Aktionen verteilt werden kann.
-    var pos = 0;
-    job.parts = parts.map(function(part) {
-      var entry = { from: part.from, to: part.to, start: pos, len: part.text.length };
-      pos += part.text.length;
-      return entry;
-    });
-    job.tmpId = _getOrCreateExportFolder_().createFile(Utilities.newBlob(
-      _pdfBinaryStringToBytes_(parts.map(function(part) { return part.text; }).join('')), 'application/octet-stream',
-      '.authorcheck-temp-' + Utilities.getUuid() + '.bin')).getId();
-    // Bewusst noch KEINE Gemini-Anfrage in dieser Aktion: würde sie am Zeitlimit
-    // abgebrochen, gäbe es noch keine Card mit "Continue". Ab jetzt hat jeder
-    // Schritt einen Button, mit dem es weitergeht.
-    _drivePdfSaveJob_(job);
-    return CardService.newActionResponseBuilder()
-      .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfProgressCard_(job, parts)))
-      .build();
+    var job = { fileId: fileId, fileName: fileName, language: language, fileSize: fileSize,
+                imagesRemoved: 0, imagesKept: 0, phase: 'plan', prep: {}, parts: [], extraFiles: [],
+                next: 0, batch: DRIVE_PDF_BATCH_PARTS, lastBatchMs: 0, inflight: null, issues: [], failedRanges: [] };
+    return _drivePdfAdvance_(job, started);
   } catch (err) {
     return _drivePdfErrorResponse_(err);
   }
@@ -208,52 +176,59 @@ function apiCheckDrivePdfContinue(e) {
   var started = Date.now();
   try {
     var job = _drivePdfLoadJob_(e.parameters.stateId);
-    // Nur für das (seltene) Zerlegen in Einzelseiten wird ein Paket als Text gebraucht.
-    function partText(p) {
-      return _pdfBytesToBinaryString_(_driveReadRanges_([{ file: p.file || job.tmpId, start: p.start, len: p.len }])[0]);
-    }
-    // Die letzte Etappe ist nicht fertig geworden (Zeitlimit) -> kleiner werden:
-    // erst weniger Pakete pro Etappe, dann das Paket in Einzelseiten zerlegen,
-    // und eine einzelne Seite, die selbst dafür zu lange braucht, überspringen.
-    if (job.inflight) {
-      var inf = job.inflight;
-      job.inflight = null;
-      job.lastBatchMs = 0;
-      var entry = job.parts[inf.next];
-      if (inf.size > 1) {
-        job.batch = Math.max(1, Math.floor(inf.size / 2));
-      } else if (entry.to - entry.from > 1) {
-        // Schon ein einzelnes Paket ist zu langsam: alle restlichen Pakete in
-        // Einzelseiten zerlegen (von hinten, damit die Indizes stimmen).
-        for (var k = job.parts.length - 1; k >= inf.next; k--) {
-          if (job.parts[k].to - job.parts[k].from > 1) _drivePdfSplitEntry_(job, k, partText(job.parts[k]));
-        }
-      } else {
-        job.failedRanges.push((entry.from + 1) + '-' + entry.to);
-        job.next++;
-      }
-      Logger.log('apiCheckDrivePdfContinue: Etappe ab Paket ' + (inf.next + 1) + ' (' + inf.size + ' Paket(e)) am Zeitlimit abgebrochen -> ' +
-        (inf.size > 1 ? job.batch + ' pro Etappe' : (entry.to - entry.from > 1 ? 'restliche Pakete in Einzelseiten zerlegt' : 'Seite übersprungen')));
-    }
-    // Die letzte Etappe war knapp am Limit -> vorsorglich kleinere Etappen,
-    // bevor Google die nächste Aktion hart abbricht.
-    if (job.lastBatchMs > DRIVE_PDF_BATCH_SLOW_MS && job.batch > 1) {
-      job.batch = Math.ceil(job.batch / 2);
-      Logger.log('apiCheckDrivePdfContinue: letzte Etappe ' + Math.round(job.lastBatchMs / 100) / 10 + ' s -> ' + job.batch + ' Paket(e) pro Etappe');
-    }
-    // Pakete NICHT alle vorab laden (das kostete bei großen PDFs ~20 s pro Klick):
-    // _drivePdfWork_ holt pro Etappe nur die benötigten Bytes per Range-Anfrage.
-    var parts = job.parts.map(function(p) { return { from: p.from, to: p.to, entry: p }; });
-    return _drivePdfWork_(job, parts, started, function(batch) {
-      var need = batch.filter(function(part) { return !part.bytes && part.text === undefined; });
-      var data = _driveReadRanges_(need.map(function(part) {
-        return { file: part.entry.file || job.tmpId, start: part.entry.start, len: part.entry.len };
-      }));
-      need.forEach(function(part, k) { part.bytes = data[k]; });
-    });
+    // Noch in der Vorbereitung (Verkleinern/Aufteilen)? Dann dort weitermachen.
+    if (job.phase && job.phase !== 'check') return _drivePdfAdvance_(job, started);
+    return _drivePdfCheckStep_(job, started);
   } catch (err) {
     return _drivePdfErrorResponse_(err);
   }
+}
+
+// Eine Prüf-Etappe (Gemini) für einen fertig vorbereiteten Job.
+function _drivePdfCheckStep_(job, started) {
+  // Nur für das (seltene) Zerlegen in Einzelseiten wird ein Paket als Text gebraucht.
+  function partText(p) {
+    return _pdfBytesToBinaryString_(_driveReadRanges_([{ file: p.file || job.tmpId, start: p.start, len: p.len }])[0]);
+  }
+  // Die letzte Etappe ist nicht fertig geworden (Zeitlimit) -> kleiner werden:
+  // erst weniger Pakete pro Etappe, dann das Paket in Einzelseiten zerlegen,
+  // und eine einzelne Seite, die selbst dafür zu lange braucht, überspringen.
+  if (job.inflight) {
+    var inf = job.inflight;
+    job.inflight = null;
+    job.lastBatchMs = 0;
+    var entry = job.parts[inf.next];
+    if (inf.size > 1) {
+      job.batch = Math.max(1, Math.floor(inf.size / 2));
+    } else if (entry.to - entry.from > 1) {
+      // Schon ein einzelnes Paket ist zu langsam: alle restlichen Pakete in
+      // Einzelseiten zerlegen (von hinten, damit die Indizes stimmen).
+      for (var k = job.parts.length - 1; k >= inf.next; k--) {
+        if (job.parts[k].to - job.parts[k].from > 1) _drivePdfSplitEntry_(job, k, partText(job.parts[k]));
+      }
+    } else {
+      job.failedRanges.push((entry.from + 1) + '-' + entry.to);
+      job.next++;
+    }
+    Logger.log('apiCheckDrivePdfContinue: Etappe ab Paket ' + (inf.next + 1) + ' (' + inf.size + ' Paket(e)) am Zeitlimit abgebrochen -> ' +
+      (inf.size > 1 ? job.batch + ' pro Etappe' : (entry.to - entry.from > 1 ? 'restliche Pakete in Einzelseiten zerlegt' : 'Seite übersprungen')));
+  }
+  // Die letzte Etappe war knapp am Limit -> vorsorglich kleinere Etappen,
+  // bevor Google die nächste Aktion hart abbricht.
+  if (job.lastBatchMs > DRIVE_PDF_BATCH_SLOW_MS && job.batch > 1) {
+    job.batch = Math.ceil(job.batch / 2);
+    Logger.log('apiCheckDrivePdfContinue: letzte Etappe ' + Math.round(job.lastBatchMs / 100) / 10 + ' s -> ' + job.batch + ' Paket(e) pro Etappe');
+  }
+  // Pakete NICHT alle vorab laden (das kostete bei großen PDFs ~20 s pro Klick):
+  // _drivePdfWork_ holt pro Etappe nur die benötigten Bytes per Range-Anfrage.
+  var parts = job.parts.map(function(p) { return { from: p.from, to: p.to, entry: p }; });
+  return _drivePdfWork_(job, parts, started, function(batch) {
+    var need = batch.filter(function(part) { return !part.bytes && part.text === undefined; });
+    var data = _driveReadRanges_(need.map(function(part) {
+      return { file: part.entry.file || job.tmpId, start: part.entry.start, len: part.entry.len };
+    }));
+    need.forEach(function(part, k) { part.bytes = data[k]; });
+  });
 }
 
 // ─── ETAPPENWEISE PRÜFUNG ─────────────────────────────────────────────────
@@ -347,7 +322,7 @@ function _drivePdfWork_(job, parts, started, loadBatch) {
     batchesHere++;
 
     var batch = parts.slice(job.next, job.next + job.batch);
-    if (job.tmpId) {
+    if (job.stateId) {
       // Vor dem Start vermerken: bricht diese Etappe am Zeitlimit ab, nimmt der
       // nächste "Continue"-Klick automatisch kleinere Etappen.
       job.inflight = { next: job.next, size: batch.length };
@@ -529,43 +504,6 @@ function _driveGeminiConfig_() {
 }
 
 /**
- * Lädt die PDF und baut sie neu auf (PdfShrink.gs). Bis DRIVE_PDF_MAX_BYTES
- * bleibt alles inkl. aller Bilder erhalten; größere Dateien werden stückweise
- * per Range-Anfrage gelesen und behalten Bilder nur bis DRIVE_PDF_IMAGE_BUDGET
- * (kleine zuerst). Liefert { fileSize, model | text, imagesRemoved, imagesKept }.
- */
-function _drivePdfPrepare_(fileId, fileName) {
-  var file = DriveApp.getFileById(fileId);
-  var fileSize = file.getSize();
-  if (fileSize > DRIVE_PDF_SHRINK_MAX_BYTES) {
-    throw new Error('The PDF file is too large (' + _driveMb_(fileSize) + ' MB, limit: ' + _driveMb_(DRIVE_PDF_SHRINK_MAX_BYTES) + ' MB). Please split it, e.g. into the pages of one language.');
-  }
-  if (fileSize <= DRIVE_PDF_MAX_BYTES) {
-    var text = _pdfBytesToBinaryString_(file.getBlob().getBytes());
-    try {
-      var m = pdfRebuild_(_pdfStringReader_(text));
-      return { fileSize: fileSize, model: m, imagesRemoved: 0, imagesKept: m.imagesKept };
-    } catch (e) {
-      // Ungewöhnlich aufgebaute PDF: unverändert und am Stück an Gemini schicken (wie früher).
-      Logger.log('_drivePdfPrepare_: Neuaufbau fehlgeschlagen, sende Original: ' + e.message);
-      return { fileSize: fileSize, text: text, imagesRemoved: 0, imagesKept: 0 };
-    }
-  }
-
-  var model;
-  try {
-    model = pdfRebuild_(_pdfDriveRangeReader_(fileId, fileSize), { imageBudget: DRIVE_PDF_IMAGE_BUDGET });
-  } catch (err) {
-    Logger.log('_drivePdfPrepare_: Verkleinern fehlgeschlagen: ' + (err.message || err));
-    throw new Error('The PDF file is too large (' + _driveMb_(fileSize) + ' MB) and could not be reduced automatically. Please reduce its size (e.g. Acrobat "Reduce File Size") or split it.');
-  }
-  logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_SHRUNK', fileName + ' - ' + _driveMb_(fileSize) + ' MB -> ' + _driveMb_(model.text.length) +
-    ' MB, images kept ' + model.imagesKept + ', removed ' + model.imagesRemoved + ', downloaded ' + _driveMb_(model.bytesRead) + ' MB');
-  return { fileSize: fileSize, model: model, imagesRemoved: model.imagesRemoved, imagesKept: model.imagesKept };
-}
-
-
-/**
  * Baut die interaktive Ergebnis-Card: Zusammenfassung oben, darunter pro Fund
  * eine Mini-"Issue-Card" mit Original -> Vorschlag, Erklärung.
  *
@@ -648,36 +586,6 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
 // CardService-TextParagraph unterstützt ein kleines HTML-Subset (b/s/i/...),
 // daher hier - analog zu esc() in den Sidebar-HTMLs - Nutzertext/KI-Text vor der
 // Einbettung escapen, statt rohen Text in setText() zu interpolieren.
-// Teilt die vorbereitete PDF in kompakte Seitenpakete auf, die parallel an
-// Gemini gehen (jedes Paket enthält nur Schriften/Bilder seiner Seiten).
-// Liefert [{from, to, text}] (Seiten 0-basiert, to exklusiv). Kleine PDFs oder
-// PDFs, die sich nicht aufteilen lassen, gehen als ein Paket raus.
-// Kleine Pakete = kurze Antwortzeit pro Gemini-Anfrage (alle laufen parallel).
-var DRIVE_PDF_PAGES_PER_PART = 4;
-var DRIVE_PDF_MAX_PARTS = 60;
-function _drivePdfPlanParts_(prep) {
-  if (!prep.model) return [{ from: 0, to: 0, text: prep.text }];
-  var whole = [{ from: 0, to: 0, text: prep.model.text }];
-  var splitter;
-  try { splitter = pdfPageSplitter_(prep.model); }
-  catch (e) { Logger.log('_drivePdfPlanParts_: nicht aufteilbar: ' + e.message); return whole; }
-  var n = splitter.pageCount;
-  whole[0].to = n;
-  var count = Math.min(Math.ceil(n / DRIVE_PDF_PAGES_PER_PART), DRIVE_PDF_MAX_PARTS);
-  if (count <= 1) return whole;
-  var per = Math.ceil(n / count), parts = [];
-  try {
-    for (var from = 0; from < n; from += per) {
-      var to = Math.min(n, from + per);
-      parts.push({ from: from, to: to, text: splitter.build(from, to) });
-    }
-  } catch (e2) {
-    Logger.log('_drivePdfPlanParts_: Aufteilen fehlgeschlagen: ' + e2.message);
-    return whole;
-  }
-  return parts;
-}
-
 function _driveMb_(bytes) {
   return (Math.round(bytes / (1024 * 1024) * 10) / 10).toString();
 }
