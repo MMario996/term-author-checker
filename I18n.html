@@ -1476,7 +1476,18 @@ var I18N_APPS = {
     'link.open': 'Open',
     'ac.jsonExported': 'Exported to Drive: {name}',
     'search.partialFail': 'Some termbases could not be searched ({n} request(s) failed). Results may be incomplete.',
-    'search.truncated': 'Many matches – only the first results per termbase are shown. Refine your search for more precise results.'
+    'search.truncated': 'Many matches – only the first results per termbase are shown. Refine your search for more precise results.',
+    'ac.restoreDefaults': 'Restore defaults',
+    'ac.restoreDefaultsTitle': 'Reset this rule language to the delivered standard rules (removes all custom rules)',
+    'ac.confirmRestore': 'Restore the delivered standard rules for {lang}?\n\nAll custom rules of this rule language are deleted, and all standard rules get their original on/off state, category and value again. This cannot be undone – tip: use JSON Export first.',
+    'ac.restored': 'Standard rules restored.',
+    'ac.deleteRule': 'Delete rule',
+    'ac.confirmDeleteRule': 'Delete this custom rule?\n\n„{name}“',
+    'ac.deleteSection': 'Delete category',
+    'ac.confirmDeleteSection': 'Delete the category „{name}“?\n\n{n} custom rule(s) will be deleted, {m} standard rule(s) move back to their original category.',
+    'ac.deleted': 'Deleted – click „Save Settings“ to apply.',
+    'ac.importSummary': 'Import: {std} standard rule(s) adjusted, {added} custom rule(s) added, {skipped} skipped.',
+    'ac.stdTagTitle': 'Standard rule – kept here from your import. Deleting the category moves it back to its original category.'
   },
 
   // ── DEUTSCH ─────────────────────────────────────────────────────────────
@@ -1641,7 +1652,18 @@ var I18N_APPS = {
     'link.open': 'Öffnen',
     'ac.jsonExported': 'In Drive exportiert: {name}',
     'search.partialFail': 'Einige Termbanken konnten nicht durchsucht werden ({n} Anfrage(n) fehlgeschlagen). Die Ergebnisse sind eventuell unvollständig.',
-    'search.truncated': 'Sehr viele Treffer – pro Termbank werden nur die ersten Ergebnisse angezeigt. Verfeinere die Suche für genauere Ergebnisse.'
+    'search.truncated': 'Sehr viele Treffer – pro Termbank werden nur die ersten Ergebnisse angezeigt. Verfeinere die Suche für genauere Ergebnisse.',
+    'ac.restoreDefaults': 'Standard wiederherstellen',
+    'ac.restoreDefaultsTitle': 'Diese Regelsprache auf die ausgelieferten Standardregeln zurücksetzen (entfernt alle eigenen Regeln)',
+    'ac.confirmRestore': 'Die ausgelieferten Standardregeln für {lang} wiederherstellen?\n\nAlle eigenen Regeln dieser Regelsprache werden gelöscht, und alle Standardregeln erhalten wieder ihren ursprünglichen Ein/Aus-Zustand, ihre Kategorie und ihren Wert. Das lässt sich nicht rückgängig machen – Tipp: vorher „JSON-Export“.',
+    'ac.restored': 'Standardregeln wiederhergestellt.',
+    'ac.deleteRule': 'Regel löschen',
+    'ac.confirmDeleteRule': 'Diese eigene Regel löschen?\n\n„{name}“',
+    'ac.deleteSection': 'Kategorie löschen',
+    'ac.confirmDeleteSection': 'Die Kategorie „{name}“ löschen?\n\n{n} eigene Regel(n) werden gelöscht, {m} Standardregel(n) kommen zurück in ihre ursprüngliche Kategorie.',
+    'ac.deleted': 'Gelöscht – mit „Einstellungen speichern“ übernehmen.',
+    'ac.importSummary': 'Import: {std} Standardregel(n) angepasst, {added} eigene Regel(n) übernommen, {skipped} übersprungen.',
+    'ac.stdTagTitle': 'Standardregel – per Import hierher übernommen. Beim Löschen der Kategorie kommt sie zurück in ihre ursprüngliche Kategorie.'
   },
 
   // ── FRANÇAIS ────────────────────────────────────────────────────────────
@@ -1806,7 +1828,18 @@ var I18N_APPS = {
     'link.open': 'Ouvrir',
     'ac.jsonExported': 'Exporté vers Drive : {name}',
     'search.partialFail': 'Certaines bases terminologiques n’ont pas pu être interrogées ({n} requête(s) en échec). Les résultats peuvent être incomplets.',
-    'search.truncated': 'Nombreux résultats – seuls les premiers par base terminologique sont affichés. Affinez votre recherche.'
+    'search.truncated': 'Nombreux résultats – seuls les premiers par base terminologique sont affichés. Affinez votre recherche.',
+    'ac.restoreDefaults': 'Restaurer les valeurs par défaut',
+    'ac.restoreDefaultsTitle': 'Réinitialiser cette langue de règles aux règles standard livrées (supprime toutes les règles personnalisées)',
+    'ac.confirmRestore': 'Restaurer les règles standard livrées pour {lang} ?\n\nToutes les règles personnalisées de cette langue sont supprimées et toutes les règles standard retrouvent leur état, leur catégorie et leur valeur d’origine. Action irréversible – conseil : faites d’abord un « Export JSON ».',
+    'ac.restored': 'Règles standard restaurées.',
+    'ac.deleteRule': 'Supprimer la règle',
+    'ac.confirmDeleteRule': 'Supprimer cette règle personnalisée ?\n\n« {name} »',
+    'ac.deleteSection': 'Supprimer la catégorie',
+    'ac.confirmDeleteSection': 'Supprimer la catégorie « {name} » ?\n\n{n} règle(s) personnalisée(s) seront supprimées, {m} règle(s) standard retournent dans leur catégorie d’origine.',
+    'ac.deleted': 'Supprimé – cliquez sur « Enregistrer les paramètres » pour appliquer.',
+    'ac.importSummary': 'Import : {std} règle(s) standard adaptée(s), {added} règle(s) personnalisée(s) ajoutée(s), {skipped} ignorée(s).',
+    'ac.stdTagTitle': 'Règle standard – reprise ici par import. Si la catégorie est supprimée, elle retourne dans sa catégorie d’origine.'
   },
 
   // ── ESPAÑOL ─────────────────────────────────────────────────────────────
@@ -1971,7 +2004,18 @@ var I18N_APPS = {
     'link.open': 'Abrir',
     'ac.jsonExported': 'Exportado a Drive: {name}',
     'search.partialFail': 'No se pudieron consultar algunas bases terminológicas ({n} solicitud(es) fallida(s)). Los resultados pueden estar incompletos.',
-    'search.truncated': 'Muchas coincidencias: solo se muestran los primeros resultados por base terminológica. Afina la búsqueda.'
+    'search.truncated': 'Muchas coincidencias: solo se muestran los primeros resultados por base terminológica. Afina la búsqueda.',
+    'ac.restoreDefaults': 'Restaurar valores predeterminados',
+    'ac.restoreDefaultsTitle': 'Restablecer este idioma de reglas a las reglas estándar (elimina todas las reglas propias)',
+    'ac.confirmRestore': '¿Restaurar las reglas estándar para {lang}?\n\nSe eliminan todas las reglas propias de este idioma y todas las reglas estándar recuperan su estado, categoría y valor originales. No se puede deshacer; consejo: primero «Exportar JSON».',
+    'ac.restored': 'Reglas estándar restauradas.',
+    'ac.deleteRule': 'Eliminar regla',
+    'ac.confirmDeleteRule': '¿Eliminar esta regla propia?\n\n«{name}»',
+    'ac.deleteSection': 'Eliminar categoría',
+    'ac.confirmDeleteSection': '¿Eliminar la categoría «{name}»?\n\nSe eliminarán {n} regla(s) propia(s) y {m} regla(s) estándar volverán a su categoría original.',
+    'ac.deleted': 'Eliminado: haz clic en «Guardar ajustes» para aplicarlo.',
+    'ac.importSummary': 'Importación: {std} regla(s) estándar ajustada(s), {added} regla(s) propia(s) añadida(s), {skipped} omitida(s).',
+    'ac.stdTagTitle': 'Regla estándar – traída aquí por importación. Al eliminar la categoría vuelve a su categoría original.'
   },
 
   // ── ITALIANO ────────────────────────────────────────────────────────────
@@ -2136,7 +2180,18 @@ var I18N_APPS = {
     'link.open': 'Apri',
     'ac.jsonExported': 'Esportato su Drive: {name}',
     'search.partialFail': 'Non è stato possibile cercare in alcune basi terminologiche ({n} richieste non riuscite). I risultati potrebbero essere incompleti.',
-    'search.truncated': 'Molti risultati: vengono mostrati solo i primi per ogni base terminologica. Affina la ricerca.'
+    'search.truncated': 'Molti risultati: vengono mostrati solo i primi per ogni base terminologica. Affina la ricerca.',
+    'ac.restoreDefaults': 'Ripristina predefiniti',
+    'ac.restoreDefaultsTitle': 'Ripristina le regole standard per questa lingua (elimina tutte le regole personalizzate)',
+    'ac.confirmRestore': 'Ripristinare le regole standard per {lang}?\n\nTutte le regole personalizzate di questa lingua vengono eliminate e tutte le regole standard tornano allo stato, alla categoria e al valore originali. Operazione irreversibile – consiglio: prima «Esporta JSON».',
+    'ac.restored': 'Regole standard ripristinate.',
+    'ac.deleteRule': 'Elimina regola',
+    'ac.confirmDeleteRule': 'Eliminare questa regola personalizzata?\n\n«{name}»',
+    'ac.deleteSection': 'Elimina categoria',
+    'ac.confirmDeleteSection': 'Eliminare la categoria «{name}»?\n\nVerranno eliminate {n} regole personalizzate, {m} regole standard tornano alla categoria originale.',
+    'ac.deleted': 'Eliminato – fai clic su «Salva impostazioni» per applicare.',
+    'ac.importSummary': 'Importazione: {std} regole standard adattate, {added} regole personalizzate aggiunte, {skipped} saltate.',
+    'ac.stdTagTitle': 'Regola standard – spostata qui tramite importazione. Eliminando la categoria torna nella sua categoria originale.'
   },
 
   // ── PORTUGUÊS ───────────────────────────────────────────────────────────
@@ -2301,7 +2356,18 @@ var I18N_APPS = {
     'link.open': 'Abrir',
     'ac.jsonExported': 'Exportado para o Drive: {name}',
     'search.partialFail': 'Não foi possível pesquisar algumas bases terminológicas ({n} pedido(s) falhado(s)). Os resultados podem estar incompletos.',
-    'search.truncated': 'Muitos resultados – só são mostrados os primeiros por base terminológica. Refine a pesquisa.'
+    'search.truncated': 'Muitos resultados – só são mostrados os primeiros por base terminológica. Refine a pesquisa.',
+    'ac.restoreDefaults': 'Repor predefinições',
+    'ac.restoreDefaultsTitle': 'Repor as regras padrão deste idioma (remove todas as regras próprias)',
+    'ac.confirmRestore': 'Repor as regras padrão para {lang}?\n\nTodas as regras próprias deste idioma são eliminadas e todas as regras padrão voltam ao estado, categoria e valor originais. Não é possível anular – dica: faça primeiro «Exportar JSON».',
+    'ac.restored': 'Regras padrão repostas.',
+    'ac.deleteRule': 'Eliminar regra',
+    'ac.confirmDeleteRule': 'Eliminar esta regra própria?\n\n«{name}»',
+    'ac.deleteSection': 'Eliminar categoria',
+    'ac.confirmDeleteSection': 'Eliminar a categoria «{name}»?\n\n{n} regra(s) própria(s) serão eliminadas, {m} regra(s) padrão voltam à categoria original.',
+    'ac.deleted': 'Eliminado – clique em «Guardar definições» para aplicar.',
+    'ac.importSummary': 'Importação: {std} regra(s) padrão ajustada(s), {added} regra(s) própria(s) adicionada(s), {skipped} ignorada(s).',
+    'ac.stdTagTitle': 'Regra padrão – trazida para aqui por importação. Ao eliminar a categoria, volta à categoria original.'
   },
 
   // ── 中文 (简体) ──────────────────────────────────────────────────────────
@@ -2463,7 +2529,18 @@ var I18N_APPS = {
     'link.open': '打开',
     'ac.jsonExported': '已导出到 Drive：{name}',
     'search.partialFail': '部分术语库无法搜索（{n} 个请求失败），结果可能不完整。',
-    'search.truncated': '匹配项很多——每个术语库只显示前几条结果。请细化搜索以获得更精确的结果。'
+    'search.truncated': '匹配项很多——每个术语库只显示前几条结果。请细化搜索以获得更精确的结果。',
+    'ac.restoreDefaults': '恢复默认',
+    'ac.restoreDefaultsTitle': '将此规则语言恢复为交付的标准规则（删除所有自定义规则）',
+    'ac.confirmRestore': '要恢复 {lang} 的标准规则吗？\n\n此规则语言的所有自定义规则将被删除，所有标准规则将恢复原始的开关状态、类别和值。此操作无法撤销——建议先“JSON 导出”。',
+    'ac.restored': '已恢复标准规则。',
+    'ac.deleteRule': '删除规则',
+    'ac.confirmDeleteRule': '删除此自定义规则？\n\n“{name}”',
+    'ac.deleteSection': '删除类别',
+    'ac.confirmDeleteSection': '删除类别“{name}”？\n\n将删除 {n} 条自定义规则，{m} 条标准规则将回到原始类别。',
+    'ac.deleted': '已删除——点击“保存设置”以应用。',
+    'ac.importSummary': '导入：调整了 {std} 条标准规则，添加了 {added} 条自定义规则，跳过 {skipped} 条。',
+    'ac.stdTagTitle': '标准规则——通过导入移到此处。删除该类别时会回到原始类别。'
   },
 
   // ── 日本語 ──────────────────────────────────────────────────────────────
@@ -2625,7 +2702,18 @@ var I18N_APPS = {
     'link.open': '開く',
     'ac.jsonExported': 'ドライブにエクスポートしました：{name}',
     'search.partialFail': '一部の用語ベースを検索できませんでした（{n} 件のリクエストが失敗）。結果が不完全な可能性があります。',
-    'search.truncated': '一致件数が多いため、用語ベースごとに最初の結果のみ表示しています。検索語を絞り込んでください。'
+    'search.truncated': '一致件数が多いため、用語ベースごとに最初の結果のみ表示しています。検索語を絞り込んでください。',
+    'ac.restoreDefaults': '既定に戻す',
+    'ac.restoreDefaultsTitle': 'このルール言語を標準ルールに戻す（カスタムルールはすべて削除）',
+    'ac.confirmRestore': '{lang} の標準ルールを復元しますか？\n\nこのルール言語のカスタムルールはすべて削除され、標準ルールはオン/オフ、カテゴリ、値が元に戻ります。元に戻せません。先に「JSON エクスポート」をおすすめします。',
+    'ac.restored': '標準ルールを復元しました。',
+    'ac.deleteRule': 'ルールを削除',
+    'ac.confirmDeleteRule': 'このカスタムルールを削除しますか？\n\n「{name}」',
+    'ac.deleteSection': 'カテゴリを削除',
+    'ac.confirmDeleteSection': 'カテゴリ「{name}」を削除しますか？\n\nカスタムルール {n} 件が削除され、標準ルール {m} 件は元のカテゴリに戻ります。',
+    'ac.deleted': '削除しました。「設定を保存」で反映されます。',
+    'ac.importSummary': 'インポート：標準ルール {std} 件を調整、カスタムルール {added} 件を追加、{skipped} 件をスキップ。',
+    'ac.stdTagTitle': '標準ルール（インポートでここに移動）。カテゴリを削除すると元のカテゴリに戻ります。'
   },
 
   // ── NORSK (bokmål) ──────────────────────────────────────────────────────
@@ -2790,7 +2878,18 @@ var I18N_APPS = {
     'link.open': 'Åpne',
     'ac.jsonExported': 'Eksportert til Disk: {name}',
     'search.partialFail': 'Noen termbaser kunne ikke søkes i ({n} forespørsel(er) mislyktes). Resultatene kan være ufullstendige.',
-    'search.truncated': 'Mange treff – bare de første resultatene per termbase vises. Avgrens søket for mer presise resultater.'
+    'search.truncated': 'Mange treff – bare de første resultatene per termbase vises. Avgrens søket for mer presise resultater.',
+    'ac.restoreDefaults': 'Gjenopprett standard',
+    'ac.restoreDefaultsTitle': 'Tilbakestill dette regelspråket til standardreglene (fjerner alle egne regler)',
+    'ac.confirmRestore': 'Gjenopprette standardreglene for {lang}?\n\nAlle egne regler for dette regelspråket slettes, og alle standardregler får tilbake opprinnelig av/på-status, kategori og verdi. Dette kan ikke angres – tips: bruk «JSON-eksport» først.',
+    'ac.restored': 'Standardregler gjenopprettet.',
+    'ac.deleteRule': 'Slett regel',
+    'ac.confirmDeleteRule': 'Slette denne egne regelen?\n\n«{name}»',
+    'ac.deleteSection': 'Slett kategori',
+    'ac.confirmDeleteSection': 'Slette kategorien «{name}»?\n\n{n} egne regler slettes, {m} standardregler flyttes tilbake til opprinnelig kategori.',
+    'ac.deleted': 'Slettet – klikk «Lagre innstillinger» for å bruke.',
+    'ac.importSummary': 'Import: {std} standardregler justert, {added} egne regler lagt til, {skipped} hoppet over.',
+    'ac.stdTagTitle': 'Standardregel – flyttet hit ved import. Sletter du kategorien, flyttes den tilbake til opprinnelig kategori.'
   },
 
   // ── SVENSKA ─────────────────────────────────────────────────────────────
@@ -2955,7 +3054,18 @@ var I18N_APPS = {
     'link.open': 'Öppna',
     'ac.jsonExported': 'Exporterat till Drive: {name}',
     'search.partialFail': 'Vissa termbaser kunde inte genomsökas ({n} förfrågning(ar) misslyckades). Resultaten kan vara ofullständiga.',
-    'search.truncated': 'Många träffar – bara de första resultaten per termbas visas. Förfina sökningen för mer exakta resultat.'
+    'search.truncated': 'Många träffar – bara de första resultaten per termbas visas. Förfina sökningen för mer exakta resultat.',
+    'ac.restoreDefaults': 'Återställ standard',
+    'ac.restoreDefaultsTitle': 'Återställ detta regelspråk till standardreglerna (tar bort alla egna regler)',
+    'ac.confirmRestore': 'Återställa standardreglerna för {lang}?\n\nAlla egna regler för detta regelspråk tas bort och alla standardregler får tillbaka sitt ursprungliga på/av-läge, sin kategori och sitt värde. Kan inte ångras – tips: gör först ”JSON-export”.',
+    'ac.restored': 'Standardregler återställda.',
+    'ac.deleteRule': 'Ta bort regel',
+    'ac.confirmDeleteRule': 'Ta bort denna egna regel?\n\n”{name}”',
+    'ac.deleteSection': 'Ta bort kategori',
+    'ac.confirmDeleteSection': 'Ta bort kategorin ”{name}”?\n\n{n} egna regler tas bort, {m} standardregler flyttas tillbaka till sin ursprungliga kategori.',
+    'ac.deleted': 'Borttaget – klicka på ”Spara inställningar” för att tillämpa.',
+    'ac.importSummary': 'Import: {std} standardregler justerade, {added} egna regler tillagda, {skipped} överhoppade.',
+    'ac.stdTagTitle': 'Standardregel – flyttad hit via import. Tar du bort kategorin flyttas den tillbaka till sin ursprungliga kategori.'
   },
 
   // ── SUOMI ───────────────────────────────────────────────────────────────
@@ -3120,7 +3230,18 @@ var I18N_APPS = {
     'link.open': 'Avaa',
     'ac.jsonExported': 'Viety Driveen: {name}',
     'search.partialFail': 'Joitakin termipankkeja ei voitu hakea ({n} pyyntöä epäonnistui). Tulokset voivat olla puutteellisia.',
-    'search.truncated': 'Paljon osumia – kustakin termipankista näytetään vain ensimmäiset tulokset. Tarkenna hakua.'
+    'search.truncated': 'Paljon osumia – kustakin termipankista näytetään vain ensimmäiset tulokset. Tarkenna hakua.',
+    'ac.restoreDefaults': 'Palauta oletukset',
+    'ac.restoreDefaultsTitle': 'Palauta tämän sääntökielen vakiosäännöt (poistaa kaikki omat säännöt)',
+    'ac.confirmRestore': 'Palautetaanko kielen {lang} vakiosäännöt?\n\nKaikki tämän sääntökielen omat säännöt poistetaan, ja vakiosäännöt saavat takaisin alkuperäisen tilan, luokan ja arvon. Toimintoa ei voi perua – vinkki: tee ensin ”JSON-vienti”.',
+    'ac.restored': 'Vakiosäännöt palautettu.',
+    'ac.deleteRule': 'Poista sääntö',
+    'ac.confirmDeleteRule': 'Poistetaanko tämä oma sääntö?\n\n”{name}”',
+    'ac.deleteSection': 'Poista luokka',
+    'ac.confirmDeleteSection': 'Poistetaanko luokka ”{name}”?\n\n{n} omaa sääntöä poistetaan, {m} vakiosääntöä palaa alkuperäiseen luokkaansa.',
+    'ac.deleted': 'Poistettu – ota käyttöön valitsemalla ”Tallenna asetukset”.',
+    'ac.importSummary': 'Tuonti: {std} vakiosääntöä mukautettu, {added} omaa sääntöä lisätty, {skipped} ohitettu.',
+    'ac.stdTagTitle': 'Vakiosääntö – siirretty tänne tuonnissa. Kun luokka poistetaan, se palaa alkuperäiseen luokkaansa.'
   },
 
   // ── TÜRKÇE ──────────────────────────────────────────────────────────────
@@ -3282,7 +3403,18 @@ var I18N_APPS = {
     'link.open': 'Aç',
     'ac.jsonExported': 'Drive’a aktarıldı: {name}',
     'search.partialFail': 'Bazı terim bankalarında arama yapılamadı ({n} istek başarısız). Sonuçlar eksik olabilir.',
-    'search.truncated': 'Çok sayıda eşleşme – her terim bankası için yalnızca ilk sonuçlar gösteriliyor. Daha kesin sonuçlar için aramayı daraltın.'
+    'search.truncated': 'Çok sayıda eşleşme – her terim bankası için yalnızca ilk sonuçlar gösteriliyor. Daha kesin sonuçlar için aramayı daraltın.',
+    'ac.restoreDefaults': 'Varsayılanlara dön',
+    'ac.restoreDefaultsTitle': 'Bu kural dilini teslim edilen standart kurallara sıfırla (tüm özel kuralları kaldırır)',
+    'ac.confirmRestore': '{lang} için standart kurallar geri yüklensin mi?\n\nBu kural dilindeki tüm özel kurallar silinir ve tüm standart kurallar özgün açık/kapalı durumuna, kategorisine ve değerine döner. Geri alınamaz – ipucu: önce "JSON dışa aktar".',
+    'ac.restored': 'Standart kurallar geri yüklendi.',
+    'ac.deleteRule': 'Kuralı sil',
+    'ac.confirmDeleteRule': 'Bu özel kural silinsin mi?\n\n"{name}"',
+    'ac.deleteSection': 'Kategoriyi sil',
+    'ac.confirmDeleteSection': '"{name}" kategorisi silinsin mi?\n\n{n} özel kural silinecek, {m} standart kural özgün kategorisine dönecek.',
+    'ac.deleted': 'Silindi – uygulamak için "Ayarları kaydet"e tıklayın.',
+    'ac.importSummary': 'İçe aktarma: {std} standart kural uyarlandı, {added} özel kural eklendi, {skipped} atlandı.',
+    'ac.stdTagTitle': 'Standart kural – içe aktarmayla buraya alındı. Kategori silinirse özgün kategorisine döner.'
   },
 
   // ── MAGYAR ──────────────────────────────────────────────────────────────
@@ -3444,7 +3576,18 @@ var I18N_APPS = {
     'link.open': 'Megnyitás',
     'ac.jsonExported': 'Exportálva a Drive-ba: {name}',
     'search.partialFail': 'Néhány terminológiai adatbázisban nem sikerült keresni ({n} kérés sikertelen). Az eredmények hiányosak lehetnek.',
-    'search.truncated': 'Sok találat – adatbázisonként csak az első eredmények láthatók. Pontosítsa a keresést.'
+    'search.truncated': 'Sok találat – adatbázisonként csak az első eredmények láthatók. Pontosítsa a keresést.',
+    'ac.restoreDefaults': 'Alapértelmezés visszaállítása',
+    'ac.restoreDefaultsTitle': 'A szabálynyelv visszaállítása a gyári szabályokra (minden egyéni szabályt töröl)',
+    'ac.confirmRestore': 'Visszaállítja a gyári szabályokat ({lang})?\n\nA szabálynyelv összes egyéni szabálya törlődik, a gyári szabályok pedig visszakapják eredeti be/ki állapotukat, kategóriájukat és értéküket. Nem vonható vissza – tipp: előbb „JSON-exportálás”.',
+    'ac.restored': 'Gyári szabályok visszaállítva.',
+    'ac.deleteRule': 'Szabály törlése',
+    'ac.confirmDeleteRule': 'Törli ezt az egyéni szabályt?\n\n„{name}”',
+    'ac.deleteSection': 'Kategória törlése',
+    'ac.confirmDeleteSection': 'Törli a(z) „{name}” kategóriát?\n\n{n} egyéni szabály törlődik, {m} gyári szabály visszakerül az eredeti kategóriájába.',
+    'ac.deleted': 'Törölve – az alkalmazáshoz kattintson a „Beállítások mentése” gombra.',
+    'ac.importSummary': 'Importálás: {std} gyári szabály módosítva, {added} egyéni szabály hozzáadva, {skipped} kihagyva.',
+    'ac.stdTagTitle': 'Gyári szabály – importálással került ide. A kategória törlésekor visszakerül az eredeti kategóriájába.'
   },
 
   // ── HRVATSKI ────────────────────────────────────────────────────────────
@@ -3609,7 +3752,18 @@ var I18N_APPS = {
     'link.open': 'Otvori',
     'ac.jsonExported': 'Izvezeno na Drive: {name}',
     'search.partialFail': 'Neke terminološke baze nije bilo moguće pretražiti ({n} zahtjev(a) nije uspjelo). Rezultati možda nisu potpuni.',
-    'search.truncated': 'Mnogo rezultata – za svaku bazu prikazuju se samo prvi rezultati. Suzite pretragu za preciznije rezultate.'
+    'search.truncated': 'Mnogo rezultata – za svaku bazu prikazuju se samo prvi rezultati. Suzite pretragu za preciznije rezultate.',
+    'ac.restoreDefaults': 'Vrati zadano',
+    'ac.restoreDefaultsTitle': 'Vrati ovaj jezik pravila na isporučena standardna pravila (uklanja sva vlastita pravila)',
+    'ac.confirmRestore': 'Vratiti standardna pravila za {lang}?\n\nSva vlastita pravila ovog jezika bit će izbrisana, a standardna pravila vraćaju izvorno stanje uključeno/isključeno, kategoriju i vrijednost. Ne može se poništiti – savjet: najprije „JSON izvoz”.',
+    'ac.restored': 'Standardna pravila vraćena.',
+    'ac.deleteRule': 'Izbriši pravilo',
+    'ac.confirmDeleteRule': 'Izbrisati ovo vlastito pravilo?\n\n„{name}”',
+    'ac.deleteSection': 'Izbriši kategoriju',
+    'ac.confirmDeleteSection': 'Izbrisati kategoriju „{name}”?\n\n{n} vlastitih pravila bit će izbrisano, {m} standardnih pravila vraća se u izvornu kategoriju.',
+    'ac.deleted': 'Izbrisano – kliknite „Spremi postavke” za primjenu.',
+    'ac.importSummary': 'Uvoz: prilagođeno {std} standardnih pravila, dodano {added} vlastitih pravila, preskočeno {skipped}.',
+    'ac.stdTagTitle': 'Standardno pravilo – premješteno ovamo uvozom. Brisanjem kategorije vraća se u izvornu kategoriju.'
   },
 
   // ── ΕΛΛΗΝΙΚΑ ───────────────────────────────────────────────────────────
@@ -3774,7 +3928,18 @@ var I18N_APPS = {
     'link.open': 'Άνοιγμα',
     'ac.jsonExported': 'Εξήχθη στο Drive: {name}',
     'search.partialFail': 'Ορισμένες βάσεις ορολογίας δεν ήταν δυνατό να αναζητηθούν ({n} αιτήματα απέτυχαν). Τα αποτελέσματα ίσως είναι ελλιπή.',
-    'search.truncated': 'Πολλά αποτελέσματα – εμφανίζονται μόνο τα πρώτα ανά βάση ορολογίας. Περιορίστε την αναζήτηση.'
+    'search.truncated': 'Πολλά αποτελέσματα – εμφανίζονται μόνο τα πρώτα ανά βάση ορολογίας. Περιορίστε την αναζήτηση.',
+    'ac.restoreDefaults': 'Επαναφορά προεπιλογών',
+    'ac.restoreDefaultsTitle': 'Επαναφορά αυτής της γλώσσας κανόνων στους τυπικούς κανόνες (αφαιρεί όλους τους δικούς σας κανόνες)',
+    'ac.confirmRestore': 'Επαναφορά των τυπικών κανόνων για {lang};\n\nΌλοι οι δικοί σας κανόνες αυτής της γλώσσας διαγράφονται και όλοι οι τυπικοί κανόνες επανέρχονται σε αρχική κατάσταση, κατηγορία και τιμή. Δεν αναιρείται – συμβουλή: πρώτα «Εξαγωγή JSON».',
+    'ac.restored': 'Οι τυπικοί κανόνες επανήλθαν.',
+    'ac.deleteRule': 'Διαγραφή κανόνα',
+    'ac.confirmDeleteRule': 'Διαγραφή αυτού του κανόνα;\n\n«{name}»',
+    'ac.deleteSection': 'Διαγραφή κατηγορίας',
+    'ac.confirmDeleteSection': 'Διαγραφή της κατηγορίας «{name}»;\n\n{n} δικοί σας κανόνες θα διαγραφούν, {m} τυπικοί κανόνες επιστρέφουν στην αρχική τους κατηγορία.',
+    'ac.deleted': 'Διαγράφηκε – πατήστε «Αποθήκευση ρυθμίσεων» για εφαρμογή.',
+    'ac.importSummary': 'Εισαγωγή: {std} τυπικοί κανόνες προσαρμόστηκαν, {added} δικοί σας κανόνες προστέθηκαν, {skipped} παραλείφθηκαν.',
+    'ac.stdTagTitle': 'Τυπικός κανόνας – μεταφέρθηκε εδώ με εισαγωγή. Αν διαγραφεί η κατηγορία, επιστρέφει στην αρχική της κατηγορία.'
   }
 };
 Object.keys(I18N_APPS).forEach(function(lang){
