@@ -6232,37 +6232,77 @@ function _ensureLogSheetHeaders_(sheet) {
 var CUSTOM_RULES_LOG_MAX_PER_CALL = 50;
 var CUSTOM_RULES_MAIL_MAX_PER_HOUR = 5;
 
+// Schluessel fuer die Dubletten-Pruefung im Log: gleiche Sprache, gleicher Name und
+// gleiche Beschreibung = dieselbe Regel (z.B. eine geteilte JSON-Datei, die ein
+// Kollege erneut importiert). Geaenderte Beschreibung = neue Zeile.
+function _customRuleLogKey_(language, name, description) {
+  return [language, name, description].map(function(v) {
+    return String(v == null ? '' : v).replace(/^'/, '').replace(/\s+/g, ' ').trim();
+  }).join('|');
+}
+
 function apiLogNewCustomRules(newRules, language) {
-  if (!Array.isArray(newRules) || !newRules.length) return { success: true, logged: 0 };
+  if (!Array.isArray(newRules) || !newRules.length) return { success: true, logged: 0, duplicates: 0 };
   language = language || "de";
   // Nur echte Custom-Regeln und nur eine begrenzte Anzahl pro Aufruf - die Funktion
   // ist fuer jeden Nutzer aufrufbar (auch direkt aus der Browser-Konsole).
   newRules = newRules.filter(function(r) {
     return r && typeof r.Name === "string" && r.Name.indexOf("CUSTOM_") === 0;
   }).slice(0, CUSTOM_RULES_LOG_MAX_PER_CALL);
-  if (!newRules.length) return { success: true, logged: 0 };
+  if (!newRules.length) return { success: true, logged: 0, duplicates: 0 };
 
   var props = PropertiesService.getScriptProperties();
   var sheetId = (props.getProperty('CUSTOM_RULES_LOG_SHEET_ID') || '').trim();
   var caller = getUserEmail_();
   var timestamp = new Date();
+  var result = { success: true, logged: 0, duplicates: 0, error: '' };
+  if (!sheetId) {
+    result.error = 'No Custom Rules Log Sheet configured (Admin Settings).';
+    return result;
+  }
 
-  if (sheetId) {
-    try {
-      var ss = SpreadsheetApp.openById(sheetId);
-      var sheet = _getOrCreateNamedSheet_(ss, 'Custom');
-      _ensureLogSheetHeaders_(sheet);
+  var lock = LockService.getScriptLock();
+  var locked = false;
+  try {
+    locked = lock.tryLock(15000);
+    var ss = SpreadsheetApp.openById(sheetId);
+    var sheet = _getOrCreateNamedSheet_(ss, 'Custom');
+    _ensureLogSheetHeaders_(sheet);
+    // Bereits protokollierte Regeln (Language = Spalte 3, Name = 8, Description = 9).
+    var seen = {};
+    var last = sheet.getLastRow();
+    if (last > 1) {
+      sheet.getRange(2, 3, last - 1, 7).getValues().forEach(function(row) {
+        seen[_customRuleLogKey_(row[0], row[5], row[6])] = true;
+      });
+    }
+    var fresh = newRules.filter(function(r) {
+      var key = _customRuleLogKey_(language, r.Name, r.Description);
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+    result.duplicates = newRules.length - fresh.length;
+    newRules = fresh;
+    if (newRules.length) {
       var rows = newRules.map(function(r) {
         return [
-          timestamp, caller, language, "Custom", r.Section || '', r.Subsection || '',
+          timestamp, caller, language, r.Origin === 'Import' ? 'Import' : 'Custom', r.Section || '', r.Subsection || '',
           r.Type || '', r.Name || '', r.Description || '', r.CustomPrompt || '', r.ReferenceUrl || ''
         ].map(_sheetSafe_); // Schutz vor Formel-Injection im zentralen Log-Sheet
       });
       sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, CUSTOM_RULES_LOG_HEADERS.length).setValues(rows);
-    } catch(e) {
-      console.warn("Could not write to the central rules log: " + e.message);
+      result.logged = rows.length;
     }
+  } catch(e) {
+    // Frueher nur console.warn - der Nutzer merkte nicht, dass nichts im Log ankam.
+    console.warn("Could not write to the central rules log: " + e.message);
+    result.error = e.message;
+    return result;
+  } finally {
+    if (locked) lock.releaseLock();
   }
+  if (!newRules.length) return result;
 
   try {
     var admins = _parseAdminEmails_(props.getProperty('ADMIN_EMAILS'));
@@ -6285,7 +6325,7 @@ function apiLogNewCustomRules(newRules, language) {
     console.warn("Could not send admin notification: " + e.message);
   }
 
-  return { success: true, logged: newRules.length };
+  return result;
 }
 
 /**

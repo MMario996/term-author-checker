@@ -489,6 +489,7 @@ var _loadingInterval = null;
 var _currentIssues = [];
 var _currentRulesData = [];
 var _pendingNewCustomRules = [];
+var _importedRules = []; // nur für die Spalte „Origin“ im Log
 var _scopeRef = null;      // geprüfter Bereich bei "Nur Auswahl" (siehe apiRunAuthorCheck)
 var _rulesDirty = false;   // ungespeicherte Änderungen im Regel-Popup
 
@@ -1276,13 +1277,26 @@ function saveRulesSettings() {
       showToast('💾 ' + t('ac.saved'));
       // Erst protokollieren, DANN schließen: früher wurde das Popup vorher
       // geschlossen, der Protokoll-Aufruf ging dabei ggf. verloren.
-      var pending = _pendingNewCustomRules;
+      // Herkunft (Formular/Import) nur fürs Log mitschicken, nicht speichern.
+      var pending = _pendingNewCustomRules.map(function(r) {
+        var c = {}; for (var k in r) c[k] = r[k];
+        c.Origin = _importedRules.indexOf(r) !== -1 ? 'Import' : 'Custom';
+        return c;
+      });
       _pendingNewCustomRules = [];
-      var finish = function(){ setTimeout(closeRulesSettings, 600); };
+      var finish = function(delay){ setTimeout(closeRulesSettings, delay || 600); };
       if (!pending.length) { finish(); return; }
       google.script.run
-        .withSuccessHandler(finish)
-        .withFailureHandler(finish)
+        .withSuccessHandler(function(res) {
+          res = res || {};
+          if (res.error) { showToast('⚠️ ' + t('ac.logError', { msg: res.error })); finish(4000); return; }
+          showToast('📝 ' + t('ac.logged', { n: res.logged || 0, d: res.duplicates || 0 }));
+          finish(2500);
+        })
+        .withFailureHandler(function(err) {
+          showToast('⚠️ ' + t('ac.logError', { msg: err && err.message ? err.message : String(err) }));
+          finish(4000);
+        })
         .apiLogNewCustomRules(pending, _currentRulesLang);
     })
     .withFailureHandler(function(err) {
@@ -1389,7 +1403,7 @@ function importOneRule(imp, SAFE_RULE_NAME, res) {
     AllowedParameterValues: []
   };
   if (idx !== -1) { _currentRulesData[idx] = rule; res.updated++; }
-  else { _currentRulesData.push(rule); _pendingNewCustomRules.push(rule); res.added++; }
+  else { _importedRules.push(rule); _currentRulesData.push(rule); _pendingNewCustomRules.push(rule); res.added++; }
 }
 
 // Was beim Löschen einer Kategorie passiert: eigene Regeln werden gelöscht,
