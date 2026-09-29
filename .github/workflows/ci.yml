@@ -18,3 +18,9 @@ jobs:
           node-version: 20
       - name: Syntax, Manifest und doppelte Funktionen prüfen
         run: node ci/check.js
+      - name: Playwright installieren
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: UI-Test Terminologiesuche (Server-Code + Oberfläche im Browser)
+        run: node ci/ui-smoke.js
