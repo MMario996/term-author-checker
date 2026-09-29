@@ -48,6 +48,8 @@ for (const file of htmlFiles) {
     if (!/^with(SuccessHandler|FailureHandler|UserObject)$/.test(m[1])) addCall(m[1], file);
   }
   for (const m of src.matchAll(/\.\s*(api[A-Za-z0-9_$]*)\s*\(/g)) addCall(m[1], file);
+  // Hilfsfunktion run('apiName', [...]) (z. B. PdfCheck.html)
+  for (const m of src.matchAll(/\brun\(\s*['"](api[A-Za-z0-9_$]*)['"]/g)) addCall(m[1], file);
 }
 for (const file of gsFiles) {
   const src = fs.readFileSync(path.join(root, file), 'utf8');

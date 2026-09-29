@@ -111,14 +111,26 @@ function onDriveItemsSelected(e) {
   });
   section.addWidget(langSelect);
 
-  var action = CardService.newAction()
-    .setFunctionName('apiCheckDrivePdf')
-    .setParameters({ fileId: item.id, fileName: item.title })
-    .setLoadIndicator(CardService.LoadIndicator.SPINNER);
-
+  // "PDF prüfen" öffnet das PDF-Fenster, das alle Etappen automatisch abarbeitet
+  // (DrivePdfWeb.gs). Ohne Web-App-URL: wie bisher schrittweise im Seitenbereich.
+  var params = { fileId: item.id, fileName: item.title };
+  var hasWindow = !!_drivePdfWebAppUrl_();
   section.addWidget(CardService.newTextButton()
     .setText('✅ ' + _ct_('d.checkPdf'))
-    .setOnClickAction(action));
+    .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName(hasWindow ? 'apiOpenDrivePdfWindow' : 'apiCheckDrivePdf')
+      .setParameters(params)
+      .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
+  if (hasWindow) {
+    section.addWidget(CardService.newTextButton()
+      .setText(_ct_('d.checkInPanel'))
+      .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+      .setOnClickAction(CardService.newAction()
+        .setFunctionName('apiCheckDrivePdf')
+        .setParameters(params)
+        .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
+  }
 
   card.addSection(section);
   return card.build();
@@ -154,17 +166,54 @@ function apiCheckDrivePdf(e) {
     try { PropertiesService.getUserProperties().setProperty(DRIVE_PDF_LAST_LANG_KEY, language); } catch (propErr) {}
     _driveGeminiConfig_(); // bricht früh ab, wenn kein API-Key konfiguriert ist
 
-    var fileSize = DriveApp.getFileById(fileId).getSize();
-    if (fileSize > DRIVE_PDF_SHRINK_MAX_BYTES) {
-      throw new Error('The PDF file is too large (' + _driveMb_(fileSize) + ' MB, limit: ' + _driveMb_(DRIVE_PDF_SHRINK_MAX_BYTES) + ' MB). Please split it, e.g. into the pages of one language.');
-    }
-    var job = { fileId: fileId, fileName: fileName, language: language, fileSize: fileSize,
-                imagesRemoved: 0, imagesKept: 0, phase: 'plan', prep: {}, parts: [], extraFiles: [],
-                next: 0, batch: DRIVE_PDF_BATCH_PARTS, lastBatchMs: 0, inflight: null, issues: [], failedRanges: [] };
-    return _drivePdfAdvance_(job, started);
+    var job = _drivePdfNewJob_(fileId, fileName, language);
+    return _drivePdfCardResponse_(job, _drivePdfAdvance_(job, started, _drivePdfLimits_(false)));
   } catch (err) {
     return _drivePdfErrorResponse_(err);
   }
+}
+
+// Neuen Prüf-Job anlegen (gemeinsam für Seitenbereich und PDF-Fenster).
+function _drivePdfNewJob_(fileId, fileName, language) {
+  var file = DriveApp.getFileById(fileId);
+  if (file.getMimeType && file.getMimeType() !== 'application/pdf') {
+    throw new Error(_ct_('d.onlyPdfText', { name: _escapeCardHtml_(fileName || file.getName()) }).replace(/<[^>]+>/g, ''));
+  }
+  var fileSize = file.getSize();
+  if (fileSize > DRIVE_PDF_SHRINK_MAX_BYTES) {
+    throw new Error('The PDF file is too large (' + _driveMb_(fileSize) + ' MB, limit: ' + _driveMb_(DRIVE_PDF_SHRINK_MAX_BYTES) + ' MB). Please split it, e.g. into the pages of one language.');
+  }
+  return { fileId: fileId, fileName: fileName || file.getName(), language: language, fileSize: fileSize,
+           imagesRemoved: 0, imagesKept: 0, phase: 'plan', prep: {}, parts: [], extraFiles: [],
+           next: 0, batch: DRIVE_PDF_BATCH_PARTS, lastBatchMs: 0, inflight: null, issues: [], failedRanges: [] };
+}
+
+/**
+ * Zeitbudgets: Karten-Aktion im Seitenbereich (hartes Limit ~30 s) bzw.
+ * PDF-Fenster (google.script.run, Limit 6 min - dort wird mit Reserve bis ca.
+ * 4 min gearbeitet, danach ruft das Fenster automatisch die nächste Etappe auf).
+ */
+function _drivePdfLimits_(web) {
+  return web
+    ? { web: true, prepStart: 170000, prepLimit: 230000, checkStart: 170000, checkLimit: 240000 }
+    : { web: false, prepStart: DRIVE_PREP_START_BEFORE_MS, prepLimit: DRIVE_PREP_LIMIT_MS,
+        checkStart: DRIVE_PDF_START_BATCH_BEFORE_MS, checkLimit: DRIVE_PDF_ACTION_LIMIT_MS };
+}
+
+// Status aus _drivePdfAdvance_/_drivePdfCheckStep_ in eine Karten-Antwort umsetzen.
+function _drivePdfCardResponse_(job, status) {
+  var card;
+  if (status.done) {
+    card = _buildDrivePdfResultsCard_(status.resultId, job.fileName, job.issues,
+      { fileSize: job.fileSize, imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept, failedRanges: job.failedRanges });
+  } else if (job.phase === 'check') {
+    card = _buildDrivePdfProgressCard_(job, job.parts);
+  } else {
+    card = _buildDrivePdfPrepCard_(job);
+  }
+  return CardService.newActionResponseBuilder()
+    .setNavigation(CardService.newNavigation().updateCard(card))
+    .build();
 }
 
 /**
@@ -176,16 +225,21 @@ function apiCheckDrivePdfContinue(e) {
   var started = Date.now();
   try {
     var job = _drivePdfLoadJob_(e.parameters.stateId);
-    // Noch in der Vorbereitung (Verkleinern/Aufteilen)? Dann dort weitermachen.
-    if (job.phase && job.phase !== 'check') return _drivePdfAdvance_(job, started);
-    return _drivePdfCheckStep_(job, started);
+    return _drivePdfCardResponse_(job, _drivePdfContinue_(job, started, _drivePdfLimits_(false)));
   } catch (err) {
     return _drivePdfErrorResponse_(err);
   }
 }
 
+// Nächste Etappe(n) eines geladenen Jobs: Vorbereitung fortsetzen oder prüfen.
+function _drivePdfContinue_(job, started, lim) {
+  if (job.phase && job.phase !== 'check') return _drivePdfAdvance_(job, started, lim);
+  return _drivePdfCheckStep_(job, started, lim);
+}
+
 // Eine Prüf-Etappe (Gemini) für einen fertig vorbereiteten Job.
-function _drivePdfCheckStep_(job, started) {
+// Liefert { done: false } (Zwischenstand gespeichert) oder { done: true, resultId }.
+function _drivePdfCheckStep_(job, started, lim) {
   // Nur für das (seltene) Zerlegen in Einzelseiten wird ein Paket als Text gebraucht.
   function partText(p) {
     return _pdfBytesToBinaryString_(_driveReadRanges_([{ file: p.file || job.tmpId, start: p.start, len: p.len }])[0]);
@@ -222,7 +276,7 @@ function _drivePdfCheckStep_(job, started) {
   // Pakete NICHT alle vorab laden (das kostete bei großen PDFs ~20 s pro Klick):
   // _drivePdfWork_ holt pro Etappe nur die benötigten Bytes per Range-Anfrage.
   var parts = job.parts.map(function(p) { return { from: p.from, to: p.to, entry: p }; });
-  return _drivePdfWork_(job, parts, started, function(batch) {
+  return _drivePdfWork_(job, parts, started, lim, function(batch) {
     var need = batch.filter(function(part) { return !part.bytes && part.text === undefined; });
     var data = _driveReadRanges_(need.map(function(part) {
       return { file: part.entry.file || job.tmpId, start: part.entry.start, len: part.entry.len };
@@ -306,7 +360,7 @@ function _driveReadRanges_(ranges) {
 }
 
 // loadBatch (optional): lädt die Bytes der Pakete einer Etappe nach (part.bytes).
-function _drivePdfWork_(job, parts, started, loadBatch) {
+function _drivePdfWork_(job, parts, started, lim, loadBatch) {
   var cfg = _driveGeminiConfig_();
   var prompt = _drivePdfPrompt_(job);
   var seen = {};
@@ -317,8 +371,8 @@ function _drivePdfWork_(job, parts, started, loadBatch) {
     // Die erste Etappe einer Aktion läuft immer (dafür ist der Klick da); weitere
     // nur, wenn die Dauer der letzten Etappe noch sicher in die Restzeit passt.
     var elapsed = Date.now() - started;
-    if (batchesHere > 0 && (elapsed > DRIVE_PDF_START_BATCH_BEFORE_MS ||
-        elapsed + job.lastBatchMs * 1.2 > DRIVE_PDF_ACTION_LIMIT_MS)) break;
+    if (batchesHere > 0 && (elapsed > lim.checkStart ||
+        elapsed + job.lastBatchMs * 1.2 > lim.checkLimit)) break;
     batchesHere++;
 
     var batch = parts.slice(job.next, job.next + job.batch);
@@ -349,9 +403,7 @@ function _drivePdfWork_(job, parts, started, loadBatch) {
 
   if (job.next < parts.length) {
     _drivePdfSaveJob_(job);
-    return CardService.newActionResponseBuilder()
-      .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfProgressCard_(job, parts)))
-      .build();
+    return { done: false };
   }
 
   _drivePdfCleanupJob_(job);
@@ -372,10 +424,7 @@ function _drivePdfWork_(job, parts, started, loadBatch) {
   } catch (cacheErr) {
     Logger.log('_drivePdfWork_: result cache failed (result possibly too large): ' + cacheErr);
   }
-  return CardService.newActionResponseBuilder()
-    .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfResultsCard_(resultId, job.fileName, job.issues,
-      { fileSize: job.fileSize, imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept, failedRanges: job.failedRanges })))
-    .build();
+  return { done: true, resultId: resultId };
 }
 
 /** Schickt eine Etappe (mehrere Seitenpakete parallel) an Gemini. */
@@ -799,7 +848,7 @@ function _drivePdfComputeAnnotations_(doc, pages, issues) {
 var DRIVE_UPLOAD_CHUNK = 16 * 1024 * 1024;     // Vielfaches von 256 KiB (Vorgabe von Drive)
 var DRIVE_ACTION_BUDGET_MS = 15000;            // danach Fortsetzung in der nächsten Aktion (Limit 30 s, ein Stück dauert mehrere s)
 
-function _driveLargeAnnotatedStart_(fileId, fileName, issues, started) {
+function _driveLargeAnnotatedStart_(fileId, fileName, issues, started, budgetMs) {
   var fileSize = DriveApp.getFileById(fileId).getSize();
   var reader = _pdfDriveRangeReader_(fileId, fileSize);
   var model = pdfRebuild_(reader, { imageBudget: 0 });
@@ -837,20 +886,21 @@ function _driveLargeAnnotatedStart_(fileId, fileName, issues, started) {
 
   var state = { srcId: fileId, fileName: fileName, fileSize: fileSize, total: total, offset: 0,
                 session: sessionUri, tmpId: tmp.getId(), count: result.count, positioned: result.positioned };
-  return _driveLargeAnnotatedContinue_(state, started);
+  return _driveLargeAnnotatedContinue_(state, started, budgetMs);
 }
 
 /**
  * Lädt weitere Stücke hoch, bis fertig oder das Zeitbudget der Aktion erreicht
  * ist. Liefert { done: true, url } oder { done: false, state }.
  */
-function _driveLargeAnnotatedContinue_(state, started) {
+function _driveLargeAnnotatedContinue_(state, started, budgetMs) {
+  budgetMs = budgetMs || DRIVE_ACTION_BUDGET_MS;
   var token = ScriptApp.getOAuthToken();
   var srcUrl = 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(state.srcId) + '?alt=media&supportsAllDrives=true';
   var appended = null;
 
   while (state.offset < state.total) {
-    if (Date.now() - started > DRIVE_ACTION_BUDGET_MS) return { done: false, state: state };
+    if (Date.now() - started > budgetMs) return { done: false, state: state };
     var end = Math.min(state.total, state.offset + DRIVE_UPLOAD_CHUNK);
     var chunk = [];
     if (state.offset < state.fileSize) {
