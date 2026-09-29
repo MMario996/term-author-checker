@@ -65,6 +65,7 @@ function _drivePdfAdvance_(job, started, lim) {
       _drivePdfPrepUnit_(job, ctx);
       prep.ms = prep.ms || {};
       prep.ms[phase] = Date.now() - t0;
+      _drivePdfTrackTime_(job, phase, prep.ms[phase]);
       units++;
       Logger.log('_drivePdfAdvance_: Einheit "' + phase + '" dauerte ' + Math.round(prep.ms[phase] / 100) / 10 +
         ' s (nach ' + Math.round((Date.now() - started) / 100) / 10 + ' s)');
