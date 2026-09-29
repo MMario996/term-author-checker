@@ -47,9 +47,10 @@ function apiOpenDrivePdfWindow(e) {
   return CardService.newActionResponseBuilder()
     .setOpenLink(CardService.newOpenLink()
       .setUrl(url)
-      .setOpenAs(CardService.OpenAs.OVERLAY)
-      // Nach dem Schliessen laedt der Seitenbereich neu und bietet "Letztes Ergebnis" an.
-      .setOnClose(CardService.OnClose.RELOAD))
+      // Eigener, voller Tab statt kleinem Overlay-Fenster: Verlauf, Filter und
+      // Fehlerliste haben so genug Platz. Das Ergebnis bietet der Seitenbereich
+      // beim naechsten Oeffnen der Datei unter "Letzte Pruefung" an.
+      .setOpenAs(CardService.OpenAs.FULL_SIZE))
     .build();
 }
 
@@ -81,20 +82,24 @@ function _drivePdfWebTexts_() {
 
 // Status fuer die Seite: Fortschritt oder fertiges Ergebnis.
 function _drivePdfWebStatus_(job, status) {
-  var out = { stateId: job.stateId || null, fileName: job.fileName, phase: job.phase, done: !!status.done };
+  var out = { stateId: job.stateId || null, fileName: job.fileName, phase: job.phase, done: !!status.done,
+              timeline: job.tl || {}, checkLog: job.checkLog || [] };
+  var parts = job.parts || [];
+  if (job.phase === 'check' || status.done) {
+    out.pagesTotal = parts.length ? parts[parts.length - 1].to : 0;
+    out.partsTotal = parts.length;
+  }
   if (status.done) {
     out.result = {
       resultId: status.resultId, issues: job.issues,
       info: { fileSize: job.fileSize, imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept,
-              failedRanges: job.failedRanges, annotateSteps: job.fileSize > DRIVE_PDF_ANNOTATE_MAX_BYTES }
+              failedRanges: job.failedRanges, annotateSteps: job.fileSize > DRIVE_PDF_ANNOTATE_MAX_BYTES,
+              pagesTotal: out.pagesTotal, partsTotal: out.partsTotal }
     };
     return out;
   }
   if (job.phase === 'check') {
-    var parts = job.parts || [];
-    out.pagesTotal = parts.length ? parts[parts.length - 1].to : 0;
     out.pagesDone = job.next > 0 ? parts[job.next - 1].to : 0;
-    out.partsTotal = parts.length;
     out.partsDone = job.next;
     out.issuesSoFar = job.issues.length;
     // 0-100 fuer den Balken: Vorbereitung zaehlt 30 %, die Pruefung 70 %.
@@ -179,19 +184,30 @@ function apiPdfWebFileInfo(fileId) {
   return { name: file.getName(), mb: _driveMb_(size), isPdf: file.getMimeType() === 'application/pdf', etaSec: eta };
 }
 
-/** Seite: Ergebnis als Google Sheet. */
-function apiPdfWebExportSheet(resultId) {
+// Export nur fuer die im Fenster angehakten Kategorien (types: z. B.
+// ['terminology', 'style']). Ohne Auswahl (null) alle Fehler.
+function _drivePdfFilterIssues_(issues, types) {
+  if (!Array.isArray(types)) return issues;
+  return (issues || []).filter(function(issue) {
+    var type = (issue.type === 'terminology' || issue.type === 'grammar') ? issue.type : 'style';
+    return types.indexOf(type) !== -1;
+  });
+}
+
+/** Seite: Ergebnis als Google Sheet (optional nur ausgewaehlte Kategorien). */
+function apiPdfWebExportSheet(resultId, types) {
   var data = _loadDrivePdfResult_(resultId);
-  return _buildDrivePdfReportSheet_(data.issues, data.fileName, data.language);
+  return _buildDrivePdfReportSheet_(_drivePdfFilterIssues_(data.issues, types), data.fileName, data.language);
 }
 
 /**
  * Seite: kommentierte PDF erzeugen. Kleine Dateien in einem Aufruf, grosse
  * stueckweise ({ done: false, state, pct } -> apiPdfWebAnnotateContinue).
  */
-function apiPdfWebAnnotate(resultId) {
+function apiPdfWebAnnotate(resultId, types) {
   var started = Date.now();
   var data = _loadDrivePdfResult_(resultId);
+  data.issues = _drivePdfFilterIssues_(data.issues, types);
   try {
     if (data.fileSize > DRIVE_PDF_ANNOTATE_MAX_BYTES) {
       return _drivePdfWebAnnotateStatus_(_driveLargeAnnotatedStart_(data.fileId, data.fileName, data.issues, started, DRIVE_PDF_WEB_ANNOTATE_BUDGET_MS));

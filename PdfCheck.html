@@ -13,13 +13,56 @@
 }
 *,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
 html,body{ background:var(--white); color:var(--ink); font-family:var(--ff-body); font-size:15px; -webkit-font-smoothing:antialiased; }
-#app{ max-width:760px; margin:0 auto; padding:22px 18px 40px; }
+#app{ max-width:1440px; margin:0 auto; padding:22px 24px 40px; }
+.grid{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:18px; align-items:start; }
+.grid.result{ grid-template-columns:minmax(340px,440px) minmax(0,1fr); }
+.grid > * { min-width:0; }
+.sticky{ position:sticky; top:12px; max-height:calc(100vh - 24px); overflow-y:auto; padding-right:4px; }
+@media (max-width: 960px){ .grid, .grid.result{ grid-template-columns:1fr; } .sticky{ position:static; } }
+.chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.chip{ font-size:12.5px; border:1px solid var(--gray-200); background:var(--gray-50); padding:4px 10px; color:var(--gray-600); }
+.chip b{ color:var(--ink); }
+.box-title{ font-family:var(--ff-head); font-size:14px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; margin-bottom:12px; }
+.tl{ width:100%; border-collapse:collapse; font-size:13.5px; }
+.tl td{ padding:7px 6px; border-bottom:1px solid var(--gray-150); vertical-align:middle; }
+.tl td.ic{ width:26px; text-align:center; }
+.tl td.tm{ text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; font-weight:600; }
+.tl td.dt{ color:var(--gray-500); font-size:12.5px; }
+.tl tr.pending td{ color:var(--gray-400); }
+.tl tr.pending td.tm{ font-weight:400; }
+.tl tr.active td{ background:#FFFBE0; }
+.tl tr.sum td{ border-top:2px solid var(--ink); border-bottom:none; font-weight:700; }
+.batches{ margin-top:12px; max-height:230px; overflow-y:auto; border:1px solid var(--gray-150); }
+.batches div{ display:flex; justify-content:space-between; gap:10px; padding:5px 10px; font-size:12.5px; border-bottom:1px solid var(--gray-100); }
+.batches div:nth-child(odd){ background:var(--gray-50); }
+.batches .n{ color:var(--gray-500); }
+.sub-title{ font-size:12px; font-weight:600; color:var(--gray-500); text-transform:uppercase; letter-spacing:.4px; margin-top:14px; }
+.tiles{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:12px; }
+.tile{ border:1px solid var(--gray-150); background:var(--gray-50); padding:10px 12px; }
+.tile .v{ font-family:var(--ff-head); font-size:22px; font-weight:600; line-height:1.1; }
+.tile .l{ font-size:12px; color:var(--gray-500); margin-top:2px; }
+.filters{ display:flex; flex-direction:column; gap:6px; }
+.filter{ display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--gray-200); cursor:pointer; user-select:none; }
+.filter:hover{ background:var(--gray-50); }
+.filter input{ width:18px; height:18px; accent-color:var(--ink); cursor:pointer; }
+.filter .cnt{ margin-left:auto; font-family:var(--ff-head); font-weight:600; font-size:15px; }
+.filter.off{ opacity:.55; }
+.linkbtn{ background:none; border:none; padding:0; font:inherit; font-size:13px; color:var(--ink); text-decoration:underline; cursor:pointer; }
+.sel-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin:10px 0 2px; font-size:13px; color:var(--gray-500); }
+.actions.stack{ flex-direction:column; align-items:stretch; }
+.actions.stack .btn{ justify-content:center; }
+.list-head{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-top:18px; }
+.issue-no{ font-family:var(--ff-head); font-weight:600; color:var(--ink); }
+details.box > summary{ cursor:pointer; list-style:none; }
+details.box > summary::-webkit-details-marker{ display:none; }
+details.box > summary::after{ content:'▾'; float:right; color:var(--gray-400); }
+details.box[open] > summary{ margin-bottom:10px; }
 .brand{ font-family:var(--ff-head); font-size:12px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; color:var(--gray-500); }
 h1{ font-family:var(--ff-head); font-size:22px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; margin:2px 0 4px; }
 .file{ font-size:14px; color:var(--gray-600); word-break:break-word; }
 .file b{ color:var(--ink); }
 .box{ border:1px solid var(--gray-200); padding:18px; margin-top:18px; }
-.steps{ display:flex; align-items:center; gap:10px; list-style:none; margin-bottom:18px; }
+.steps{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; list-style:none; margin-bottom:18px; }
 .steps li{ display:flex; align-items:center; gap:8px; font-family:var(--ff-head); font-size:13px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--gray-400); }
 .steps .dot{ width:24px; height:24px; border-radius:50%; border:2px solid var(--gray-300); display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--gray-400); background:var(--white); }
 .steps li.active{ color:var(--ink); }
@@ -57,6 +100,7 @@ h1{ font-family:var(--ff-head); font-size:22px; font-weight:600; letter-spacing:
 .summary{ font-family:var(--ff-head); font-size:20px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; }
 .note{ margin-top:10px; padding:8px 10px; background:#FFF8D6; border-left:3px solid var(--yellow); font-size:13px; line-height:1.45; }
 .issue{ border:1px solid var(--gray-200); margin-top:10px; }
+#issues .issue:first-child{ margin-top:0; }
 .issue-head{ display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--gray-50); border-bottom:1px solid var(--gray-150); font-size:13px; color:var(--gray-500); }
 .badge{ font-family:var(--ff-head); font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; padding:2px 8px; }
 .badge.terminology{ background:var(--yellow); color:var(--ink); }
@@ -77,25 +121,32 @@ h1{ font-family:var(--ff-head); font-size:22px; font-weight:600; letter-spacing:
   <div class="brand">Kärcher TermCheck</div>
   <h1 id="title"></h1>
   <div class="file" id="fileLine"></div>
+  <div class="chips" id="chips"></div>
 
-  <div class="box" id="progressBox">
-    <ol class="steps">
-      <li id="step1" class="active"><span class="dot">1</span><span id="step1Lbl"></span></li>
-      <li class="line" id="line1" aria-hidden="true"></li>
-      <li id="step2"><span class="dot">2</span><span id="step2Lbl"></span></li>
-      <li class="line" id="line2" aria-hidden="true"></li>
-      <li id="step3"><span class="dot">3</span><span id="step3Lbl"></span></li>
-    </ol>
-    <div class="prog-head">
-      <div class="pct" id="pctText">0 %</div>
-      <div class="eta">
-        <div class="eta-main" id="etaText" aria-live="polite"></div>
-        <div class="eta-sub" id="elapsedText"></div>
+  <div class="grid" id="progressView">
+    <div class="box" id="progressBox">
+      <ol class="steps">
+        <li id="step1" class="active"><span class="dot">1</span><span id="step1Lbl"></span></li>
+        <li class="line" id="line1" aria-hidden="true"></li>
+        <li id="step2"><span class="dot">2</span><span id="step2Lbl"></span></li>
+        <li class="line" id="line2" aria-hidden="true"></li>
+        <li id="step3"><span class="dot">3</span><span id="step3Lbl"></span></li>
+      </ol>
+      <div class="prog-head">
+        <div class="pct" id="pctText">0 %</div>
+        <div class="eta">
+          <div class="eta-main" id="etaText" aria-live="polite"></div>
+          <div class="eta-sub" id="elapsedText"></div>
+        </div>
       </div>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="bar"><div id="barFill"></div></div>
+      <div class="status" id="statusText"><span class="spinner"></span><span id="statusMsg"></span></div>
+      <div class="hint" id="keepOpen"></div>
     </div>
-    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="bar"><div id="barFill"></div></div>
-    <div class="status" id="statusText"><span class="spinner"></span><span id="statusMsg"></span></div>
-    <div class="hint" id="keepOpen"></div>
+    <div class="box" id="timelineBox">
+      <div class="box-title" id="tlTitle"></div>
+      <div id="timeline"></div>
+    </div>
   </div>
 
   <div class="box error hidden" id="errorBox">
@@ -103,21 +154,38 @@ h1{ font-family:var(--ff-head); font-size:22px; font-weight:600; letter-spacing:
     <div class="actions"><button class="btn primary" id="retryBtn"></button></div>
   </div>
 
-  <div class="hidden" id="resultBox">
-    <div class="box">
-      <div class="summary" id="summary"></div>
-      <div id="notes"></div>
-      <div class="actions" id="resultActions">
-        <button class="btn primary" id="annotBtn"></button>
-        <button class="btn" id="sheetBtn"></button>
+  <div class="grid result hidden" id="resultBox" style="margin-top:18px;">
+    <div class="sticky">
+      <div class="box" style="margin-top:0;">
+        <div class="summary" id="summary"></div>
+        <div class="tiles" id="tiles"></div>
+        <div id="notes"></div>
       </div>
-      <div class="actions" id="annotOut"></div>
-      <div class="small" id="annotHelp"></div>
+      <div class="box" id="exportBox">
+        <div class="box-title" id="filterTitle"></div>
+        <div class="filters" id="filters"></div>
+        <div class="sel-row">
+          <span id="selCount"></span>
+          <span><button class="linkbtn" id="selAll"></button> · <button class="linkbtn" id="selNone"></button></span>
+        </div>
+        <div class="actions stack" id="resultActions">
+          <button class="btn primary" id="annotBtn"></button>
+          <button class="btn" id="sheetBtn"></button>
+        </div>
+        <div class="actions stack" id="annotOut"></div>
+        <div class="small" id="annotHelp"></div>
+      </div>
+      <details class="box" id="timelineResult">
+        <summary class="box-title" id="tlTitle2" style="margin-bottom:0;"></summary>
+        <div id="timeline2"></div>
+      </details>
+      <div class="actions" style="margin-top:18px;">
+        <button class="btn" id="closeBtn"></button>
+      </div>
+      <div class="small" id="closeHint"></div>
     </div>
-    <div id="issues"></div>
-    <div class="actions" style="margin-top:22px;">
-      <button class="btn" id="closeBtn"></button>
-      <span class="small" id="closeHint" style="margin:0;"></span>
+    <div>
+      <div id="issues"></div>
     </div>
   </div>
 </div>
@@ -145,39 +213,62 @@ function run(fn, args, ok, fail){
   r[fn].apply(r, args);
 }
 
+var TYPES = ['terminology', 'grammar', 'style'];
+var PHASES = ['plan', 'fetch', 'full', 'assemble', 'split', 'check'];
+var _info = {}, _selected = {}, _lastSt = null, _lastStAt = 0, _finalTimes = null;
+
 document.addEventListener('DOMContentLoaded', function(){
   $('title').textContent = '📄 ' + (T['w.title'] || 'PDF check');
   $('keepOpen').innerHTML = '⏳ ' + t('w.keepOpen');
   $('retryBtn').textContent = '🔄 ' + (T['w.retry'] || 'Try again');
-  $('annotBtn').textContent = '🖍️ ' + T['d.openAnnotated'];
-  $('sheetBtn').textContent = '📊 ' + T['d.exportSheet'];
   $('closeBtn').textContent = T['w.close'];
+  $('tlTitle').textContent = '⏱️ ' + T['w.timeline'];
+  $('tlTitle2').textContent = '⏱️ ' + T['w.timeline'];
+  $('filterTitle').textContent = '🗂️ ' + T['w.filterTitle'];
+  $('selAll').textContent = T['w.all'];
+  $('selNone').textContent = T['w.none'];
   $('retryBtn').onclick = function(){
-    _retries = 0; show('errorBox', false); show('progressBox', true);
+    _retries = 0; show('errorBox', false); show('progressView', true);
     if (!_ticker) _ticker = setInterval(tick, 1000);
     _stateId ? next() : start();
   };
   $('sheetBtn').onclick = exportSheet;
   $('annotBtn').onclick = annotate;
   $('closeBtn').onclick = closeWindow;
+  $('selAll').onclick = function(){ setAll(true); };
+  $('selNone').onclick = function(){ setAll(false); };
   $('step1Lbl').textContent = T['w.stepPrep'];
   $('step2Lbl').textContent = T['w.stepCheck'];
   $('step3Lbl').textContent = T['w.stepDone'];
   setStatus(T['w.working']);
   if (!FILE_ID) { showError('No file selected.'); return; }
   _t0 = Date.now();
+  renderChips();
+  renderTimeline();
   tick();
   _ticker = setInterval(tick, 1000);
   run('apiPdfWebFileInfo', [FILE_ID], function(info){
     _fileName = info.name;
+    _info.mb = info.mb;
     if (_eta === null && info.etaSec) setEta(info.etaSec);
-    $('fileLine').innerHTML = '<b>' + esc(info.name) + '</b> · ' + esc(info.mb) + ' MB · ' + esc(T['d.language']) + ': ' + esc(CHECK_LANG_NAME);
+    $('fileLine').innerHTML = '<b>' + esc(info.name) + '</b>';
+    renderChips();
   }, function(){});
   start();
 });
 
 function setStatus(html){
   $('statusMsg').innerHTML = html;
+}
+
+// Kennzahlen oben (Dateigröße, Sprache, Seiten, Pakete) - füllen sich nach und nach.
+function renderChips(){
+  var c = [];
+  if (_info.mb) c.push([T['w.statSize'], _info.mb + ' MB']);
+  c.push([T['d.language'], CHECK_LANG_NAME]);
+  if (_info.pages) c.push([T['w.statPages'], _info.pages]);
+  if (_info.parts) c.push([T['w.statParts'], _info.parts]);
+  $('chips').innerHTML = c.map(function(x){ return '<span class="chip">' + esc(x[0]) + ': <b>' + esc(x[1]) + '</b></span>'; }).join('');
 }
 
 // ─── Fortschritt und Restzeit ───────────────────────────────────────────
@@ -190,10 +281,15 @@ function fmtTime(sec){
   var m = Math.floor(sec / 60), s = sec % 60;
   return m + ':' + (s < 10 ? '0' : '') + s + ' min';
 }
+function fmtShort(ms){
+  var sec = Math.max(0, Math.round(ms / 1000));
+  return sec < 60 ? sec + ' s' : fmtTime(sec);
+}
 function setEta(sec){ _eta = sec; _etaAt = Date.now(); tick(); }
 function tick(){
   var elapsed = (Date.now() - _t0) / 1000;
   $('elapsedText').innerHTML = t('w.elapsed', { t: fmtTime(elapsed) });
+  renderTimeline();
   if (_eta === null) { $('etaText').textContent = T['w.estimating']; return; }
   var rem = _eta - (Date.now() - _etaAt) / 1000;
   if (rem <= 3) { $('etaText').textContent = T['w.almost']; rem = 3; }
@@ -213,6 +309,53 @@ function setStep(n){
   }
 }
 
+// ─── Verlauf & Ladezeiten ───────────────────────────────────────────────
+// Gemessene Dauer je Phase vom Server (timeline), die laufende Phase zählt live
+// weiter. "Übertragung & Zwischenspeichern" = Gesamtzeit minus gemessene Phasen.
+function timelineHtml(st, final){
+  var tl = (st && st.timeline) || {}, cur = st ? (st.done ? '' : st.phase) : 'plan';
+  var curIdx = cur ? PHASES.indexOf(cur) : PHASES.length;
+  var liveMs = st && !final ? Date.now() - _lastStAt : 0;
+  var total = final ? _duration * 1000 : Date.now() - _t0, sum = 0, rows = '';
+  PHASES.forEach(function(ph, i){
+    var e = tl[ph], ms = e ? e.ms : 0, state;
+    if (ph === cur && !final) { state = 'active'; ms += liveMs; }
+    else if (e) state = 'done';
+    else if (i < curIdx) return; // übersprungen (z. B. kleine PDF ohne Verkleinern)
+    else state = 'pending';
+    if (final && !e) return;
+    sum += ms;
+    var detail = '';
+    if (ph === 'check' && st && st.pagesTotal) detail = (st.done ? st.pagesTotal : (st.pagesDone || 0)) + ' / ' + st.pagesTotal + ' ' + T['w.statPages'];
+    else if (ph === 'split' && _info.parts) detail = _info.parts + ' ' + T['w.statParts'];
+    else if (e && e.n > 1 && ph !== 'check') detail = e.n + '×';
+    var icon = state === 'done' ? '✅' : (state === 'active' ? '<span class="spinner" style="margin:0"></span>' : '○');
+    rows += '<tr class="' + state + '"><td class="ic">' + icon + '</td><td>' + esc(T['w.ph.' + ph]) +
+      '</td><td class="dt">' + esc(detail) + '</td><td class="tm">' + (state === 'pending' ? '–' : fmtShort(ms)) + '</td></tr>';
+  });
+  total = Math.max(total, sum);
+  var io = Math.max(0, total - sum);
+  if (st && io >= 1000) rows += '<tr' + (final ? '' : ' class="pending"') + '><td class="ic">🔁</td><td>' + esc(T['w.ph.io']) + '</td><td class="dt"></td><td class="tm">' + fmtShort(io) + '</td></tr>';
+  rows += '<tr class="sum"><td class="ic">Σ</td><td>' + esc(T['w.total']) + '</td><td class="dt"></td><td class="tm">' + fmtShort(total) + '</td></tr>';
+  var html = '<table class="tl">' + rows + '</table>';
+  var log = (st && st.checkLog) || [];
+  if (log.length) {
+    html += '<div class="sub-title">🔎 ' + esc(T['w.checkBatches']) + ' (' + log.length + ')</div><div class="batches">' +
+      log.slice().reverse().map(function(b){
+        return '<div><span>' + t('w.batchLine', { from: b.from, to: b.to, n: b.n }) + '</span><span class="n">' + fmtShort(b.ms) + '</span></div>';
+      }).join('') + '</div>';
+  }
+  return html;
+}
+function renderTimeline(){
+  if (_finalTimes) return;
+  // Nur neu zeichnen, wenn der Nutzer nicht gerade in der Etappen-Liste scrollt.
+  var box = document.querySelector('#timeline .batches'), top = box ? box.scrollTop : 0;
+  $('timeline').innerHTML = timelineHtml(_lastSt, false);
+  box = document.querySelector('#timeline .batches');
+  if (box) box.scrollTop = top;
+}
+
 function start(){
   run('apiPdfWebStart', [FILE_ID, CHECK_LANG], onStatus, onFail);
 }
@@ -224,6 +367,8 @@ function next(){
 function onStatus(st){
   _retries = 0;
   if (st.stateId) _stateId = st.stateId;
+  _lastSt = st; _lastStAt = Date.now();
+  if (st.pagesTotal) { _info.pages = st.pagesTotal; _info.parts = st.partsTotal; renderChips(); }
   if (st.done) { finishProgress(); showResult(st.result); return; }
   setStep(st.step || 1);
   if (typeof st.etaSec === 'number') setEta(st.etaSec);
@@ -234,6 +379,7 @@ function onStatus(st){
   } else {
     setStatus(t('d.prepProgress', { mb: st.fileMb, pct: Math.round(st.pct / 30 * 100) }));
   }
+  renderTimeline();
   next();
 }
 
@@ -260,32 +406,89 @@ var _duration = 0;
 
 function showError(msg){
   if (_ticker) { clearInterval(_ticker); _ticker = null; }
-  show('progressBox', false);
+  show('progressView', false);
   show('errorBox', true);
   $('errorText').innerHTML = '⚠️ <b>' + esc(T['d.error']) + ':</b> ' + esc(msg);
 }
 
+function typeOf(it){ return (it.type === 'terminology' || it.type === 'grammar') ? it.type : 'style'; }
+
 function showResult(res){
   _result = res;
-  show('progressBox', false);
+  show('progressView', false);
   show('resultBox', true);
   var issues = res.issues || [], info = res.info || {};
+  if (info.pagesTotal) { _info.pages = info.pagesTotal; _info.parts = info.partsTotal; renderChips(); }
   $('summary').textContent = (issues.length ? '🔎 ' : '🎉 ') + t('d.issuesFound', { n: issues.length }).replace(/<[^>]+>/g, '');
-  var notes = _duration ? '<div class="small" style="margin-top:4px;">⏱️ ' + esc(T['w.stepDone']) + ' · ' + esc(fmtTime(_duration)) + '</div>' : '';
+  var prep = 0, tl = (_lastSt && _lastSt.timeline) || {};
+  PHASES.forEach(function(ph){ if (ph !== 'check' && tl[ph]) prep += tl[ph].ms; });
+  var tiles = [[issues.length, T['w.statIssues']], [fmtTime(_duration), T['w.statTime']]];
+  if (info.pagesTotal) tiles.push([info.pagesTotal, T['w.statPages']]);
+  tiles.push([_info.mb ? _info.mb + ' MB' : '–', T['w.statSize']]);
+  $('tiles').innerHTML = tiles.map(function(x){ return '<div class="tile"><div class="v">' + esc(x[0]) + '</div><div class="l">' + esc(x[1]) + '</div></div>'; }).join('');
+  var notes = '';
   if (info.imagesRemoved) notes += '<div class="note">ℹ️ ' + t('d.shrunk', { mb: (info.fileSize / 1048576).toFixed(1), kept: info.imagesKept, removed: info.imagesRemoved }) + '</div>';
   if (info.failedRanges && info.failedRanges.length) notes += '<div class="note">⚠️ ' + t('d.failedPages', { pages: info.failedRanges.join(', ') }) + '</div>';
   if (!issues.length) notes += '<div class="note">✅ ' + t('d.noErrors') + '</div>';
   $('notes').innerHTML = notes;
-  show('resultActions', issues.length > 0);
+  $('timeline2').innerHTML = timelineHtml(_lastSt, true);
+  _finalTimes = true;
+  show('exportBox', issues.length > 0);
   $('annotHelp').innerHTML = issues.length ? t('d.annotHelp') : '';
-  $('issues').innerHTML = issues.map(function(it){
-    var type = (it.type === 'terminology' || it.type === 'grammar') ? it.type : 'style';
-    return '<div class="issue"><div class="issue-head"><span class="badge ' + type + '">' + esc(T['type.' + type]) + '</span>' +
+  // Kategorien: nur die tatsächlich gefundenen, anfangs alle ausgewählt.
+  var counts = {};
+  issues.forEach(function(it){ var ty = typeOf(it); counts[ty] = (counts[ty] || 0) + 1; });
+  _selected = {};
+  $('filters').innerHTML = TYPES.filter(function(ty){ return counts[ty]; }).map(function(ty){
+    _selected[ty] = true;
+    return '<label class="filter" id="f_' + ty + '"><input type="checkbox" checked data-type="' + ty + '">' +
+      '<span class="badge ' + ty + '">' + esc(T['type.' + ty]) + '</span><span class="cnt">' + counts[ty] + '</span></label>';
+  }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#filters input'), function(cb){
+    cb.onchange = function(){ _selected[cb.getAttribute('data-type')] = cb.checked; onSelectionChange(); };
+  });
+  $('closeHint').innerHTML = t('w.closeHint');
+  onSelectionChange();
+}
+
+function setAll(on){
+  Array.prototype.forEach.call(document.querySelectorAll('#filters input'), function(cb){
+    cb.checked = on; _selected[cb.getAttribute('data-type')] = on;
+  });
+  onSelectionChange();
+}
+function selectedTypes(){ return TYPES.filter(function(ty){ return _selected[ty]; }); }
+function selectedIssues(){
+  return (_result.issues || []).filter(function(it){ return _selected[typeOf(it)]; });
+}
+
+// Auswahl geändert: Liste filtern, Zähler und Export-Buttons anpassen. Links zu
+// einem früheren Export gehören zu einer anderen Auswahl - daher entfernen.
+function onSelectionChange(){
+  var all = _result.issues || [], sel = selectedIssues(), n = sel.length;
+  TYPES.forEach(function(ty){ var el = $('f_' + ty); if (el) el.classList.toggle('off', !_selected[ty]); });
+  $('selCount').innerHTML = n ? t('w.selectedCount', { n: n, total: all.length }) : esc(T['w.noneSelected']);
+  $('annotOut').innerHTML = '';
+  resetButtons();
+  $('issues').innerHTML = sel.map(function(it, i){
+    var type = typeOf(it);
+    return '<div class="issue"><div class="issue-head"><span class="issue-no">' + (i + 1) + '</span><span class="badge ' + type + '">' + esc(T['type.' + type]) + '</span>' +
       (it.location ? '<span>📍 ' + esc(it.location) + '</span>' : '') + '</div>' +
       '<div class="issue-body"><div class="diff"><s>' + esc(it.original) + '</s><span class="arrow">→</span><b>' + esc(it.suggestion) + '</b></div>' +
       (it.explanation ? '<div class="expl">💡 ' + esc(it.explanation) + '</div>' : '') + '</div></div>';
   }).join('');
-  $('closeHint').innerHTML = t('w.closeHint');
+}
+function resetButtons(){
+  var n = selectedIssues().length;
+  $('annotBtn').textContent = '🖍️ ' + T['d.openAnnotated'] + ' (' + n + ')';
+  $('sheetBtn').textContent = '📊 ' + T['d.exportSheet'] + ' (' + n + ')';
+  $('annotBtn').disabled = $('sheetBtn').disabled = !n || _busy;
+}
+var _busy = false;
+function setBusy(on){
+  _busy = on;
+  Array.prototype.forEach.call(document.querySelectorAll('#filters input, #selAll, #selNone'), function(el){ el.disabled = on; });
+  if (!on) resetButtons(); else { $('annotBtn').disabled = $('sheetBtn').disabled = true; }
 }
 
 // Ergebnis-Links als echter Link anbieten (ein automatisch geöffneter Tab nach
@@ -296,32 +499,39 @@ function offerLink(url, label){
   a.className = 'btn primary'; a.textContent = label + ' ↗';
   $('annotOut').appendChild(a);
 }
+function exportLabel(){
+  var types = selectedTypes();
+  return types.length === $('filters').querySelectorAll('input').length ? '' : ' – ' + types.map(function(ty){ return T['type.' + ty]; }).join(', ');
+}
 
 function exportSheet(){
-  var btn = $('sheetBtn');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>' + esc(T['w.working']);
-  run('apiPdfWebExportSheet', [_result.resultId], function(url){
-    btn.textContent = '📊 ' + T['d.exportSheet'];
-    offerLink(url, '📊 ' + T['w.open'] + ' (Sheet)');
+  var btn = $('sheetBtn'), t0 = Date.now(), label = exportLabel();
+  setBusy(true);
+  btn.innerHTML = '<span class="spinner"></span>' + esc(T['w.working']);
+  run('apiPdfWebExportSheet', [_result.resultId, selectedTypes()], function(url){
+    setBusy(false);
+    offerLink(url, '📊 ' + T['w.open'] + ' (Sheet' + label + ') · ' + fmtShort(Date.now() - t0));
   }, function(err){
-    btn.disabled = false; btn.textContent = '📊 ' + T['d.exportSheet'];
+    setBusy(false);
     alert(t('d.exportError', { msg: err && err.message ? err.message : String(err) }).replace(/<[^>]+>/g, ''));
   });
 }
 
 function annotate(){
-  var btn = $('annotBtn'), tries = 0;
-  btn.disabled = true;
+  var btn = $('annotBtn'), tries = 0, t0 = Date.now(), label = exportLabel();
+  setBusy(true);
   btn.innerHTML = '<span class="spinner"></span>' + esc(T['d.creatingAnnot']);
   function onAnnot(r){
     tries = 0;
     if (r.done) {
-      btn.textContent = '🖍️ ' + T['d.annotReady'];
-      offerLink(r.url, '🖍️ ' + T['w.open'] + ' (PDF)');
+      setBusy(false);
+      offerLink(r.url, '🖍️ ' + T['w.open'] + ' (PDF' + label + ') · ' + fmtShort(Date.now() - t0));
       return;
     }
-    // Große Datei: wird stückweise geschrieben - automatisch weiter.
-    btn.innerHTML = '<span class="spinner"></span>' + esc(T['d.creatingAnnot']) + ' · ' + r.pct + ' %';
+    // Große Datei: wird stückweise geschrieben - automatisch weiter, mit Restzeit.
+    var el = Date.now() - t0, rem = r.pct > 0 ? el * (100 - r.pct) / r.pct : 0;
+    btn.innerHTML = '<span class="spinner"></span>' + esc(T['d.creatingAnnot']) + ' · ' + r.pct + ' %' +
+      (rem ? ' · ' + t('w.eta', { t: fmtTime(rem / 1000) }) : '');
     run('apiPdfWebAnnotateContinue', [r.state], onAnnot, onAnnotFail(r.state));
   }
   function onAnnotFail(state){
@@ -331,11 +541,11 @@ function annotate(){
         setTimeout(function(){ run('apiPdfWebAnnotateContinue', [state], onAnnot, onAnnotFail(state)); }, 2000 * tries);
         return;
       }
-      btn.disabled = false; btn.textContent = '🖍️ ' + T['d.openAnnotated'];
+      setBusy(false);
       alert((err && err.message) ? err.message : String(err));
     };
   }
-  run('apiPdfWebAnnotate', [_result.resultId], onAnnot, onAnnotFail(null));
+  run('apiPdfWebAnnotate', [_result.resultId, selectedTypes()], onAnnot, onAnnotFail(null));
 }
 
 function closeWindow(){

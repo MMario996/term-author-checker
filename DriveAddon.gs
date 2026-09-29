@@ -246,6 +246,15 @@ function _drivePdfContinue_(job, started, lim) {
   return _drivePdfCheckStep_(job, started, lim);
 }
 
+// Gemessene Dauer je Phase (ms) und Anzahl Einheiten - nur fuer die Anzeige
+// "Verlauf & Ladezeiten" im PDF-Fenster.
+function _drivePdfTrackTime_(job, phase, ms) {
+  var tl = job.tl || (job.tl = {});
+  var e = tl[phase] || (tl[phase] = { ms: 0, n: 0 });
+  e.ms += ms;
+  e.n++;
+}
+
 // Eine Prüf-Etappe (Gemini) für einen fertig vorbereiteten Job.
 // Liefert { done: false } (Zwischenstand gespeichert) oder { done: true, resultId }.
 function _drivePdfCheckStep_(job, started, lim) {
@@ -385,6 +394,7 @@ function _drivePdfWork_(job, parts, started, lim, loadBatch) {
     batchesHere++;
 
     var batch = parts.slice(job.next, job.next + job.batch);
+    var issuesBefore = job.issues.length;
     var wallStart = Date.now(); // komplette Etappe inkl. Laden/Speichern (fuer die Restzeit-Schaetzung)
     if (job.stateId) {
       // Vor dem Start vermerken: bricht diese Etappe am Zeitlimit ab, nimmt der
@@ -410,6 +420,10 @@ function _drivePdfWork_(job, parts, started, lim, loadBatch) {
     job.next += batch.length;
     job.inflight = null;
     job.lastBatchWallMs = Date.now() - wallStart;
+    _drivePdfTrackTime_(job, 'check', job.lastBatchWallMs);
+    // Verlauf fuer das PDF-Fenster (Seiten, gefundene Fehler, Dauer je Etappe).
+    job.checkLog = (job.checkLog || []).concat([{ from: batch[0].from + 1, to: batch[batch.length - 1].to,
+      n: job.issues.length - issuesBefore, ms: job.lastBatchWallMs }]).slice(-80);
   }
 
   if (job.next < parts.length) {
