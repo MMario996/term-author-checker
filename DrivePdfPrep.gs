@@ -340,7 +340,7 @@ function _buildDrivePdfPrepCard_(job) {
   section.addWidget(CardService.newTextParagraph().setText(
     _ct_('d.prepProgress', { mb: _driveMb_(job.fileSize), pct: _drivePdfPrepPercent_(job) }) + '<br>' +
     _ct_('d.stepsHelp', { btn: _ct_('d.continue') })));
-  section.addWidget(CardService.newTextButton()
+  section.addWidget(_cardButton_(true)
     .setText('⏩ ' + _ct_('d.continue'))
     .setOnClickAction(CardService.newAction()
       .setFunctionName('apiCheckDrivePdfContinue')

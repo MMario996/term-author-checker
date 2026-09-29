@@ -21,7 +21,8 @@ var DRIVE_PDF_WEB_ANNOTATE_BUDGET_MS = 200000; // kommentierte PDF: Upload-Stuec
 // lieferte im Add-on die Adresse einer Bereitstellung ohne Web-App-Zugang, das
 // Fenster zeigte dann Googles 404-Seite ("Sorry, unable to open the file").
 function _drivePdfWebAppUrl_() {
-  var url = String(PropertiesService.getScriptProperties().getProperty('WEBAPP_URL') || '').trim();
+  // Ein versehentlich mitkopierter Zusatz (?page=pdfcheck, #...) wird abgeschnitten.
+  var url = String(PropertiesService.getScriptProperties().getProperty('WEBAPP_URL') || '').trim().replace(/[?#].*$/, '');
   // Nur eine veroeffentlichte Bereitstellung (/exec) taugt fuer alle Nutzer.
   return /^https:\/\/script\.google\.com\/.+\/exec$/.test(url) ? url : '';
 }
@@ -102,7 +103,54 @@ function _drivePdfWebStatus_(job, status) {
     out.pct = Math.round(30 * _drivePdfPrepPercent_(job) / 100);
   }
   out.fileMb = _driveMb_(job.fileSize);
+  out.etaSec = _drivePdfWebEta_(job);
+  out.step = job.phase === 'check' ? 2 : 1;
   return out;
+}
+
+// ─── RESTZEIT-SCHAETZUNG ───────────────────────────────────────────────────
+// Aus den gemessenen Dauern der bisherigen Einheiten/Etappen (job.prep.ms,
+// job.lastBatchMs) plus Erfahrungswerten fuer das, was noch nicht gemessen ist.
+// Bewusst grob ("ca."): die Antwortzeit von Gemini schwankt.
+var DRIVE_PDF_WEB_BATCH_MS_DEFAULT = 15000;   // eine Pruef-Etappe (bis 8 Pakete parallel)
+var DRIVE_PDF_WEB_CALL_OVERHEAD = 0.08;       // Laden/Speichern des Zwischenstands pro Aufruf
+
+// Anzahl Seitenpakete: bekannt ab dem Aufteilen, vorher grob aus der Dateigroesse.
+function _drivePdfEstParts_(job) {
+  if (job.phase === 'check') return (job.parts || []).length;
+  var sp = job.prep && job.prep.split;
+  if (sp) return Math.max(1, Math.ceil(sp.n / Math.max(1, sp.per)));
+  return Math.min(DRIVE_PDF_MAX_PARTS, Math.max(1, Math.round(job.fileSize / (2 * 1024 * 1024))));
+}
+
+function _drivePdfWebEta_(job) {
+  var prep = job.prep || {}, m = prep.ms || {}, D = DRIVE_PREP_DEFAULT_MS;
+  var order = ['plan', 'fetch', 'full', 'assemble', 'split', 'check'];
+  var idx = order.indexOf(job.phase || 'check');
+  var ms = 0;
+  if (idx <= 0) ms += m.plan || D.plan;
+  if (idx <= 1) {
+    var ranges = prep.plan && prep.plan.ranges;
+    var fetchUnits = ranges
+      ? Math.ceil(Math.max(0, ranges.length - (prep.nextRange || 0)) / (prep.fetchBatch || DRIVE_PREP_FETCH_BATCH))
+      : Math.max(1, Math.ceil(job.fileSize / (40 * 1024 * 1024)));
+    ms += fetchUnits * (m.fetch || D.fetch);
+  }
+  if (idx <= 2) {
+    var fullUnits = 1;
+    if (prep.fullNeeded) {
+      var rem = 0;
+      for (var i = prep.fullNext || 0; i < prep.fullNeeded.length; i++) rem += prep.fullNeeded[i][2] - prep.fullNeeded[i][1];
+      fullUnits = Math.ceil(rem / (prep.fullBatchBytes || DRIVE_PREP_FULL_BATCH_BYTES));
+    }
+    ms += fullUnits * (m.full || D.full);
+  }
+  if (idx <= 3) ms += m.assemble || D.assemble;
+  var parts = _drivePdfEstParts_(job);
+  if (idx <= 4) ms += Math.max(0, parts - ((prep.split && prep.split.next) ? Math.ceil(prep.split.next / prep.split.per) : 0)) * (m.split || D.split);
+  var partsLeft = Math.max(0, parts - (idx === 5 ? (job.next || 0) : 0));
+  ms += Math.ceil(partsLeft / (job.batch || DRIVE_PDF_BATCH_PARTS)) * (job.lastBatchWallMs || job.lastBatchMs || DRIVE_PDF_WEB_BATCH_MS_DEFAULT);
+  return Math.round(ms * (1 + DRIVE_PDF_WEB_CALL_OVERHEAD) / 1000);
 }
 
 /** Seite: Pruefung starten (erster Aufruf). */
@@ -125,7 +173,10 @@ function apiPdfWebContinue(stateId) {
 /** Seite: Name der Datei fuer die Anzeige (vor dem Start). */
 function apiPdfWebFileInfo(fileId) {
   var file = DriveApp.getFileById(fileId);
-  return { name: file.getName(), mb: _driveMb_(file.getSize()), isPdf: file.getMimeType() === 'application/pdf' };
+  var size = file.getSize();
+  // Erste grobe Restzeit, bevor die erste Etappe zurueckkommt.
+  var eta = _drivePdfWebEta_({ phase: 'plan', prep: {}, parts: [], fileSize: size, batch: DRIVE_PDF_BATCH_PARTS });
+  return { name: file.getName(), mb: _driveMb_(size), isPdf: file.getMimeType() === 'application/pdf', etaSec: eta };
 }
 
 /** Seite: Ergebnis als Google Sheet. */
