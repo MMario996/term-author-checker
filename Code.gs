@@ -1,6 +1,4 @@
 const PHRASE_V1 = 'https://cloud.memsource.com/web/api2/v1';
-const PHRASE_V1_TC = 'https://cloud.memsource.com/web/api2/v1';
-const PHRASE_V2_TC = 'https://cloud.memsource.com/web/api2/v2';
 
 const DEFAULT_AI_PROMPT = 'Du bist ein Terminologie-Assistent für Kärcher, Hersteller von Reinigungsgeräten (Hochdruckreiniger, Kehrmaschinen, Sauger, Zubehör).\n\nDer Nutzer beschreibt in eigenen Worten, wonach er sucht:\n"{freeText}"\n\nErkenne die Sprache AUSSCHLIESSLICH anhand dieses Textfelds (ISO-639-1-Code, z.B. "de", "en", "it", "fr", "es"). Ein eventuell zusätzlich angehängtes Bild hat KEINEN Einfluss auf die Sprachwahl, es dient nur der inhaltlichen Erkennung des Objekts. Nutze "de" als Standard NUR dann, wenn das Textfeld leer ist (reine Bildsuche ohne Text) oder wirklich zu kurz/mehrdeutig ist, um überhaupt eine Sprache zu erkennen. Ist echter, eindeutiger Text vorhanden (z.B. eine ganze Frage in einer bestimmten Sprache), MUSS diese Sprache verwendet werden, auch wenn zusätzlich ein Bild angehängt ist.\n\nNenne dann die 1 bis 3 wahrscheinlichsten Fachbegriffe, nach denen in einer Terminologie-Datenbank gesucht werden sollte (kurze, konkrete Substantive/Fachwörter, keine ganzen Sätze). WICHTIG: Sowohl die Begriffe als auch deine Erklärung müssen zwingend in der erkannten Sprache formuliert sein, nicht auf Deutsch übersetzt, außer die erkannte Sprache ist bereits Deutsch.\n\nAntworte AUSSCHLIESSLICH mit validem JSON in exakt dieser Struktur, ohne Markdown-Formatierung, ohne Codeblock:\n{"lang": "...", "terms": ["...", "..."], "explanation": "..."}';
 
@@ -9,7 +7,7 @@ const DEFAULT_AI_PROMPT = 'Du bist ein Terminologie-Assistent für Kärcher, Her
 // ============================================================================
 function doGet(e) {
   return HtmlService.createTemplateFromFile('TermSearch').evaluate()
-    .setTitle('Kärcher TermSearch')
+    .setTitle('Kärcher TermCheck – Terminology Search')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
@@ -39,11 +37,22 @@ function apiSetUiLang(lang) {
 // Liefert eine Add-on-Seite als Template aus, mit der gespeicherten UI-Sprache.
 // hostApp ('docs' / 'sheets' / 'slides', optional) landet in der Seite als
 // HOST_APP und wird bei Server-Aufrufen, die ein Fenster öffnen, mitgeschickt.
-function renderWithI18n_(filename, hostApp) {
+// rulesOnly: AuthorCheck.html als reines Regel-Popup ausliefern (statt wie
+// frueher ueber eine UserProperty, die sich mehrere offene Fenster teilten).
+function renderWithI18n_(filename, hostApp, rulesOnly) {
   var tpl = HtmlService.createTemplateFromFile(filename);
   tpl.uiLang = getUiLangPref_();
   tpl.hostApp = hostApp || '';
+  tpl.rulesOnly = !!rulesOnly;
   return tpl.evaluate();
+}
+
+// Temperatur fuer alle Gemini-Aufrufe. Frueher "parseFloat(x) || 0.2" - damit
+// wurde eine bewusst eingestellte Temperatur 0 stillschweigend zu 0.2.
+function _aiTemperature_() {
+  var raw = PropertiesService.getScriptProperties().getProperty('AI_TEMPERATURE');
+  var t = parseFloat(raw);
+  return (isFinite(t) && t >= 0 && t <= 2) ? t : 0.2;
 }
 
 function apiGetContext() {
@@ -53,7 +62,6 @@ function apiGetContext() {
   var token  = (props.getProperty('PHRASE_API_TOKEN') || '').trim();
   var geminiKey = (props.getProperty('GEMINI_API_KEY') || '').trim();
   var role = getUserRole_(caller);
-    var isRulesOnly = userProps.getProperty('AUTHORCHECK_IS_RULES_ONLY') === 'true';
   var rulesHelpSeen = userProps.getProperty('AUTHORCHECK_RULES_HELP_SEEN') === 'true';
   // Basis-URL der Web-App für teilbare Such-Links (?q=...); leer, wenn nicht als Web-App bereitgestellt.
   var webAppUrl = '';
@@ -65,7 +73,6 @@ function apiGetContext() {
     isAdmin:         role === 'ADMIN',
     phraseConnected: token.length > 10,
     aiEnabled:       geminiKey.length > 10,
-    isRulesOnly:     isRulesOnly,
     rulesHelpSeen:   rulesHelpSeen,
     templates: {
       LLM: { uid: props.getProperty('TEMPLATE_LLM') || 'pNoERiZ1YTileyUe4Za1j6', name: '[AKW] Terminology check [MT+Review LLM]' },
@@ -158,12 +165,6 @@ function apiGetTemplateLanguages(templateUid) {
   if (code !== 200) throw new Error('Failed to fetch template (' + code + '): ' + res.getContentText().slice(0, 200));
   var data = JSON.parse(res.getContentText());
   return { sourceLang: data.sourceLang || '', targetLangs: Array.isArray(data.targetLangs) ? data.targetLangs : [] };
-}
-
-function apiCheckAccess() {
-  var token = (PropertiesService.getScriptProperties().getProperty('PHRASE_API_TOKEN') || '').trim();
-  if (!token) return { allowed: false, reason: 'no_token' };
-  return { allowed: true };
 }
 
 function getUserEmail_() {
@@ -475,99 +476,157 @@ function _firstNumber_(values) {
   return null;
 }
 
+var TERMSEARCH_PAGE_SIZE = 50;
+var TERMSEARCH_RESULT_CACHE_TTL = 600; // 10 min: gleiche Suche kurz hintereinander nicht erneut abfragen
+var PHRASE_RETRYABLE_CODES = [429, 500, 502, 503, 504];
+
+// Nur die Sprachen abfragen, die eine Termbase ueberhaupt enthaelt. Frueher gingen
+// ohne Sprachauswahl immer alle 15 Sprachen an jede Termbase (viele leere Anfragen).
+function _tbQueryLangs_(tb, queryLangs) {
+  var have = (tb.langs || []).map(function(l) { return String(l).toLowerCase().replace('-', '_'); });
+  if (!have.length) return queryLangs;
+  return queryLangs.filter(function(l) {
+    return have.some(function(h) { return h === l || h.indexOf(l + '_') === 0; });
+  });
+}
+
+/**
+ * Sucht in allen Ziel-Termbases. Liefert
+ *   { concepts: [...], failed: <Anzahl fehlgeschlagener Anfragen>, requests: <Anzahl>,
+ *     truncated: <true, wenn eine Termbase mehr als eine Seite Treffer hatte> }
+ * Frueher wurden Fehler (429/5xx) stillschweigend uebersprungen - die Oberflaeche
+ * zeigte dann "Keine Treffer" statt eines Hinweises.
+ */
 function _searchCore_(query, sourceLang, searchLang) {
-  if (!query || query.trim().length < 1) return [];
+  var empty = { concepts: [], failed: 0, requests: 0, truncated: false };
+  if (!query || query.trim().length < 1) return empty;
   var raw = query.trim();
-  
+
   var targetTermbases = _getTargetTermbases_();
-  if (!targetTermbases.length) return [];
-    var displayLang = (sourceLang || 'de').toLowerCase(); // Standard: Deutsch als Referenzsprache oben, unabhängig von der Trefferspache
+  if (!targetTermbases.length) return empty;
+  var displayLang = (sourceLang || 'de').toLowerCase(); // Standard: Deutsch als Referenzsprache oben, unabhängig von der Trefferspache
   var queryLangs = searchLang ? [String(searchLang).toLowerCase()] : TERMSEARCH_ALL_LANGS;
+
+  var cache = CacheService.getScriptCache();
+  var cacheKey = 'TS_RESULT_' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(
+    Utilities.DigestAlgorithm.MD5, raw.toLowerCase() + '|' + displayLang + '|' + queryLangs.join(','), Utilities.Charset.UTF_8));
+  var cached = _cacheGetCompressed_(cache, cacheKey);
+  if (cached) return cached;
+
   var core = raw.replace(/\*/g, '').trim();
   var phraseQuery = core ? ('*' + core + '*') : raw; // Sterne für Phrase, sonst nur exakte Treffer
   var auth = _phraseAuth_();
   var BATCH = 10;
   var conceptMap = {};
+  var truncated = false;
 
   // Alle Termbase/Sprache-Kombinationen als flache Liste, damit wir sie
   // gemeinsam in Batches abfragen können (queryLang ist bei Phrase Pflicht).
   var jobs = [];
   targetTermbases.forEach(function(tb) {
-    queryLangs.forEach(function(lang) { jobs.push({ tb: tb, lang: lang }); });
+    _tbQueryLangs_(tb, queryLangs).forEach(function(lang) { jobs.push({ tb: tb, lang: lang }); });
   });
 
-  for (var i = 0; i < jobs.length; i += BATCH) {
-    var chunk = jobs.slice(i, i + BATCH);
-    var requests = chunk.map(function(job) {
-      var body = { query: phraseQuery, pageNumber: 0, pageSize: 50, queryLang: job.lang };
-      return {
-        url: PHRASE_V1 + '/termBases/' + encodeURIComponent(job.tb.uid) + '/browse',
-        method: 'post', contentType: 'application/json',
-        payload: JSON.stringify(body), headers: { Authorization: auth }, muteHttpExceptions: true
-      };
-    });
-    var responses;
-    try { responses = UrlFetchApp.fetchAll(requests); } catch(e) { continue; }
-    responses.forEach(function(res, idx) {
-      if (res.getResponseCode() !== 200) return;
-      var data;
-      try { data = JSON.parse(res.getContentText()); } catch(e) { return; }
-      var concepts = data.searchResults || data.concepts || [];
-      var tbInfo = chunk[idx].tb;
-      concepts.forEach(function(concept) {
-        var cid = concept.conceptId || concept.id || '';
-        var allTerms = [];
-        (concept.terms || []).forEach(function(termItem) {
-          var termArray = Array.isArray(termItem) ? termItem : [termItem];
-          termArray.forEach(function(t) { allTerms.push(t); });
-        });
-        
-        var matchedTerm = null;
-        allTerms.forEach(function(t) {
-          if (!matchedTerm && _termMatchesQuery_(t.text || t.term, raw)) matchedTerm = t;
-        });
-        if (!matchedTerm) return;
+  function toRequest(job) {
+    var body = { query: phraseQuery, pageNumber: 0, pageSize: TERMSEARCH_PAGE_SIZE, queryLang: job.lang };
+    return {
+      url: PHRASE_V1 + '/termBases/' + encodeURIComponent(job.tb.uid) + '/browse',
+      method: 'post', contentType: 'application/json',
+      payload: JSON.stringify(body), headers: { Authorization: auth }, muteHttpExceptions: true
+    };
+  }
 
-        var sourceTermRaw = null;
-        var translationsRaw = [];
-        allTerms.forEach(function(t) {
-           var tLang = (t.lang || t.language || '').toLowerCase();
-           if (displayLang && tLang === displayLang && !sourceTermRaw) {
-               sourceTermRaw = t;
-           } else {
-               translationsRaw.push(t);
-           }
-        });
-        if (!sourceTermRaw) {
-            sourceTermRaw = matchedTerm;
-            translationsRaw = allTerms.filter(function(t) { return t !== matchedTerm; });
+  function handleResponse(res, job) {
+    var data;
+    try { data = JSON.parse(res.getContentText()); } catch(e) { return; }
+    var concepts = data.searchResults || data.concepts || [];
+    if (concepts.length >= TERMSEARCH_PAGE_SIZE) truncated = true;
+    var tbInfo = job.tb;
+    concepts.forEach(function(concept, idx) {
+      var cid = concept.conceptId || concept.id || '';
+      var allTerms = [];
+      (concept.terms || []).forEach(function(termItem) {
+        var termArray = Array.isArray(termItem) ? termItem : [termItem];
+        termArray.forEach(function(t) { allTerms.push(t); });
+      });
+
+      var matchedTerm = null;
+      allTerms.forEach(function(t) {
+        if (!matchedTerm && _termMatchesQuery_(t.text || t.term, raw)) matchedTerm = t;
+      });
+      if (!matchedTerm) return;
+
+      var sourceTermRaw = null;
+      var translationsRaw = [];
+      allTerms.forEach(function(t) {
+        var tLang = (t.lang || t.language || '').toLowerCase();
+        if (displayLang && tLang === displayLang && !sourceTermRaw) {
+          sourceTermRaw = t;
+        } else {
+          translationsRaw.push(t);
         }
-        var key = tbInfo.category + '_' + (cid || (sourceTermRaw.text + '_' + idx));
-        if (!conceptMap[key]) {
-          conceptMap[key] = {
-            conceptId: cid,
-            category: tbInfo.category,
-            categoryLabel: tbInfo.label,
-            sourceTerm: _mapTerm_(sourceTermRaw, cid),
-            translations: []
-          };
-        }
-        translationsRaw.forEach(function(t) {
-          var mapped = _mapTerm_(t, cid);
-          var langAlreadyIn = conceptMap[key].translations.some(function(existing) {
-            return existing.lang === mapped.lang && existing.term === mapped.term;
-          });
-          if (!langAlreadyIn) conceptMap[key].translations.push(mapped);
+      });
+      if (!sourceTermRaw) {
+        sourceTermRaw = matchedTerm;
+        translationsRaw = allTerms.filter(function(t) { return t !== matchedTerm; });
+      }
+      var key = tbInfo.category + '_' + (cid || (sourceTermRaw.text + '_' + idx));
+      if (!conceptMap[key]) {
+        conceptMap[key] = {
+          conceptId: cid,
+          category: tbInfo.category,
+          categoryLabel: tbInfo.label,
+          sourceTerm: _mapTerm_(sourceTermRaw, cid),
+          translations: []
+        };
+      }
+      translationsRaw.forEach(function(t) {
+        var mapped = _mapTerm_(t, cid);
+        var langAlreadyIn = conceptMap[key].translations.some(function(existing) {
+          return existing.lang === mapped.lang && existing.term === mapped.term;
         });
+        if (!langAlreadyIn) conceptMap[key].translations.push(mapped);
       });
     });
   }
+
+  // Ein Durchgang ueber eine Job-Liste; liefert die Jobs zurueck, die mit einem
+  // voruebergehenden Fehler (Rate-Limit, 5xx, Netzwerk) gescheitert sind.
+  function runPass(list) {
+    var retry = [];
+    for (var i = 0; i < list.length; i += BATCH) {
+      var chunk = list.slice(i, i + BATCH);
+      var responses;
+      try { responses = UrlFetchApp.fetchAll(chunk.map(toRequest)); }
+      catch(e) { Array.prototype.push.apply(retry, chunk); continue; }
+      responses.forEach(function(res, idx) {
+        var code = res.getResponseCode();
+        if (code === 200) handleResponse(res, chunk[idx]);
+        else if (PHRASE_RETRYABLE_CODES.indexOf(code) !== -1) retry.push(chunk[idx]);
+        else console.warn('_searchCore_: HTTP ' + code + ' fuer ' + chunk[idx].tb.name + '/' + chunk[idx].lang);
+      });
+    }
+    return retry;
+  }
+
+  var retry = runPass(jobs);
+  if (retry.length) {
+    Utilities.sleep(1000);
+    retry = runPass(retry);
+  }
+  if (retry.length) console.warn('_searchCore_: ' + retry.length + ' von ' + jobs.length + ' Anfragen fehlgeschlagen.');
+  if (jobs.length && retry.length === jobs.length) {
+    throw new Error('The termbase search failed (Phrase is not reachable or the rate limit was hit). Please try again in a moment.');
+  }
+
   var grouped = Object.keys(conceptMap).map(function(key) {
     var c = conceptMap[key];
     c.translations.sort(function(a, b) { return a.lang.localeCompare(b.lang); });
     return c;
   });
-  return grouped;
+  var result = { concepts: grouped, failed: retry.length, requests: jobs.length, truncated: truncated };
+  if (!retry.length) _cachePutCompressed_(cache, cacheKey, result, TERMSEARCH_RESULT_CACHE_TTL);
+  return result;
 }
 
 function apiSearchTerms(query, sourceLang) {
@@ -627,7 +686,7 @@ function apiAiAssistedSearch(freeText, history, imageData, uiLang) {
   var rawUrl = props.getProperty('GEMINI_API_URL') || 'https://34-111-99-134.nip.io/gemini/v1beta/models/';
   var apiUrl = rawUrl.split(']')[0].replace('[', '').trim();
   var model  = (props.getProperty('AI_MODEL') || 'gemini-3.6-flash').trim();
-  var temperature = parseFloat(props.getProperty('AI_TEMPERATURE')) || 0.2;
+  var temperature = _aiTemperature_();
   var promptTemplate = props.getProperty('AI_PROMPT') || DEFAULT_AI_PROMPT;
   // Absicherung: ein alter, gespeicherter Custom-Prompt ohne das "lang"-Feld
   // würde die Spracherkennung stillschweigend brechen (Fallback immer 'de').
@@ -682,9 +741,14 @@ function apiAiAssistedSearch(freeText, history, imageData, uiLang) {
   var terms = Array.isArray(parsed.terms) ? parsed.terms.slice(0, 3).filter(Boolean) : [];
   var detectedLang = String(parsed.lang || 'de').toLowerCase().slice(0, 2);
   var merged = {};
+  var searchFailed = 0, searchTruncated = false;
   terms.forEach(function(t) {
-    var r = _searchCore_(t, detectedLang, detectedLang);
-    r.forEach(function(c) {
+    var r;
+    try { r = _searchCore_(t, detectedLang, detectedLang); }
+    catch (e) { searchFailed++; return; }
+    searchFailed += r.failed;
+    if (r.truncated) searchTruncated = true;
+    r.concepts.forEach(function(c) {
       var key = c.category + '_' + (c.conceptId || c.sourceTerm.term);
       merged[key] = c;
     });
@@ -699,85 +763,10 @@ function apiAiAssistedSearch(freeText, history, imageData, uiLang) {
     suggestedTerms: terms,
     results: results,
     detectedLang: detectedLang,
+    searchFailed: searchFailed,
+    searchTruncated: searchTruncated,
     history: updatedHistory
   };
-}
-
-function apiAddTerm(payload) {
-  _requireAdmin_('add terms');
-  var uid  = String(payload.termibaseUid || '').trim();
-  var text = String(payload.term || '').trim();
-  var lang = String(payload.lang || '').trim();
-  if (!uid || !text || !lang) throw new Error('termibaseUid, term, and lang are required.');
-  var norm = _normStatus_(payload.status);
-  var body = { text: text, lang: lang, status: norm.phraseStatus, forbidden: norm.forbidden };
-  if (payload.note)       body.note  = String(payload.note).trim();
-  if (payload.definition) body.usage = String(payload.definition).trim();
-  if (payload.conceptId)  body.conceptId = payload.conceptId;
-  var res = _phraseFetch_(PHRASE_V1 + '/termBases/' + encodeURIComponent(uid) + '/terms', { method: 'post', body: body });
-  return _mapTerm_(res, payload.conceptId || '');
-}
-
-function apiUpdateTerm(payload) {
-  _requireAdmin_('update terms');
-  var uid    = String(payload.termibaseUid || '').trim();
-  var termId = String(payload.id || '').trim();
-  var text   = String(payload.term || '').trim();
-  if (!uid || !termId || !text) throw new Error('termibaseUid, id, and term are required.');
-  var norm = _normStatus_(payload.status);
-  var body = { text: text, status: norm.phraseStatus, forbidden: norm.forbidden };
-  if (payload.note)       body.note  = String(payload.note).trim();
-  if (payload.definition) body.usage = String(payload.definition).trim();
-  var url = PHRASE_V1 + '/termBases/' + encodeURIComponent(uid) + '/terms/' + encodeURIComponent(termId);
-  var res = _phraseFetch_(url, { method: 'put', body: body });
-  return _mapTerm_(res, payload.conceptId || '');
-}
-
-function apiDeleteTerm(termId, termBaseUid) {
-  _requireAdmin_('delete terms');
-  var tid = String(termId || '').trim();
-  var uid = String(termBaseUid || '').trim();
-  if (!tid || !uid) throw new Error('termId and termBaseUid are required.');
-  var url = PHRASE_V1 + '/termBases/' + encodeURIComponent(uid) + '/terms/' + encodeURIComponent(tid);
-  var res = UrlFetchApp.fetch(url, { method: 'delete', headers: { Authorization: _phraseAuth_() }, muteHttpExceptions: true });
-  var code = res.getResponseCode();
-  if (code !== 204 && code !== 200) throw new Error('Delete term failed (' + code + '): ' + res.getContentText().slice(0, 200));
-  return { success: true };
-}
-
-function apiBatchImportTerms(termBaseUid, rows) {
-  _requireAdmin_('import terms');
-  var uid = String(termBaseUid || '').trim();
-  if (!uid) throw new Error('termBaseUid is required.');
-  if (!Array.isArray(rows) || !rows.length) throw new Error('No rows to import.');
-  var url  = PHRASE_V1 + '/termBases/' + encodeURIComponent(uid) + '/terms';
-  var auth = _phraseAuth_();
-  var BATCH = 20;
-  var created = 0, failed = 0, errors = [];
-  for (var i = 0; i < rows.length; i += BATCH) {
-    var chunk = rows.slice(i, i + BATCH);
-    var requests = chunk.map(function(row) {
-      var norm = _normStatus_(row.status);
-      var body = { text: String(row.term||'').trim(), lang: String(row.lang||'').trim(), status: norm.phraseStatus, forbidden: norm.forbidden };
-      if (row.note)       body.note  = String(row.note).trim();
-      if (row.definition) body.usage = String(row.definition).trim();
-      return { url: url, method: 'post', contentType: 'application/json', headers: { Authorization: auth }, payload: JSON.stringify(body), muteHttpExceptions: true };
-    });
-    var responses;
-    try { responses = UrlFetchApp.fetchAll(requests); } catch(e) { chunk.forEach(function(r){failed++;errors.push(r.term+': '+e.message);}); continue; }
-    responses.forEach(function(res, idx) {
-      var code = res.getResponseCode();
-      if (code === 201 || code === 200) { created++; } else {
-        failed++;
-        var em = '';
-        try { em = JSON.parse(res.getContentText()).errorDescription || res.getContentText(); } catch(e) { em = res.getContentText(); }
-        errors.push(String(chunk[idx].term) + ': ' + em);
-      }
-    });
-    if (i + BATCH < rows.length) Utilities.sleep(300);
-  }
-  logAuditEvent_(getUserEmail_(), 'TERMBASE_IMPORT', 'Imported ' + created + ' terms into ' + uid + (failed ? ' (' + failed + ' failed)' : ''));
-  return { success: failed === 0, created: created, failed: failed, errors: errors };
 }
 
 // ============================================================================
@@ -877,13 +866,6 @@ function _mapTerm_(raw, conceptId) {
   };
 }
 
-function _normStatus_(uiStatus) {
-  var s = String(uiStatus || '').toUpperCase();
-  if (s === 'FORBIDDEN') return { phraseStatus: 'Approved', forbidden: true  };
-  if (s === 'APPROVED')  return { phraseStatus: 'Approved', forbidden: false };
-  return { phraseStatus: 'New', forbidden: false };
-}
-
 function printAllTermbaseUIDs() {
   var termbases = apiListTermbases(); // Admin-Check steckt in apiListTermbases
   Logger.log("=== VERFÜGBARE TERMBASES ===");
@@ -972,6 +954,22 @@ function _sheetsRangeToText_(range) {
   }).filter(function(line) { return line.trim() !== ''; }).join('\n');
 }
 
+// Alle durchsuchbaren Bereiche eines Google Docs: Haupttext zuerst (damit "erstes
+// Vorkommen" wie bisher im Haupttext beginnt), dann Kopfzeile, Fusszeile, Fussnoten.
+// Pruefen, Ersetzen, Springen und Kommentieren nutzen dieselbe Liste.
+function _docsSections_(doc) {
+  var out = [doc.getBody()];
+  try { var header = doc.getHeader(); if (header) out.push(header); } catch (e) {}
+  try { var footer = doc.getFooter(); if (footer) out.push(footer); } catch (e) {}
+  try {
+    doc.getFootnotes().forEach(function(fn) {
+      var contents = fn.getFootnoteContents();
+      if (contents) out.push(contents);
+    });
+  } catch (e) {}
+  return out;
+}
+
 var EXTRACT_DEFAULT_MAX_CHARS = 15000;
 
 /**
@@ -1000,7 +998,9 @@ function apiExtractTextFromCurrentApp(scope, maxChars) {
         });
       }
     } else {
-      text = doc.getBody().getText();
+      // Haupttext plus Kopf-/Fusszeile und Fussnoten (frueher nur der Haupttext).
+      text = _docsSections_(doc).map(function(sec) { return sec.getText(); })
+        .filter(function(t) { return t.trim(); }).join('\n\n');
     }
   } 
   else if (SpreadsheetApp.getActiveSpreadsheet()) {

@@ -50,11 +50,11 @@ function _driveRequireScopes_() {
 function onDriveHomepage(e) {
   var card = CardService.newCardBuilder();
   card.setHeader(CardService.newCardHeader()
-    .setTitle('Kärcher Author Check')
-    .setSubtitle('PDF check'));
+    .setTitle('Kärcher TermCheck – Author Check')
+    .setSubtitle('📄 ' + _ct_('d.subtitle')));
   card.addSection(CardService.newCardSection()
     .addWidget(CardService.newTextParagraph()
-      .setText('Select a single PDF file in Google Drive to check it against the Author Check rules. Other file types are not supported yet.')));
+      .setText(_ct_('d.homeText'))));
   return card.build();
 }
 
@@ -63,17 +63,17 @@ function onDriveItemsSelected(e) {
   var items = (e.drive && e.drive.selectedItems) || [];
 
   if (items.length !== 1) {
-    return _buildDriveInfoCard_('Please select exactly one file', 'Select a single PDF file in Drive - not multiple files, and no folders.');
+    return _buildDriveInfoCard_('☝️ ' + _ct_('d.oneFileTitle'), _ct_('d.oneFileText'));
   }
 
   var item = items[0];
   if (item.mimeType !== 'application/pdf') {
-    return _buildDriveInfoCard_('Only PDF is supported', 'The file "' + _escapeCardHtml_(item.title) + '" is not a PDF. This check currently only works for PDF files.');
+    return _buildDriveInfoCard_('📄 ' + _ct_('d.onlyPdfTitle'), _ct_('d.onlyPdfText', { name: _escapeCardHtml_(item.title) }));
   }
 
   var card = CardService.newCardBuilder();
   card.setHeader(CardService.newCardHeader()
-    .setTitle('Kärcher Author Check')
+    .setTitle('Kärcher TermCheck – Author Check')
     .setSubtitle(item.title));
 
   // Ergebnis der letzten Prüfung dieser Datei (bis zu 1 h) wieder anbieten -
@@ -84,11 +84,10 @@ function onDriveItemsSelected(e) {
     if (lastResultId) lastData = _loadDrivePdfResult_(lastResultId);
   } catch (cacheErr) { lastData = null; }
   if (lastData) {
-    var lastSection = CardService.newCardSection().setHeader('Last check');
-    lastSection.addWidget(CardService.newTextParagraph().setText(
-      lastData.issues.length + ' issue(s) found for this file. You can reopen the result (e.g. to create the annotated PDF) without checking again.'));
+    var lastSection = CardService.newCardSection().setHeader('🕘 ' + _ct_('d.lastCheck'));
+    lastSection.addWidget(CardService.newTextParagraph().setText(_ct_('d.lastCheckText', { n: lastData.issues.length })));
     lastSection.addWidget(CardService.newTextButton()
-      .setText('Show last result')
+      .setText(_ct_('d.showLast'))
       .setOnClickAction(CardService.newAction()
         .setFunctionName('apiShowDrivePdfResult')
         .setParameters({ resultId: lastResultId })));
@@ -97,18 +96,18 @@ function onDriveItemsSelected(e) {
 
   var section = CardService.newCardSection();
   section.addWidget(CardService.newTextParagraph()
-    .setText('Checks the entire content of this PDF against the Author Check rules (grammar, terminology, style) - the same as Author Check in Docs, Sheets and Slides.'));
+    .setText(_ct_('d.intro')));
   section.addWidget(CardService.newTextParagraph()
-    .setText('<i>Rules are personal to you and shared across Docs, Sheets, Slides and Drive. To view or change them, open Author Check in a Google Doc, Sheet or Slide deck and click "Rules".</i>'));
+    .setText('<i>' + _ct_('d.rulesNote') + '</i>'));
 
   var langSelect = CardService.newSelectionInput()
     .setType(CardService.SelectionInputType.DROPDOWN)
-    .setTitle('Language')
+    .setTitle(_ct_('d.language'))
     .setFieldName('language');
   // Zuletzt verwendete Sprache vorauswaehlen statt immer DE.
   var lastLang = PropertiesService.getUserProperties().getProperty(DRIVE_PDF_LAST_LANG_KEY) || 'de';
   DRIVE_PDF_LANGUAGES.forEach(function(pair) {
-    langSelect.addItem(pair[1], pair[0], pair[0] === lastLang);
+    langSelect.addItem(_ctLangName_(pair[0], pair[1]), pair[0], pair[0] === lastLang);
   });
   section.addWidget(langSelect);
 
@@ -118,7 +117,7 @@ function onDriveItemsSelected(e) {
     .setLoadIndicator(CardService.LoadIndicator.SPINNER);
 
   section.addWidget(CardService.newTextButton()
-    .setText('Check PDF')
+    .setText('✅ ' + _ct_('d.checkPdf'))
     .setOnClickAction(action));
 
   card.addSection(section);
@@ -445,22 +444,20 @@ function _drivePdfRunBatch_(cfg, prompt, batch, isSplit) {
 
 function _buildDrivePdfProgressCard_(job, parts) {
   var card = CardService.newCardBuilder();
-  card.setHeader(CardService.newCardHeader().setTitle('Checking PDF ...').setSubtitle(job.fileName));
+  card.setHeader(CardService.newCardHeader().setTitle('⏳ ' + _ct_('d.checking')).setSubtitle(job.fileName));
   var section = CardService.newCardSection();
   var pagesDone = job.next > 0 ? parts[job.next - 1].to : 0;
   var pagesTotal = parts[parts.length - 1].to;
   var intro = job.imagesRemoved
-    ? 'Prepared: ' + job.imagesKept + ' images kept, ' + job.imagesRemoved + ' large images left out to reduce the size.<br>'
+    ? _ct_('d.prepared', { kept: job.imagesKept, removed: job.imagesRemoved }) + '<br>'
     : '';
+  var btnLabel = _ct_(job.next === 0 ? 'd.start' : 'd.continue');
   section.addWidget(CardService.newTextParagraph().setText(
-    (job.next === 0 ? intro + 'The PDF (' + pagesTotal + ' pages) is ready to be checked.' 
-                    : 'Checked <b>' + pagesDone + ' of ' + pagesTotal + ' pages</b>, ' + job.issues.length + ' issue(s) so far.') + '<br>' +
-    'Large PDFs are checked in several steps so that no step runs into Google\'s time limit. Click <b>' +
-    (job.next === 0 ? 'Start check' : 'Continue') + '</b> for the next step. ' +
-    'If a step is ever interrupted ("Exceeded maximum execution time"), click the <b>&larr;</b> arrow at the top ' +
-    'to return here and click the button again - the next step will be smaller.'));
+    (job.next === 0 ? intro + _ct_('d.ready', { pages: pagesTotal })
+                    : _ct_('d.progress', { done: pagesDone, total: pagesTotal, n: job.issues.length })) + '<br>' +
+    _ct_('d.stepsHelp', { btn: btnLabel })));
   section.addWidget(CardService.newTextButton()
-    .setText(job.next === 0 ? 'Start check' : 'Continue')
+    .setText((job.next === 0 ? '▶️ ' : '⏩ ') + btnLabel)
     .setOnClickAction(CardService.newAction()
       .setFunctionName('apiCheckDrivePdfContinue')
       .setParameters({ stateId: job.stateId })
@@ -509,7 +506,7 @@ function _drivePdfPrompt_(job) {
 
 function _drivePdfErrorResponse_(err) {
   var errCard = CardService.newCardBuilder();
-  errCard.setHeader(CardService.newCardHeader().setTitle('Error'));
+  errCard.setHeader(CardService.newCardHeader().setTitle('⚠️ ' + _ct_('d.error')));
   errCard.addSection(CardService.newCardSection()
     .addWidget(CardService.newTextParagraph().setText(_escapeCardHtml_(err.message || String(err)))));
   return CardService.newActionResponseBuilder()
@@ -527,7 +524,7 @@ function _driveGeminiConfig_() {
     apiKey: apiKey,
     apiUrl: rawUrl.split(']')[0].replace('[', '').trim(),
     model: (props.getProperty('AI_MODEL') || 'gemini-3.6-flash').trim(),
-    temperature: parseFloat(props.getProperty('AI_TEMPERATURE')) || 0.2
+    temperature: _aiTemperature_()
   };
 }
 
@@ -590,43 +587,43 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
   info = info || {};
   var card = CardService.newCardBuilder();
   card.setHeader(CardService.newCardHeader()
-    .setTitle(issues.length + ' issue(s) found')
+    .setTitle((issues.length ? '🔎 ' : '🎉 ') + _ct_('d.issuesFound', { n: issues.length }))
     .setSubtitle(fileName));
 
   var topSection = CardService.newCardSection();
   if (info.imagesRemoved) {
     topSection.addWidget(CardService.newTextParagraph().setText(
-      '<i>This PDF (' + _driveMb_(info.fileSize) + ' MB) was too large to send as is. It was checked with ' + info.imagesKept +
-      ' images; ' + info.imagesRemoved + ' large images (e.g. photos) were left out. The text was checked completely.</i>'));
+      '<i>' + _ct_('d.shrunk', { mb: _driveMb_(info.fileSize), kept: info.imagesKept, removed: info.imagesRemoved }) + '</i>'));
   }
   if (info.failedRanges && info.failedRanges.length) {
     topSection.addWidget(CardService.newTextParagraph().setText(
-      '<b>Note:</b> pages ' + _escapeCardHtml_(info.failedRanges.join(', ')) + ' could not be checked (AI request failed). Please run the check again.'));
+      '⚠️ ' + _ct_('d.failedPages', { pages: _escapeCardHtml_(info.failedRanges.join(', ')) })));
   }
   if (!issues.length) {
-    topSection.addWidget(CardService.newTextParagraph().setText('No errors found for the selected language.'));
+    topSection.addWidget(CardService.newTextParagraph().setText('✅ ' + _ct_('d.noErrors')));
     card.addSection(topSection);
     return card.build();
   }
 
   topSection.addWidget(CardService.newTextButton()
-    .setText('Open Annotated PDF')
+    .setText('🖍️ ' + _ct_('d.openAnnotated'))
     .setOnClickAction(CardService.newAction()
       .setFunctionName('apiExportDrivePdfAnnotated')
       .setParameters({ resultId: resultId })
       .setLoadIndicator(CardService.LoadIndicator.SPINNER)));
   topSection.addWidget(CardService.newTextButton()
-    .setText('Export as Sheet')
+    .setText('📊 ' + _ct_('d.exportSheet'))
     .setOnClickAction(CardService.newAction().setFunctionName('apiExportDrivePdfResultToSheet').setParameters({ resultId: resultId })));
   topSection.addWidget(CardService.newTextParagraph()
-    .setText('<i>"Open Annotated PDF" creates a copy of this file in which each finding is highlighted in yellow directly on the affected words, with a sticky-note comment in the margin next to it (Google Drive itself does not support visible comments on PDFs). Placement is best-effort - if the exact spot can’t be located, the note falls back to the top of its best-guess page; the full original quote is always in the note text either way.' +
-      (info.fileSize > DRIVE_PDF_ANNOTATE_MAX_BYTES ? ' For large files like this one it may take a few steps (click "Continue").' : '') + '</i>'));
+    .setText('<i>' + _ct_('d.annotHelp') +
+      (info.fileSize > DRIVE_PDF_ANNOTATE_MAX_BYTES ? ' ' + _ct_('d.annotHelpLarge') : '') + '</i>'));
   card.addSection(topSection);
 
   var shown = issues.slice(0, DRIVE_PDF_MAX_CARD_ISSUES);
   shown.forEach(function(issue) {
     var section = CardService.newCardSection();
-    var typeLabel = (issue.type || 'style').toUpperCase();
+    var type = (issue.type === 'terminology' || issue.type === 'grammar') ? issue.type : 'style';
+    var typeLabel = _ct_('type.' + type).toUpperCase();
     var locationLabel = issue.location ? ' - ' + issue.location : '';
     section.addWidget(CardService.newTextParagraph()
       .setText('<b>' + _escapeCardHtml_(typeLabel) + '</b>' + _escapeCardHtml_(locationLabel)));
@@ -641,7 +638,7 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
   if (issues.length > shown.length) {
     var moreSection = CardService.newCardSection();
     moreSection.addWidget(CardService.newTextParagraph()
-      .setText('+ ' + (issues.length - shown.length) + ' more issue(s). Use "Export as Sheet" for the full list.'));
+      .setText('➕ ' + _ct_('d.more', { n: issues.length - shown.length })));
     card.addSection(moreSection);
   }
 
@@ -731,7 +728,7 @@ function apiExportDrivePdfResultToSheet(e) {
       .build();
   } catch (err) {
     return CardService.newActionResponseBuilder()
-      .setNotification(CardService.newNotification().setText('Error: ' + (err.message || String(err))))
+      .setNotification(CardService.newNotification().setText(_ct_('d.exportError', { msg: err.message || String(err) })))
       .build();
   }
 }
@@ -766,8 +763,7 @@ function apiExportDrivePdfAnnotated(e) {
     // Notification, nur eine Zeile plus Alternative - der Grund landet im Log.
     Logger.log('apiExportDrivePdfAnnotated: ' + (err.message || err));
     return CardService.newActionResponseBuilder()
-      .setNotification(CardService.newNotification().setText(
-        'Could not create an annotated PDF for this file (unsupported internal PDF structure). Please use "Export as Sheet" instead.'))
+      .setNotification(CardService.newNotification().setText(_ct_('d.annotFailed')))
       .build();
   }
 }
@@ -858,7 +854,8 @@ function _drivePdfComputeAnnotations_(doc, pages, issues) {
 
     var pageIdx = matchedPage !== null ? matchedPage : guessedPage;
 
-    var typeLabel = (issue.type || 'style').toUpperCase();
+    var type = (issue.type === 'terminology' || issue.type === 'grammar') ? issue.type : 'style';
+    var typeLabel = _ct_('type.' + type).toUpperCase();
     var contents = '[' + typeLabel + ']\n' + issue.original + '\n\n-> ' + issue.suggestion +
       (issue.explanation ? '\n\n' + issue.explanation : '') +
       (issue.location ? '\n\n(AI-reported location: ' + issue.location + ')' : '');
@@ -988,13 +985,12 @@ function _driveLargeAnnotatedContinue_(state, started) {
 function _buildDrivePdfAnnotateProgressCard_(state) {
   var pct = Math.floor(state.offset / state.total * 100);
   var card = CardService.newCardBuilder();
-  card.setHeader(CardService.newCardHeader().setTitle('Creating annotated PDF').setSubtitle(state.fileName));
+  card.setHeader(CardService.newCardHeader().setTitle('⏳ ' + _ct_('d.creatingAnnot')).setSubtitle(state.fileName));
   var section = CardService.newCardSection();
   section.addWidget(CardService.newTextParagraph().setText(
-    'This PDF is large (' + _driveMb_(state.fileSize) + ' MB), so the annotated copy is written in several steps. ' +
-    'Progress: <b>' + pct + ' %</b>. Click <b>Continue</b> to go on.'));
+    _ct_('d.annotLarge', { mb: _driveMb_(state.fileSize), pct: pct })));
   section.addWidget(CardService.newTextButton()
-    .setText('Continue')
+    .setText('⏩ ' + _ct_('d.continue'))
     .setOnClickAction(CardService.newAction()
       .setFunctionName('apiExportDrivePdfAnnotatedContinue')
       .setParameters({ state: JSON.stringify(state) })
@@ -1005,9 +1001,9 @@ function _buildDrivePdfAnnotateProgressCard_(state) {
 
 function _buildDrivePdfAnnotatedDoneCard_(fileName, url) {
   var card = CardService.newCardBuilder();
-  card.setHeader(CardService.newCardHeader().setTitle('Annotated PDF ready').setSubtitle(fileName));
+  card.setHeader(CardService.newCardHeader().setTitle('🎉 ' + _ct_('d.annotReady')).setSubtitle(fileName));
   card.addSection(CardService.newCardSection().addWidget(CardService.newTextButton()
-    .setText('Open Annotated PDF')
+    .setText('🖍️ ' + _ct_('d.openAnnotated'))
     .setOpenLink(CardService.newOpenLink().setUrl(url))));
   return card.build();
 }
@@ -1026,7 +1022,7 @@ function apiExportDrivePdfAnnotatedContinue(e) {
   } catch (err) {
     Logger.log('apiExportDrivePdfAnnotatedContinue: ' + (err.message || err));
     return CardService.newActionResponseBuilder()
-      .setNotification(CardService.newNotification().setText('Could not create the annotated PDF: ' + (err.message || err)))
+      .setNotification(CardService.newNotification().setText(_ct_('d.annotContinueFailed', { msg: err.message || err })))
       .build();
   }
 }

@@ -156,15 +156,17 @@ button, select, input, textarea{ font-family:inherit; }
 .btn-mini.primary:hover{ background:var(--yellow-dim); }
 .btn-mini.ghost:hover{ border-color:var(--ink); }
 .btn-mini:disabled{ opacity:.5; cursor:not-allowed; }
-.issue-card.applied .issue-body{ opacity:.5; }
-.issue-card.applied .btn-mini{ pointer-events:none; }
-.applied-tag{ font-family:var(--ff-head); font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--green); display:flex; align-items:center; gap:4px; }
+/* Nur Text ausgrauen - der Button "Nächstes ersetzen" (.btn-next) muss klickbar bleiben */
+.issue-card.applied .diff-line, .issue-card.applied .issue-explanation{ opacity:.5; }
+.issue-card.applied .btn-mini:not(.btn-next){ pointer-events:none; }
+.applied-tag{ font-family:var(--ff-head); font-size:12px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--green); display:flex; align-items:center; gap:4px; }
 .applied-tag svg{ width:12px; height:12px; }
 .state-box{ text-align:center; padding:34px 14px; }
 .state-icon-wrap{ display:flex; justify-content:center; margin-bottom:10px; }
 .state-icon-wrap svg{ width:36px; height:36px; }
-.state-title{ font-family:var(--ff-head); font-size:12.5px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--ink); margin-bottom:4px; }
-.state-sub{ font-size:11.5px; color:var(--gray-500); line-height:1.5; }
+.state-title{ font-family:var(--ff-head); font-size:15px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--ink); margin-bottom:6px; }
+.state-sub{ font-size:14px; color:var(--gray-500); line-height:1.5; }
+.state-box .btn-mini{ margin:14px auto 0; max-width:200px; }
 #toast{
   position:fixed; left:50%; bottom:20px; transform:translateX(-50%) translateY(10px);
   background:var(--ink); color:var(--yellow); font-family:var(--ff-head);
@@ -173,6 +175,11 @@ button, select, input, textarea{ font-family:inherit; }
   z-index:10000; max-width:90%; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.3); border:1px solid var(--yellow);
 }
 #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+#toast.has-link{ pointer-events:auto; }
+#toast a{ color:var(--yellow); margin-left:8px; text-decoration:underline; }
+/* Regel-Popup: Seitenleisten-Bereich gar nicht erst anzeigen (kein Aufblitzen) */
+body.rules-only #app{ display:none; }
+.ctx-loading{ display:flex; justify-content:center; padding:40px 0; }
 /* Settings Gear & Modal */
 #settingsGear {
   position:absolute; top:12px; right:14px; background:none; border:none; cursor:pointer; color:var(--gray-400); padding:4px;
@@ -256,16 +263,20 @@ body.popup-mode #newRulePrompt {
   height: 110px !important;
 }
 .modal-foot .btn-mini { white-space: nowrap; flex: 0 0 auto; padding: 8px 14px; }
-body.popup-mode .modal-foot .btn-mini { font-size: 16px; padding: 10px 18px; }
-.check-notice{margin:0 0 10px;padding:8px 10px;background:#FFF8D6;border-left:3px solid var(--yellow);font-size:11.5px;line-height:1.45;color:#3A3A3A;}
-.remaining-hint{font-size:11px;color:#767676;margin:0 6px;}
-.failed-tag{font-size:11px;color:#D32F2F;margin-right:6px;}
+body.popup-mode .modal-foot .btn-mini { font-size: 14px; padding: 8px 12px; }
+body.popup-mode .modal-foot .btn-check { font-size: 15px; }
+.check-notice{margin:0 0 10px;padding:8px 10px;background:#FFF8D6;border-left:3px solid var(--yellow);font-size:13px;line-height:1.45;color:#3A3A3A;}
+.remaining-hint{font-size:13px;color:#767676;margin:0 6px;}
+.failed-tag{font-size:13px;color:#D32F2F;margin-right:6px;}
+.status-note{font-size:13px;color:var(--gray-400);}
+.control-row .scope-option{ cursor:pointer; font-family:var(--ff-body); font-size:14px; font-weight:normal; letter-spacing:0; text-transform:none; color:var(--ink); }
+.rules-hint{ font-size:13px; color:var(--gray-500); text-align:center; margin:-8px 0 16px; }
 .ui-lang-select{ border:1px solid var(--gray-200); background:var(--white); color:var(--gray-600); padding:4px; font-size:11px; cursor:pointer; outline:none; max-width:96px; }
 .ui-lang-select:hover, .ui-lang-select:focus{ border-color:var(--ink); color:var(--ink); }
 body.popup-mode .ui-lang-select{ font-size:13px; max-width:none; }
 </style>
 </head>
-<body>
+<body class="<?= rulesOnly ? 'popup-mode rules-only' : '' ?>">
 <div id="app">
   <div class="header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
     <div class="header-text">
@@ -290,15 +301,17 @@ body.popup-mode .ui-lang-select{ font-size:13px; max-width:none; }
       </button>
     </div>
   </div>
+  <div id="ctxLoading" class="ctx-loading"><span class="spinner"></span></div>
+  <div id="ctxError" style="display:none"></div>
   <div id="aiUnavailable" class="ai-disabled-note" style="display:none" data-i18n="ac.unavailable">Author Check is not configured yet (Gemini API Key missing). Please contact an admin.</div>
   <div id="mainWrap" style="display:none">
     <div class="control-row" style="margin-bottom:8px;">
       <label style="margin-right:10px;" data-i18n="ac.scope">Scope</label>
       <div style="display:flex; gap:4px 12px; align-items:center; flex-wrap:wrap;">
-        <label style="cursor:pointer; font-size:12px; font-weight:normal; text-transform:none; color:var(--ink);">
+        <label class="scope-option">
           <input type="radio" name="checkScope" value="full" checked style="margin-right:4px;"> <span data-i18n="ac.scopeFull">Entire Document</span>
         </label>
-        <label style="cursor:pointer; font-size:12px; font-weight:normal; text-transform:none; color:var(--ink);">
+        <label class="scope-option">
           <input type="radio" name="checkScope" value="selection" style="margin-right:4px;"> <span data-i18n="ac.scopeSelection">Selection Only</span>
         </label>
       </div>
@@ -343,7 +356,7 @@ body.popup-mode .ui-lang-select{ font-size:13px; max-width:none; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
       <span data-i18n="ac.checkBtn">Check Document</span>
     </button>
-       <p style="font-size:12px; color:var(--gray-500); text-align:center; margin:-8px 0 16px;">
+    <p class="rules-hint">
       <span data-i18n="ac.rulesHintPre">Which rules and prompts apply here can be viewed and changed under</span>
       <a href="#" target="_self" onclick="openRulesSettings(); return false;" style="color:var(--ink); font-weight:600;" data-i18n="ac.rules">Rules</a><span data-i18n="ac.rulesHintPost">.</span>
       </p>
@@ -394,7 +407,7 @@ body.popup-mode .ui-lang-select{ font-size:13px; max-width:none; }
         <button class="btn-mini ghost" style="padding:6px 10px;" onclick="exportRulesToDrive()" data-i18n-title="ac.jsonExportTitle"><span data-i18n="ac.jsonExport">JSON Export</span></button>
         <label class="btn-mini ghost" style="padding:6px 10px; cursor:pointer;" data-i18n-title="ac.jsonImportTitle">
           <span data-i18n="ac.jsonImport">JSON Import</span>
-          <input type="file" id="importRulesInput" accept=".json" style="display:none" onchange="importRulesFile(event)">
+          <input type="file" id="importRulesInput" accept=".json,application/json" style="display:none" onchange="importRulesFile(event)">
         </label>
       </div>
       <button class="btn-check" style="margin:0; padding:8px 16px; width:auto;" onclick="saveRulesSettings()" data-i18n="ac.save">Save Settings</button>
@@ -433,6 +446,8 @@ body.popup-mode .ui-lang-select{ font-size:13px; max-width:none; }
 var I18N_INITIAL_LANG = <?!= JSON.stringify(uiLang) ?>;
 // Editor-App, in der diese Seite läuft ('docs'/'sheets'/'slides'), siehe _resolveHost_.
 var HOST_APP = <?!= JSON.stringify(hostApp) ?>;
+// true = als großes Regel-Popup geöffnet (apiOpenRulesModal), sonst Seitenleiste.
+var RULES_ONLY = <?!= JSON.stringify(!!rulesOnly) ?>;
 function I18N_PERSIST(lang){ google.script.run.apiSetUiLang(lang); }
 </script>
 <?!= include('I18n'); ?>
@@ -441,6 +456,8 @@ var _loadingInterval = null;
 var _currentIssues = [];
 var _currentRulesData = [];
 var _pendingNewCustomRules = [];
+var _scopeRef = null;      // geprüfter Bereich bei "Nur Auswahl" (siehe apiRunAuthorCheck)
+var _rulesDirty = false;   // ungespeicherte Änderungen im Regel-Popup
 
 // Sprachnamen in den Auswahllisten (Prüfsprache, Regelsprache) in der UI-Sprache anzeigen.
 function onUiLangChanged(){
@@ -452,23 +469,34 @@ function onUiLangChanged(){
 
 document.addEventListener('DOMContentLoaded', function(){
   initUiLangSelects();
-  google.script.run.withSuccessHandler(function(ctx){
-    document.getElementById('aiUnavailable').style.display = ctx.aiEnabled ? 'none' : 'block';
-    document.getElementById('mainWrap').style.display = ctx.aiEnabled ? 'block' : 'none';
-    var exportAllBtn = document.getElementById('exportAllToLogBtn');
-    if (exportAllBtn) exportAllBtn.style.display = ctx.isAdmin ? '' : 'none';
-    
-    // Wenn als reine Rules-Ansicht aufgerufen, verstecke den Check-Bereich und öffne direkt das Rules-UI
-      if (ctx.isRulesOnly) {
-      document.getElementById('app').style.display = 'none';
-      document.body.classList.add('popup-mode');
-      initRulesModalUI();
-      if (!ctx.rulesHelpSeen) {
-        openRulesHelp();
-      }
-    }
-  }).apiGetContext();
+  // Regel-Popup: Regeln sofort laden, nicht erst auf den Kontext warten.
+  if (RULES_ONLY) initRulesModalUI();
+  loadContext();
 });
+
+function loadContext(){
+  document.getElementById('ctxLoading').style.display = RULES_ONLY ? 'none' : '';
+  document.getElementById('ctxError').style.display = 'none';
+  google.script.run
+    .withSuccessHandler(function(ctx){
+      document.getElementById('ctxLoading').style.display = 'none';
+      document.getElementById('aiUnavailable').style.display = ctx.aiEnabled ? 'none' : 'block';
+      document.getElementById('mainWrap').style.display = ctx.aiEnabled ? 'block' : 'none';
+      var exportAllBtn = document.getElementById('exportAllToLogBtn');
+      if (exportAllBtn) exportAllBtn.style.display = ctx.isAdmin ? '' : 'none';
+      if (RULES_ONLY && !ctx.rulesHelpSeen) openRulesHelp();
+    })
+    .withFailureHandler(function(err){
+      // Früher blieb die Seitenleiste hier einfach leer.
+      document.getElementById('ctxLoading').style.display = 'none';
+      var box = document.getElementById('ctxError');
+      box.style.display = 'block';
+      showState(box, 'error', { key:'err.connection' }, (err && err.message) ? err.message : String(err));
+      box.querySelector('.state-box').insertAdjacentHTML('beforeend',
+        '<button class="btn-mini ghost" onclick="loadContext()">🔄 '+tl('ac.retry')+'</button>');
+    })
+    .apiGetContext();
+}
 
 document.getElementById('checkBtn').addEventListener('click', runCheck);
 
@@ -483,6 +511,7 @@ function runCheck(){
     .withSuccessHandler(function(res){
       btn.disabled = false;
       stopLoading();
+      _scopeRef = res.scopeRef || null;
       renderIssues($rw, res);
     })
     .withFailureHandler(function(err){
@@ -498,22 +527,13 @@ function exportAuditReport(){
     showToast(t('ac.noIssuesToExport'));
     return;
   }
-  showToast(t('ac.generatingReport'));
+  showToast('📊 ' + t('ac.generatingReport'));
   google.script.run
     .withSuccessHandler(function(url){
-      showToast(t('ac.openingReport'));
-      
-      // Automatisches öffnen im neuen Tab
-      var a = document.createElement('a');
-      a.href = url;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      openUrlOrOffer(url, '📊 ' + t('ac.openingReport'));
     })
     .withFailureHandler(function(err){
-      showToast(t('ac.exportError', { msg: err.message || err }));
+      showToast('⚠️ ' + t('ac.exportError', { msg: err.message || err }));
     })
     .apiExportAuditReport(_currentIssues);
 }
@@ -539,13 +559,13 @@ function checkNoticeHtml(res){
   if (res && res.truncated) parts.push(tl('ac.truncated', { n: Number(res.maxChars || 0).toLocaleString(getUiLang()) }));
   if (res && res.failedParts) parts.push(tl('ac.failedParts', { failed: res.failedParts, parts: res.parts }));
   if (!parts.length) return '';
-  return '<div class="check-notice">' + parts.join('<br>') + '</div>';
+  return '<div class="check-notice">⚠️ ' + parts.join('<br>⚠️ ') + '</div>';
 }
 
 function renderIssues(wrap, res){
   _currentIssues = res.issues || [];
   if (!_currentIssues.length){
-    showState(wrap, 'empty', { key:'ac.noIssuesTitle' }, { key:'ac.noIssuesSub' });
+    showState(wrap, 'empty', { key:'ac.noIssuesTitle', emoji:'🎉' }, { key:'ac.noIssuesSub' });
     var notice = checkNoticeHtml(res);
     if (notice) wrap.insertAdjacentHTML('afterbegin', notice);
     return;
@@ -591,32 +611,32 @@ function applyIssue(id){
   if (!issue) return;
   var card = document.getElementById(id);
   var actions = card.querySelector('.issue-actions');
-  actions.innerHTML = '<span style="font-size:11px;color:#9A9A9A;">'+tl('ac.replacing')+'</span>';
+  actions.innerHTML = '<span class="status-note">'+tl('ac.replacing')+'</span>';
   google.script.run
     .withSuccessHandler(function(r){
       card.classList.add('applied');
       actions.innerHTML = '<span class="applied-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg> '+tl('ac.replaced')+'</span>' +
         (r.remaining ? '<span class="remaining-hint">' + tln('ac.remaining', r.remaining) + '</span>' +
-          '<button class="btn-mini ghost" onclick="applyIssue(\''+id+'\')">'+tl('ac.replaceNext')+'</button>' : '');
-      showToast(r.remaining ? t('ac.replacedFirst', { n: r.remaining }) : t('ac.correctionApplied'));
+          '<button class="btn-mini ghost btn-next" onclick="applyIssue(\''+id+'\')">'+tl('ac.replaceNext')+'</button>' : '');
+      showToast('✅ ' + (r.remaining ? t('ac.replacedFirst', { n: r.remaining }) : t('ac.correctionApplied')));
     })
     .withFailureHandler(function(err){
       actions.innerHTML = '<button class="btn-mini primary" onclick="applyIssue(\''+id+'\')">'+tl('ac.retry')+'</button><button class="btn-mini ghost" onclick="dismissIssue(\''+id+'\')">'+tl('ac.ignore')+'</button>';
-      showToast(t('ac.error', { msg: (err && err.message) ? err.message : String(err) }));
+      showToast('⚠️ ' + t('ac.error', { msg: (err && err.message) ? err.message : String(err) }));
     })
-    .apiApplyAuthorCheckFix(issue.original, issue.suggestion);
+    .apiApplyAuthorCheckFix(issue.original, issue.suggestion, _scopeRef);
 }
 
 function jumpToIssue(id) {
   var issue = _currentIssues.find(function(i){ return i.id === id; });
   if (!issue) return;
-  showToast(t('ac.jumping'));
+  showToast('📍 ' + t('ac.jumping'));
   google.script.run
     .withSuccessHandler(function(found) {
-      if (!found) showToast(t('ac.locationNotFound'));
+      if (!found) showToast('🤷 ' + t('ac.locationNotFound'));
     })
-    .withFailureHandler(function(err){ showToast(t('ac.error', { msg: err.message })); })
-    .apiJumpToIssue(issue.original);
+    .withFailureHandler(function(err){ showToast('⚠️ ' + t('ac.error', { msg: err.message })); })
+    .apiJumpToIssue(issue.original, _scopeRef);
 }
 
 function commentIssue(id) {
@@ -624,23 +644,23 @@ function commentIssue(id) {
   if (!issue) return;
   var card = document.getElementById(id);
   var actions = card.querySelector('.issue-actions');
-  actions.innerHTML = '<span style="font-size:11px;color:#9A9A9A;">'+tl('ac.addingNote')+'</span>';
+  actions.innerHTML = '<span class="status-note">'+tl('ac.addingNote')+'</span>';
   
   google.script.run
     .withSuccessHandler(function(found) {
       if (found) {
         card.classList.add('applied');
-        actions.innerHTML = '<span class="applied-tag">'+tl('ac.noteAdded')+'</span>';
-        showToast(t('ac.noteInserted'));
+        actions.innerHTML = '<span class="applied-tag">📝 '+tl('ac.noteAdded')+'</span>';
+        showToast('📝 ' + t('ac.noteInserted'));
       } else {
-        actions.innerHTML = '<span style="font-size:11px;color:#D32F2F;">'+tl('ac.textNotFound')+'</span>';
+        actions.innerHTML = '<span class="failed-tag">'+tl('ac.textNotFound')+'</span>';
       }
     })
     .withFailureHandler(function(err){
       actions.innerHTML = '<button class="btn-mini ghost" onclick="commentIssue(\''+id+'\')">'+tl('ac.retryNote')+'</button><button class="btn-mini ghost" onclick="dismissIssue(\''+id+'\')">'+tl('ac.ignore')+'</button>';
-      showToast(t('ac.error', { msg: (err && err.message) ? err.message : String(err) }));
+      showToast('⚠️ ' + t('ac.error', { msg: (err && err.message) ? err.message : String(err) }));
     })
-    .apiCommentIssue(issue.original, issue.suggestion, issue.explanation);
+    .apiCommentIssue(issue.original, issue.suggestion, issue.explanation, _scopeRef);
 }
 
 function dismissIssue(id){
@@ -648,7 +668,7 @@ function dismissIssue(id){
   if (card) card.remove();
   _currentIssues = _currentIssues.filter(function(i){ return i.id !== id; });
   if (!_currentIssues.length) {
-    showState(document.getElementById('resultsWrap'), 'empty', { key:'ac.noOpenTitle' }, { key:'ac.noOpenSub' });
+    showState(document.getElementById('resultsWrap'), 'empty', { key:'ac.noOpenTitle', emoji:'✨' }, { key:'ac.noOpenSub' });
   }
 }
 
@@ -661,7 +681,7 @@ function replaceAll(){
   var ok = 0, failed = 0;
   function next(i){
     if (i >= pending.length) {
-      showToast(failed ? t('ac.replaceAllPartial', { ok: ok, failed: failed }) : t('ac.replaceAllOk', { ok: ok }));
+      showToast(failed ? '⚠️ ' + t('ac.replaceAllPartial', { ok: ok, failed: failed }) : '✅ ' + t('ac.replaceAllOk', { ok: ok }));
       return;
     }
     var issue = pending[i];
@@ -678,10 +698,10 @@ function replaceAll(){
       .withFailureHandler(function(){
         failed++;
         var actions = card.querySelector('.issue-actions');
-        if (actions) actions.insertAdjacentHTML('afterbegin', '<span class="failed-tag">'+tl('ac.notFound')+'</span>');
+        if (actions && !actions.querySelector('.failed-tag')) actions.insertAdjacentHTML('afterbegin', '<span class="failed-tag">'+tl('ac.notFound')+'</span>');
         next(i+1);
       })
-      .apiApplyAuthorCheckFix(issue.original, issue.suggestion);
+      .apiApplyAuthorCheckFix(issue.original, issue.suggestion, _scopeRef);
   }
   next(0);
 }
@@ -693,7 +713,7 @@ function noteAll(){
   var ok = 0, failed = 0;
   function next(i){
     if (i >= pending.length) {
-      showToast(failed ? t('ac.noteAllPartial', { ok: ok, failed: failed }) : t('ac.noteAllOk', { ok: ok }));
+      showToast(failed ? '⚠️ ' + t('ac.noteAllPartial', { ok: ok, failed: failed }) : '📝 ' + t('ac.noteAllOk', { ok: ok }));
       return;
     }
     var issue = pending[i];
@@ -705,14 +725,14 @@ function noteAll(){
           ok++;
           card.classList.add('applied');
           var actions = card.querySelector('.issue-actions');
-          if (actions) actions.innerHTML = '<span class="applied-tag">'+tl('ac.noteAdded')+'</span>';
+          if (actions) actions.innerHTML = '<span class="applied-tag">📝 '+tl('ac.noteAdded')+'</span>';
         } else {
           failed++;
         }
         next(i+1);
       })
       .withFailureHandler(function(){ failed++; next(i+1); })
-      .apiCommentIssue(issue.original, issue.suggestion, issue.explanation);
+      .apiCommentIssue(issue.original, issue.suggestion, issue.explanation, _scopeRef);
   }
   next(0);
 }
@@ -721,12 +741,12 @@ function ignoreAll(){
   var cards = document.querySelectorAll('.issue-card');
   cards.forEach(function(c){ c.remove(); });
   _currentIssues = [];
-  showState(document.getElementById('resultsWrap'), 'empty', { key:'ac.allIgnoredTitle' }, { key:'ac.allIgnoredSub' });
+  showState(document.getElementById('resultsWrap'), 'empty', { key:'ac.allIgnoredTitle', emoji:'🙈' }, { key:'ac.allIgnoredSub' });
 }
 
-// title/sub: Rohtext (z.B. Server-Fehlermeldung) oder { key, vars } für i18n
+// title/sub: Rohtext (z.B. Server-Fehlermeldung) oder { key, vars, emoji } für i18n
 function showState(wrap, type, title, sub){
-  var part = function(x){ return (x && typeof x === 'object') ? tl(x.key, x.vars) : esc(x); };
+  var part = function(x){ return (x && typeof x === 'object') ? (x.emoji ? x.emoji + ' ' : '') + tl(x.key, x.vars) : esc(x); };
   var icons = {
     empty: '<svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="24" stroke="#3A3A3A" stroke-width="2.5"/><path d="M22 33l7 7 15-15" stroke="#3A3A3A" stroke-width="2.5"/></svg>',
     error: '<svg viewBox="0 0 64 64" fill="none"><rect x="10" y="10" width="44" height="44" stroke="#D32F2F" stroke-width="2.5"/><path d="M22 22l20 20M42 22L22 42" stroke="#D32F2F" stroke-width="2.5"/></svg>'
@@ -737,9 +757,25 @@ function showState(wrap, type, title, sub){
 
 function showToast(msg){
   var el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
+  el.textContent = msg; el.classList.remove('has-link'); el.classList.add('show');
   clearTimeout(el._t);
   el._t = setTimeout(function(){ el.classList.remove('show'); }, 1800);
+}
+// Toast mit anklickbarem Link, bleibt länger stehen.
+function showLinkToast(msg, url){
+  var el = document.getElementById('toast');
+  var href = safeHref(url);
+  el.innerHTML = esc(msg) + (href ? '<a href="'+esc(href)+'" target="_blank" rel="noopener noreferrer">'+tl('link.open')+' ↗</a>' : '');
+  el.classList.add('show', 'has-link');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove('show', 'has-link'); }, 10000);
+}
+// Neuen Tab öffnen. Da das erst in der Server-Antwort passiert (nicht direkt beim
+// Klick), blockiert der Browser das oft als Popup - dann den Link anbieten.
+function openUrlOrOffer(url, msg){
+  var w = null;
+  try { w = window.open(url, '_blank', 'noopener'); } catch(e) {}
+  if (w) showToast(msg); else showLinkToast(msg, url);
 }
 
 function esc(str){ if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -751,6 +787,8 @@ function escJsAttr(str){
   return String(str||'')
     .replace(/\\/g,'\\\\')
     .replace(/'/g,"\\'")
+    .replace(/\n/g,'\\n')
+    .replace(/\r/g,'\\r')
     .replace(/&/g,'&amp;')
     .replace(/"/g,'&quot;')
     .replace(/</g,'&lt;')
@@ -794,11 +832,12 @@ function openRulesSettings() {
   // Ruft das große Popup im Backend auf, falls wir uns in der Seitenleiste befinden
   google.script.run
     .withSuccessHandler(function(){ clearTimeout(timeoutId); resetBtn(); })
-    .withFailureHandler(function(err){ clearTimeout(timeoutId); resetBtn(); showToast(t('ac.error', { msg: err.message })); })
+    .withFailureHandler(function(err){ clearTimeout(timeoutId); resetBtn(); showToast('⚠️ ' + t('ac.error', { msg: err.message })); })
     .apiOpenRulesModal(HOST_APP);
 }
 
 function closeRulesSettings() {
+  if (_rulesDirty && !confirm(t('ac.discardChanges'))) return;
   var modalEl = document.getElementById('rulesModal');
   if (modalEl) modalEl.classList.remove('open');
   // Schließt den Modal-Dialog in Google Docs/Sheets/Slides
@@ -813,8 +852,25 @@ function initRulesModalUI() {
   loadRulesForLanguage(_currentRulesLang);
 }
 function onRulesLangChange() {
-  _currentRulesLang = document.getElementById('rulesLangSelect').value;
+  var sel = document.getElementById('rulesLangSelect');
+  if (_rulesDirty && !confirm(t('ac.discardChanges'))) { sel.value = _currentRulesLang; return; }
+  _currentRulesLang = sel.value;
+  _pendingNewCustomRules = [];
   loadRulesForLanguage(_currentRulesLang);
+}
+
+// Übernimmt Häkchen und Parameter aus der Liste in _currentRulesData. Vorher
+// aufrufen, bevor die Liste neu gezeichnet wird (Verschieben, Neue Regel, Import) -
+// sonst gingen ungespeicherte Änderungen verloren.
+function syncRulesFromDom() {
+  var body = document.getElementById('rulesListContainer');
+  if (!body) return;
+  _currentRulesData.forEach(function(r) {
+    var cb = body.querySelector('input.rule-checkbox[data-name="'+cssEscapeAC(r.Name)+'"]');
+    var sel = body.querySelector('select[data-name="'+cssEscapeAC(r.Name)+'"]');
+    if (cb) r.IsEnabled = cb.checked;
+    if (sel) r.Parameter = sel.value;
+  });
 }
 function loadRulesForLanguage(lang) {
   var listEl = document.getElementById('rulesListContainer');
@@ -822,10 +878,11 @@ function loadRulesForLanguage(lang) {
   google.script.run
     .withSuccessHandler(function(rules) {
       _currentRulesData = rules;
+      _rulesDirty = false;
       renderRulesUI(rules);
     })
     .withFailureHandler(function(err) {
-      listEl.innerHTML = '<div style="color:red; text-align:center; padding:20px;">'+tl('ac.error', { msg: err && err.message ? err.message : String(err) })+'</div>';
+      listEl.innerHTML = '<div style="color:red; text-align:center; padding:20px;">⚠️ '+tl('ac.error', { msg: err && err.message ? err.message : String(err) })+'</div>';
     })
     .apiGetRulesConfig(lang);
 }
@@ -852,7 +909,7 @@ function renderRulesUI(rules) {
       '</select>' +
       '<input type="text" id="newRuleCustomGroup"'+tAttrPh('ac.newGroupPh')+' style="display:none; width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
       '<label style="font-size:10px; font-weight:bold; color:var(--gray-500); text-transform:uppercase;">'+tl('ac.typeLabel')+'</label>' +
-      '<select id="newRuleKind" style="width:100%; margin-bottom:6px; padding:5px; font-size:11px; border:1px solid var(--gray-300);">' +
+      '<select id="newRuleKind" onchange="onRuleKindChange(this)" style="width:100%; margin-bottom:6px; padding:5px; font-size:11px; border:1px solid var(--gray-300);">' +
         '<option value="PROMPT" selected data-i18n="ac.kindPrompt">'+esc(t('ac.kindPrompt'))+'</option>' +
         '<option value="RULE" data-i18n="ac.kindRule">'+esc(t('ac.kindRule'))+'</option>' +
       '</select>' +
@@ -925,12 +982,20 @@ function renderRulesUI(rules) {
   });
 
   container.innerHTML = topAddHeader + html;
+  if (!container._dirtyWatch) {
+    container.addEventListener('change', function(ev){
+      if (ev.target.matches('.rule-checkbox, .select-all-checkbox, .select-all-checkbox-sub, select[data-name]')) _rulesDirty = true;
+    });
+    container._dirtyWatch = true;
+  }
   Object.keys(sections).forEach(function(section) {
     updateGroupSelectAllState(section);
     Object.keys(sections[section]).forEach(function(sub) {
       updateSubgroupSelectAllState(section + '__' + sub);
     });
   });
+  // Aktive Suche nach dem Neuzeichnen wieder anwenden.
+  filterRulesList();
 }
 function toggleGroupAll(section, checked) {
   var container = document.getElementById('rulesListContainer');
@@ -1071,20 +1136,30 @@ function confirmMoveRule() {
     return;
   }
 
+  syncRulesFromDom();
   var rule = _currentRulesData.find(function(r) { return r.Name === _moveRuleTargetName; });
   if (rule) {
     rule.Section = section;
     rule.Subsection = sub;
   }
 
+  _rulesDirty = true;
   closeMoveRuleDialog();
   renderRulesUI(_currentRulesData);
-  showToast(t('ac.ruleMoved'));
+  showToast('↔️ ' + t('ac.ruleMoved'));
 }
 
 function toggleAddCustomRuleForm() {
   var form = document.getElementById('addCustomRuleForm');
   if (form) form.style.display = (form.style.display === 'none') ? 'block' : 'none';
+}
+
+// "Regel" = kurze Stilregel (nur Beschreibung), "Prompt" = eigene Prüfanweisung.
+// Früher bekam jede eigene Regel einen CustomPrompt und wurde damit immer als
+// Prompt behandelt - die Auswahl hatte keine Wirkung.
+function onRuleKindChange(selectEl) {
+  var promptEl = document.getElementById('newRulePrompt');
+  if (promptEl) promptEl.style.display = (selectEl.value === 'RULE') ? 'none' : '';
 }
 
 function onCategorySelectChange(selectEl) {
@@ -1116,12 +1191,19 @@ function addNewCustomRule() {
     return;
   }
 
+  // Eindeutiger Name: früher überschrieben sich Regeln mit gleichem Titel (oder
+  // Titeln nur aus Sonderzeichen, z.B. Chinesisch) gegenseitig.
+  var baseName = "CUSTOM_" + (name.toUpperCase().replace(/[^A-Z0-9]/g, '_').replace(/^_+|_+$/g, '') || 'RULE');
+  var ruleName = baseName, n = 2;
+  while (_currentRulesData.some(function(r) { return r.Name === ruleName; })) ruleName = baseName + '_' + (n++);
+
+  syncRulesFromDom();
   var newRule = {
-    "Name": "CUSTOM_" + name.toUpperCase().replace(/[^A-Z0-9]/g, '_'),
+    "Name": ruleName,
     "Description": desc,
     "Type": finalGroup,
     "RuleKind": kind,
-    "CustomPrompt": prompt || desc,
+    "CustomPrompt": kind === 'PROMPT' ? (prompt || desc) : '',
     "ReferenceUrl": refUrl || null,
     "IsEnabled": true,
     "IsConfigurable": false,
@@ -1130,37 +1212,36 @@ function addNewCustomRule() {
 
   _currentRulesData.push(newRule);
   _pendingNewCustomRules.push(newRule);
+  _rulesDirty = true;
   renderRulesUI(_currentRulesData);
-  showToast(t('ac.ruleAdded'));
+  showToast('➕ ' + t('ac.ruleAdded'));
 }
 
 function saveRulesSettings() {
-  var body = document.getElementById('rulesListContainer');
-  var updatedRules = _currentRulesData.map(function(r) {
-    var cb = body.querySelector('input.rule-checkbox[data-name="'+cssEscapeAC(r.Name)+'"]');
-    var sel = body.querySelector('select[data-name="'+cssEscapeAC(r.Name)+'"]');
-    if (cb) r.IsEnabled = cb.checked;
-    if (sel) r.Parameter = sel.value;
-    return r;
-  });
+  syncRulesFromDom();
+  var updatedRules = _currentRulesData;
   var btn = document.querySelector('#rulesModal .modal-foot .btn-check');
   btn.innerText = t('ac.saving');
   btn.disabled = true;
   google.script.run
     .withSuccessHandler(function() {
-      btn.innerText = t('ac.save');
-      btn.disabled = false;
-      closeRulesSettings();
-      showToast(t('ac.saved'));
-      if (_pendingNewCustomRules.length) {
-        google.script.run.apiLogNewCustomRules(_pendingNewCustomRules, _currentRulesLang);
-        _pendingNewCustomRules = [];
-      }
+      _rulesDirty = false;
+      showToast('💾 ' + t('ac.saved'));
+      // Erst protokollieren, DANN schließen: früher wurde das Popup vorher
+      // geschlossen, der Protokoll-Aufruf ging dabei ggf. verloren.
+      var pending = _pendingNewCustomRules;
+      _pendingNewCustomRules = [];
+      var finish = function(){ setTimeout(closeRulesSettings, 600); };
+      if (!pending.length) { finish(); return; }
+      google.script.run
+        .withSuccessHandler(finish)
+        .withFailureHandler(finish)
+        .apiLogNewCustomRules(pending, _currentRulesLang);
     })
     .withFailureHandler(function(err) {
       btn.innerText = t('ac.save');
       btn.disabled = false;
-      showToast(t('ac.saveError', { msg: err.message }));
+      showToast('⚠️ ' + t('ac.saveError', { msg: err.message }));
     })
     .apiSaveRulesConfig(updatedRules, _currentRulesLang);
 }
@@ -1169,42 +1250,47 @@ function exportAllRulesToLogSheet() {
   showToast(t('ac.exportingLog'));
   google.script.run
     .withSuccessHandler(function(res) {
-      showToast(t('ac.exportedLog', { n: res.exported }));
+      showToast('✅ ' + t('ac.exportedLog', { n: res.exported }));
     })
     .withFailureHandler(function(err) {
-      showToast(t('ac.error', { msg: err.message || err }));
+      showToast('⚠️ ' + t('ac.error', { msg: err.message || err }));
     })
     .apiExportAllRulesToLogSheet(_currentRulesData, _currentRulesLang);
 }
 
 function exportRulesOverview() {
-  showToast(t('ac.buildingOverview'));
+  syncRulesFromDom();
+  showToast('📊 ' + t('ac.buildingOverview'));
   google.script.run
     .withSuccessHandler(function(url) {
-      showToast(t('ac.overviewReady'));
-      window.open(url, '_blank');
+      openUrlOrOffer(url, '📊 ' + t('ac.overviewReady'));
     })
     .withFailureHandler(function(err) {
-      showToast(t('ac.error', { msg: err.message || err }));
+      showToast('⚠️ ' + t('ac.error', { msg: err.message || err }));
     })
     .apiExportRulesOverview(_currentRulesData);
 }
 
 function exportRulesToDrive() {
-  showToast(t('ac.exportingDrive'));
+  syncRulesFromDom();
+  showToast('📤 ' + t('ac.exportingDrive'));
   google.script.run
-    .withSuccessHandler(function() {
-      showToast(t('ac.driveUpdated'));
+    .withSuccessHandler(function(res) {
+      showLinkToast('📤 ' + t('ac.jsonExported', { name: res.name }), res.url);
     })
     .withFailureHandler(function(err) {
-      showToast(t('ac.exportError', { msg: err.message }));
+      showToast('⚠️ ' + t('ac.exportError', { msg: err.message }));
     })
     .apiExportRulesToDrive(_currentRulesData, _currentRulesLang);
 }
 
 function importRulesFile(event) {
-  var file = event.target.files[0];
+  var input = event.target;
+  var file = input.files[0];
+  // Zurücksetzen, damit dieselbe Datei erneut gewählt werden kann (sonst kein change-Event).
+  input.value = '';
   if (!file) return;
+  syncRulesFromDom();
   var reader = new FileReader();
   reader.onload = function(e) {
     try {
@@ -1227,25 +1313,14 @@ function importRulesFile(event) {
           if (imp.Name && imp.Name.indexOf('CUSTOM_') === 0) _pendingNewCustomRules.push(imp);
         }
       });
+      _rulesDirty = true;
       renderRulesUI(_currentRulesData);
-      showToast(skipped ? t('ac.importedSkipped', { n: skipped }) : t('ac.imported'));
+      showToast(skipped ? '⚠️ ' + t('ac.importedSkipped', { n: skipped }) : '📥 ' + t('ac.imported'));
     } catch(err) {
-      showToast(t('ac.invalidJson'));
+      showToast('⚠️ ' + t('ac.invalidJson'));
     }
   };
   reader.readAsText(file);
-}
-
-function toggleViewMode() {
-  showToast(t('ac.switchingView'));
-  google.script.run
-    .withSuccessHandler(function(res) {
-      // Wenn vom Modal in die Seitenleiste gewechselt wurde, schließen wir das Dialogfenster automatisch
-      if (res && res.newMode === 'SIDEBAR') {
-        google.script.host.close();
-      }
-    })
-    .apiToggleAuthorCheckView();
 }
 
 function backToHomepage() {

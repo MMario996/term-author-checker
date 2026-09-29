@@ -1,9 +1,27 @@
 # term-author-checker
+
+**Kärcher TermCheck** – Google-Workspace-Add-on mit zwei Werkzeugen:
+🔍 **Terminologiesuche** (Seitenleiste und Web-App) und ✍️ **Author Check**
+(Grammatik-, Terminologie- und Stilprüfung in Docs, Sheets, Slides und für PDFs in Drive).
+
+## Oberflächensprachen
+
+Alle Texte gibt es in 15 Sprachen. HTML-Oberflächen: `I18n.html`.
+Karten (Startkarte, Drive-PDF-Check) und vom Server erzeugte Texte: `CardI18n.gs`.
+Neue Texte bitte in beiden Fällen für alle Sprachen ergänzen (Englisch ist Fallback).
+
+## Skripteigenschaften (optional)
+
+- `EXPORT_FOLDER_ID`: Zielordner für `exportProjectToTxt` (Quellcode-Export).
+  Ohne diese Eigenschaft wird der Ordner „TermCheck Source Export“ angelegt.
+
 ## CI / CD
 
 - **CI** (`.github/workflows/ci.yml`): bei jedem Push und Pull Request prüft
-  `node ci/check.js` die Syntax aller `.gs`-Dateien, `appsscript.json` und
-  doppelt definierte Funktionen. Lokal: `node ci/check.js`.
+  `node ci/check.js` die Syntax aller `.gs`-Dateien, `appsscript.json`,
+  doppelt definierte Funktionen und ob jede aus HTML (`google.script.run`),
+  Cards (`setFunctionName`) oder dem Manifest (`runFunction`) aufgerufene
+  Server-Funktion existiert. Lokal: `node ci/check.js`.
 - **CD** (`.github/workflows/deploy.yml`): bei jedem Push auf `main` (oder
   manuell über "Run workflow") wird der Code per
   [clasp](https://github.com/google/clasp) ins Apps-Script-Projekt übertragen

@@ -28,7 +28,7 @@
   ],
   "addOns": {
     "common": {
-      "name": "Kärcher Term- & Authoring-Tool",
+      "name": "Kärcher TermCheck",
       "logoUrl": "https://raw.githubusercontent.com/MMario996/terminology-search/main/Authorcheck.jpg",
       "layoutProperties": {
         "primaryColor": "#FFED00",

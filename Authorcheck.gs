@@ -22,10 +22,12 @@ const AUTHORCHECK_DEFAULT_PROMPT =
 
 // ─── ANSICHTEN: CHECKS IN DER SEITENLEISTE / RULES IM POPUP ───────────────
 function showAuthorCheckSidebar(e) {
+  // Altlast aufraeumen: frueher wurde der Popup-Modus ueber diese UserProperty
+  // gesteuert (siehe renderWithI18n_ in Code.gs).
   PropertiesService.getUserProperties().deleteProperty('AUTHORCHECK_IS_RULES_ONLY');
   var host = _resolveHost_(e);
   var ui = renderWithI18n_('AuthorCheck', host.app)
-    .setTitle('Kärcher Author Check')
+    .setTitle('Kärcher TermCheck – Author Check')
     .setWidth(350);
 
   host.ui.showSidebar(ui);
@@ -33,15 +35,15 @@ function showAuthorCheckSidebar(e) {
 
 // hostApp: 'docs' | 'sheets' | 'slides' - wird von der Seitenleiste mitgeschickt
 // (HOST_APP), weil google.script.run kein Event-Objekt liefert.
+// Groesse bewusst unter 1366x768 (haeufige Laptop-Aufloesung) - frueher 1350x900,
+// dann war der Speichern-Button unten abgeschnitten.
 function apiOpenRulesModal(hostApp) {
-  PropertiesService.getUserProperties().setProperty('AUTHORCHECK_IS_RULES_ONLY', 'true');
   var host = _resolveHost_(hostApp);
-  var ui = renderWithI18n_('AuthorCheck', host.app)
-    .setTitle('Rules & Custom Prompts')
-    .setWidth(1350)
-    .setHeight(900);
+  var ui = renderWithI18n_('AuthorCheck', host.app, true)
+    .setWidth(1100)
+    .setHeight(640);
 
-  host.ui.showModalDialog(ui, 'Rules & Custom Prompts');
+  host.ui.showModalDialog(ui, 'Kärcher TermCheck – Rules & Custom Prompts');
 }
 
 function apiMarkRulesHelpSeen() {
@@ -261,6 +263,13 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
     var errMsg = (checkScope === 'selection') ? 'No text selected. Please highlight text first.' : 'No text found in active document.';
     throw new Error(errMsg);
   }
+  // "Nur Auswahl": gepruefte Stelle merken, damit Ersetzen/Springen/Notiz spaeter
+  // nur dort suchen - auch wenn der Nutzer inzwischen woanders hingeklickt hat.
+  // Ohne Bearbeitungsrecht (nur Ansicht) laesst sich kein NamedRange anlegen - dann
+  // wie frueher ohne gemerkten Bereich weiterpruefen statt abzubrechen.
+  var scopeRef = null;
+  try { scopeRef = (checkScope === 'selection') ? _captureCheckScope_() : _clearCheckScope_(); }
+  catch (scopeErr) { Logger.log('apiRunAuthorCheck: Bereich nicht gemerkt: ' + scopeErr); }
   var truncated = fullText.length > AUTHORCHECK_MAX_CHARS;
   var text = truncated ? fullText.slice(0, AUTHORCHECK_MAX_CHARS) : fullText;
 
@@ -279,7 +288,7 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
   var rawUrl = props.getProperty('GEMINI_API_URL') || 'https://34-111-99-134.nip.io/gemini/v1beta/models/';
   var apiUrl = rawUrl.split(']')[0].replace('[', '').trim();
   var model = (props.getProperty('AI_MODEL') || 'gemini-3.6-flash').trim();
-  var temperature = parseFloat(props.getProperty('AI_TEMPERATURE')) || 0.2;
+  var temperature = _aiTemperature_();
   var promptTemplate = props.getProperty('AUTHORCHECK_PROMPT') || AUTHORCHECK_DEFAULT_PROMPT;
 
   // Funktions-Ersetzungen statt Strings, damit "$&", "$1" usw. in Dokumenttext
@@ -344,8 +353,116 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
     parts: chunks.length,
     failedParts: failedParts,
     truncated: truncated,
-    maxChars: AUTHORCHECK_MAX_CHARS
+    maxChars: AUTHORCHECK_MAX_CHARS,
+    scopeRef: scopeRef
   };
+}
+
+// ─── GEPRUEFTER BEREICH ("NUR AUSWAHL") ─────────────────────────────────────
+// Frueher ersetzte "Ersetzen" nach einer Pruefung der Auswahl trotzdem das erste
+// Vorkommen im GANZEN Dokument - eventuell ausserhalb der geprueften Stelle.
+// Jetzt wird der Bereich beim Pruefen festgehalten und bei jeder Aktion mitgegeben:
+//  - Docs:   benannter Bereich (NamedRange, wandert bei Aenderungen im Text mit)
+//  - Sheets: Tabellenblatt + A1-Bereich
+//  - Slides: IDs der markierten Formen/Folien
+var AC_SCOPE_RANGE_NAME = 'termcheck_authorcheck_scope';
+
+function _captureCheckScope_() {
+  if (DocumentApp.getActiveDocument()) {
+    var doc = DocumentApp.getActiveDocument();
+    var sel = doc.getSelection();
+    if (!sel) return null;
+    _clearCheckScope_();
+    return { app: 'docs', id: doc.addNamedRange(AC_SCOPE_RANGE_NAME, sel).getId() };
+  } else if (SpreadsheetApp.getActiveSpreadsheet()) {
+    var range = SpreadsheetApp.getActiveSpreadsheet().getActiveRange();
+    return range ? { app: 'sheets', sheet: range.getSheet().getName(), a1: range.getA1Notation() } : null;
+  } else if (SlidesApp.getActivePresentation()) {
+    var selection = SlidesApp.getActivePresentation().getSelection();
+    var type = selection.getSelectionType();
+    var ref = { app: 'slides', elementIds: [], pageIds: [] };
+    if (type === SlidesApp.SelectionType.PAGE) {
+      var pages = selection.getPageRange();
+      if (pages) pages.getPages().forEach(function(p) { ref.pageIds.push(p.getObjectId()); });
+    } else {
+      // TEXT (Cursor in einer Form) und PAGE_ELEMENT: die betroffenen Formen
+      var elements = selection.getPageElementRange();
+      if (elements) elements.getPageElements().forEach(function(pe) { ref.elementIds.push(pe.getObjectId()); });
+    }
+    return (ref.elementIds.length || ref.pageIds.length) ? ref : null;
+  }
+  return null;
+}
+
+// Entfernt den Docs-Markierungsbereich eines frueheren Laufs (bei "Gesamtes Dokument").
+function _clearCheckScope_() {
+  try {
+    var doc = DocumentApp.getActiveDocument();
+    if (doc) doc.getNamedRanges(AC_SCOPE_RANGE_NAME).forEach(function(nr) { nr.remove(); });
+  } catch (e) {}
+  return null;
+}
+
+function _scopeGoneError_() {
+  return new Error('The checked selection no longer exists. Please run the check again.');
+}
+
+// Docs: alle Fundstellen (RangeElements) von pattern - im geprueften Bereich oder
+// in Haupttext, Kopf-/Fusszeile und Fussnoten.
+function _docsFindAll_(doc, pattern, scopeRef, limit) {
+  limit = limit || 500;
+  var hits = [];
+  function collect(container, from, to) {
+    if (!container || !container.findText) return;
+    var found = container.findText(pattern);
+    while (found && hits.length < limit) {
+      var inside = (from == null) || (found.getStartOffset() >= from && found.getEndOffsetInclusive() <= to);
+      if (inside) hits.push(found);
+      found = container.findText(pattern, found);
+    }
+  }
+  if (scopeRef && scopeRef.app === 'docs') {
+    var nr = doc.getNamedRangeById(scopeRef.id);
+    if (!nr) throw _scopeGoneError_();
+    nr.getRange().getRangeElements().forEach(function(re) {
+      if (re.isPartial()) collect(re.getElement(), re.getStartOffset(), re.getEndOffsetInclusive());
+      else collect(re.getElement());
+    });
+  } else {
+    _docsSections_(doc).forEach(function(sec) { collect(sec); });
+  }
+  return hits;
+}
+
+// Sheets: zu durchsuchende Bereiche - geprueftes Feld oder alle sichtbaren Blaetter
+// (aktives zuerst).
+function _sheetsSearchRanges_(ss, scopeRef) {
+  if (scopeRef && scopeRef.app === 'sheets') {
+    var sheet = ss.getSheetByName(scopeRef.sheet);
+    if (!sheet) throw _scopeGoneError_();
+    return [sheet.getRange(scopeRef.a1)];
+  }
+  var active = ss.getActiveSheet();
+  return [active].concat(_sheetsVisibleSheets_(ss).filter(function (sh) { return sh.getSheetId() !== active.getSheetId(); }))
+    .map(function(sh) { return sh.getDataRange(); });
+}
+
+// Slides: Textbereiche im geprueften Bereich oder in der ganzen Praesentation.
+function _slidesSearchTargets_(pres, scopeRef) {
+  if (!(scopeRef && scopeRef.app === 'slides')) return _slidesAllTextTargets_(pres);
+  var out = [];
+  pres.getSlides().forEach(function(slide, i) {
+    if ((scopeRef.pageIds || []).indexOf(slide.getObjectId()) !== -1) {
+      _slidesTextTargets_(slide.getPageElements(), i, out);
+      return;
+    }
+    (scopeRef.elementIds || []).forEach(function(id) {
+      var pe = slide.getPageElementById(id);
+      if (pe) _slidesTextTargets_([pe], i, out);
+    });
+  });
+  if (!out.length) throw _scopeGoneError_();
+  return out;
 }
 
 // ─── KORREKTUR IM DOKUMENT ANWENDEN ─────────────────────────────────────────
@@ -354,7 +471,8 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
 // "Sauger" -> "Nass-Trockensauger"), wurde der eingefuegte Text immer wieder
 // gefunden und bis zu 200x verschachtelt ersetzt. Zurueckgegeben wird
 // zusaetzlich, wie viele weitere Vorkommen noch im Dokument stehen.
-function apiApplyAuthorCheckFix(original, suggestion) {
+// scopeRef (optional): geprueften Bereich aus apiRunAuthorCheck, siehe oben.
+function apiApplyAuthorCheckFix(original, suggestion, scopeRef) {
   original = String(original || '');
   suggestion = String(suggestion == null ? '' : suggestion);
   if (!original.trim()) throw new Error('Nothing to replace.');
@@ -362,9 +480,10 @@ function apiApplyAuthorCheckFix(original, suggestion) {
   var count = 0, remaining = 0;
 
   if (DocumentApp.getActiveDocument()) {
-    var body = DocumentApp.getActiveDocument().getBody();
-    var found = body.findText(pattern);
-    if (found) {
+    var doc = DocumentApp.getActiveDocument();
+    var hits = _docsFindAll_(doc, pattern, scopeRef);
+    if (hits.length) {
+      var found = hits[0];
       var el = found.getElement().asText();
       var start = found.getStartOffset();
       var end = found.getEndOffsetInclusive();
@@ -375,16 +494,13 @@ function apiApplyAuthorCheckFix(original, suggestion) {
         el.setAttributes(start, start + suggestion.length - 1, attrs);
       }
       count = 1;
-      remaining = _countDocMatches_(body, pattern);
+      remaining = _docsFindAll_(doc, pattern, scopeRef).length;
     }
   } else if (SpreadsheetApp.getActiveSpreadsheet()) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var re = new RegExp(pattern);          // ohne "g": test() ist so zustandslos
     var reAll = new RegExp(pattern, 'g');  // nur fuer match()
-    var active = ss.getActiveSheet();
-    var sheets = [active].concat(_sheetsVisibleSheets_(ss).filter(function (sh) { return sh.getSheetId() !== active.getSheetId(); }));
-    sheets.forEach(function (sheet) {
-      var range = sheet.getDataRange();
+    _sheetsSearchRanges_(ss, scopeRef).forEach(function (range) {
       var values = range.getValues();
       // Formeln NIE anfassen: frueher schrieb setValues() den ganzen Bereich als
       // Werte zurueck und zerstoerte damit alle Formeln im Blatt.
@@ -407,7 +523,7 @@ function apiApplyAuthorCheckFix(original, suggestion) {
   } else if (SlidesApp.getActivePresentation()) {
     // TextRange.find() arbeitet mit regulaeren Ausdruecken. replaceAllText() mit
     // dem Regex-String suchte dagegen woertlich nach "\s+" usw. und fand nichts.
-    _slidesAllTextTargets_(SlidesApp.getActivePresentation()).forEach(function (t) {
+    _slidesSearchTargets_(SlidesApp.getActivePresentation(), scopeRef).forEach(function (t) {
       var matches = t.textRange.find(pattern);
       if (!matches.length) return;
       if (count === 0) {
@@ -428,29 +544,19 @@ function apiApplyAuthorCheckFix(original, suggestion) {
   return { success: true, count: count, remaining: remaining };
 }
 
-function _countDocMatches_(body, pattern) {
-  var n = 0;
-  var found = body.findText(pattern);
-  while (found && n < 500) {
-    n++;
-    found = body.findText(pattern, found);
-  }
-  return n;
-}
-
 function _escapeRegexAC_(str) {
   return String(str)
     .replace(/&nbsp;/g, ' ')
-    .replace(/ /g, ' ')
+    .replace(/\u00A0/g, ' ')
     .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     .replace(/\s+/g, '\\s+');
 }
 
-// Slides: erste Fundstelle in allen Formen, Tabellen und Gruppen suchen.
-// Liefert { target, match } oder null.
-function _slidesFindFirst_(pres, text) {
+// Slides: erste Fundstelle in allen Formen, Tabellen und Gruppen (bzw. im
+// geprueften Bereich) suchen. Liefert { target, match } oder null.
+function _slidesFindFirst_(pres, text, scopeRef) {
   var pattern = _escapeRegexAC_(text);
-  var targets = _slidesAllTextTargets_(pres);
+  var targets = _slidesSearchTargets_(pres, scopeRef);
   for (var i = 0; i < targets.length; i++) {
     var matches = targets[i].textRange.find(pattern);
     if (matches.length) return { target: targets[i], match: matches[0] };
@@ -463,78 +569,85 @@ function _slidesSelectHit_(pres, hit) {
   try { hit.match.select(); } catch (e) { hit.target.element.select(); }
 }
 
-// Sheets: in allen Tabellenblaettern suchen, nicht nur im aktiven.
-function _sheetsFindFirst_(text) {
+// Sheets: erste Zelle mit der Passage - mit demselben Muster wie beim Ersetzen
+// (Leerraum flexibel), frueher woertlich und damit teils "nicht gefunden",
+// obwohl Ersetzen die Stelle fand.
+function _sheetsFindFirst_(text, scopeRef) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var clean = String(text).replace(/&nbsp;/g, ' ').replace(/ /g, ' ');
-  return ss.createTextFinder(clean).findNext() || ss.createTextFinder(String(text)).findNext();
+  var pattern = _escapeRegexAC_(text);
+  var ranges = _sheetsSearchRanges_(ss, scopeRef);
+  for (var i = 0; i < ranges.length; i++) {
+    var cell = ranges[i].createTextFinder(pattern).useRegularExpression(true).findNext();
+    if (cell) return cell;
+  }
+  return null;
+}
+
+// Docs: Fundstelle markieren. Stellen in Kopf-/Fusszeile oder Fussnote lassen
+// sich per Skript nicht markieren - dann klare Meldung statt "nicht gefunden".
+function _docsSelectHit_(doc, found) {
+  try {
+    doc.setSelection(doc.newRange().addElement(found.getElement(), found.getStartOffset(), found.getEndOffsetInclusive()).build());
+  } catch (e) {
+    throw new Error('The passage is in a header, footer or footnote and cannot be selected automatically. Please look for it there.');
+  }
 }
 
 // ─── INTERAKTION: ZUR TEXTSTELLE SPRINGEN ───────────────────────────────────
-function apiJumpToIssue(searchText) {
+function apiJumpToIssue(searchText, scopeRef) {
   if (DocumentApp.getActiveDocument()) {
     var doc = DocumentApp.getActiveDocument();
-    var found = doc.getBody().findText(_escapeRegexAC_(searchText));
-    if (found) {
-      var rangeBuilder = doc.newRange();
-      rangeBuilder.addElement(found.getElement(), found.getStartOffset(), found.getEndOffsetInclusive());
-      doc.setSelection(rangeBuilder.build());
-      return true;
-    }
+    var hits = _docsFindAll_(doc, _escapeRegexAC_(searchText), scopeRef, 1);
+    if (hits.length) { _docsSelectHit_(doc, hits[0]); return true; }
   } else if (SpreadsheetApp.getActiveSpreadsheet()) {
-    var cell = _sheetsFindFirst_(searchText);
+    var cell = _sheetsFindFirst_(searchText, scopeRef);
     if (cell) { cell.activate(); return true; }
   } else if (SlidesApp.getActivePresentation()) {
     var pres = SlidesApp.getActivePresentation();
-    var hit = _slidesFindFirst_(pres, searchText);
+    var hit = _slidesFindFirst_(pres, searchText, scopeRef);
     if (hit) { _slidesSelectHit_(pres, hit); return true; }
   }
   return false;
 }
 
-// ─── INTERAKTION: NOTIZ / KOMMENTAR EXAKT AN TEXTSTELLE VERKNÜPFEN ──────────
-// Erzeugt einen an der Textstelle "verankerten" Drive-Kommentar (Highlight),
-// so wie beim manuellen "Kommentar hinzufügen" in Docs/Slides.
-// WICHTIG: Die Drive Advanced Service läuft auf v3 (siehe appsscript.json). In
-// Drive API v3 heißt das Anker-Feld "quotedFileContent" (mimeType/value), NICHT
-// "context" (Feldschema von Drive API v2, wird von v3 stillschweigend ignoriert).
-// Für Google Docs matcht der Drive-Client den quotedFileContent-Text gegen den
-// Dokumenttext und zeigt den Kommentar als Highlight an der passenden Stelle.
-function _createHighlightedDriveComment_(fileId, quotedText, commentText) {
-  var comment = Drive.Comments.create({
+// ─── INTERAKTION: NOTIZ / KOMMENTAR AN DER TEXTSTELLE ──────────────────────
+// Kommentare ueber die Drive-API koennen in Google Docs/Slides NICHT an einer
+// Textstelle verankert werden (Google unterstuetzt verankerte API-Kommentare nur
+// fuer Nicht-Workspace-Dateien). quotedFileContent zeigt das Zitat im Kommentar
+// an, markiert aber nichts im Text. Deshalb steht die Passage zusaetzlich im
+// Kommentartext, und die Stelle wird vorher markiert.
+function _createDriveComment_(fileId, quotedText, commentText) {
+  return Drive.Comments.create({
     content: commentText,
     quotedFileContent: { mimeType: 'text/plain', value: quotedText }
-  }, fileId, { fields: '*' });
-  comment._anchored = !!(comment.quotedFileContent && comment.quotedFileContent.value);
-  if (!comment._anchored) {
-    Logger.log('_createHighlightedDriveComment_: quotedFileContent wurde von Drive nicht uebernommen (fileId=' + fileId + ', id=' + comment.id + ') - Kommentar existiert, ist aber vermutlich nicht an der Textstelle markiert.');
-  }
-  return comment;
+  }, fileId, { fields: 'id' });
 }
 
-function apiCommentIssue(originalText, suggestion, explanation) {
-  var commentText = "TermCheck Suggestion:\n" + suggestion + "\n\nExplanation: " + (explanation || "");
-  var cleanOriginal = String(originalText).replace(/&nbsp;/g, ' ').replace(/ /g, ' ');
+function _authorCheckCommentText_(originalText, suggestion, explanation) {
+  return '✍️ TermCheck – ' + _ct_('c.suggestion') + ':\n' +
+    '„' + originalText + '“ → „' + suggestion + '“' +
+    (explanation ? '\n\n💡 ' + explanation : '');
+}
+
+function apiCommentIssue(originalText, suggestion, explanation, scopeRef) {
+  var cleanOriginal = String(originalText).replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
+  var commentText = _authorCheckCommentText_(cleanOriginal, suggestion, explanation);
 
   if (DocumentApp.getActiveDocument()) {
     var doc = DocumentApp.getActiveDocument();
-    var found = doc.getBody().findText(_escapeRegexAC_(cleanOriginal));
-    if (found) {
-      var rangeBuilder = doc.newRange();
-      rangeBuilder.addElement(found.getElement(), found.getStartOffset(), found.getEndOffsetInclusive());
-      doc.setSelection(rangeBuilder.build());
+    var hits = _docsFindAll_(doc, _escapeRegexAC_(cleanOriginal), scopeRef, 1);
+    if (hits.length) {
+      try { _docsSelectHit_(doc, hits[0]); } catch (selErr) { /* Kopf-/Fusszeile: Kommentar trotzdem anlegen */ }
       try {
-        _createHighlightedDriveComment_(doc.getId(), cleanOriginal, commentText);
+        _createDriveComment_(doc.getId(), cleanOriginal, commentText);
       } catch(e) {
-        // Frueher wurde hier trotzdem "Note Added" gemeldet, obwohl kein Kommentar
-        // existierte - jetzt geht der Fehler an die Oberflaeche.
         Logger.log('apiCommentIssue: Drive.Comments.create fehlgeschlagen: ' + e);
         throw new Error('Could not create the comment: ' + (e.message || e));
       }
       return true;
     }
   } else if (SpreadsheetApp.getActiveSpreadsheet()) {
-    var cell = _sheetsFindFirst_(originalText);
+    var cell = _sheetsFindFirst_(originalText, scopeRef);
     if (cell) {
       cell.activate();
       // Vorhandene Notiz nicht ueberschreiben, sondern ergaenzen.
@@ -544,14 +657,13 @@ function apiCommentIssue(originalText, suggestion, explanation) {
     }
   } else if (SlidesApp.getActivePresentation()) {
     var pres = SlidesApp.getActivePresentation();
-    var hit = _slidesFindFirst_(pres, cleanOriginal);
+    var hit = _slidesFindFirst_(pres, cleanOriginal, scopeRef);
     if (hit) {
       _slidesSelectHit_(pres, hit);
-      // Slides unterstuetzt keinen Anker auf eine Textstelle innerhalb einer
-      // Form, daher zusaetzlich die Foliennummer im Kommentartext nennen.
-      var slideCommentText = commentText + '\n\n(Slide ' + (hit.target.slideIndex + 1) + ')';
+      // Foliennummer im Kommentartext nennen, da der Kommentar nicht verankert ist.
+      var slideCommentText = commentText + '\n\n📍 ' + _ct_('c.slide', { n: hit.target.slideIndex + 1 });
       try {
-        _createHighlightedDriveComment_(pres.getId(), cleanOriginal, slideCommentText);
+        _createDriveComment_(pres.getId(), cleanOriginal, slideCommentText);
       } catch(e) {
         Logger.log('apiCommentIssue: Drive.Comments.create (Slides) fehlgeschlagen: ' + e);
         throw new Error('Could not create the comment: ' + (e.message || e));
@@ -560,10 +672,6 @@ function apiCommentIssue(originalText, suggestion, explanation) {
     }
   }
   return false;
-}
-
-function apiBackToHomepage() {
-  return true;
 }
 
 /**

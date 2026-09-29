@@ -5,12 +5,18 @@
 function exportProjectToTxt() {
   // Admin-only: jede Funktion ohne "_" am Ende ist per google.script.run aufrufbar.
   _requireAdmin_('export the project source');
-  // 1. Einstellungen
-  const folderId = "1am6gR_8i_mEg3zv176lfflhGPEYrBPf2"; // Deine Ordner-ID
-  const scriptId = ScriptApp.getScriptId(); 
-  
-  // 2. Zielordner direkt über die ID ansteuern
-  const folder = DriveApp.getFolderById(folderId);
+  // 1. Zielordner: Skripteigenschaft EXPORT_FOLDER_ID (Projekteinstellungen >
+  //    Skripteigenschaften), sonst ein eigener Ordner "TermCheck Source Export" -
+  //    frueher war hier die Ordner-ID eines einzelnen Nutzers fest eingetragen.
+  const scriptId = ScriptApp.getScriptId();
+  const folderId = (PropertiesService.getScriptProperties().getProperty('EXPORT_FOLDER_ID') || '').trim();
+  let folder;
+  if (folderId) {
+    folder = DriveApp.getFolderById(folderId);
+  } else {
+    const existing = DriveApp.searchFolders('title = "TermCheck Source Export" and "me" in owners and trashed = false');
+    folder = existing.hasNext() ? existing.next() : DriveApp.createFolder('TermCheck Source Export');
+  }
 
   // 3. Apps Script API aufrufen
   const url = "https://script.googleapis.com/v1/projects/" + scriptId + "/content";
