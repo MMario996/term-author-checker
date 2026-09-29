@@ -6302,6 +6302,7 @@ function apiLogNewCustomRules(newRules, language) {
   } finally {
     if (locked) lock.releaseLock();
   }
+  console.log('apiLogNewCustomRules: ' + result.logged + ' eingetragen, ' + result.duplicates + ' schon im Log (Tab "Custom")');
   if (!newRules.length) return result;
 
   try {
@@ -6326,6 +6327,27 @@ function apiLogNewCustomRules(newRules, language) {
   }
 
   return result;
+}
+
+/**
+ * Zum Pruefen im Skript-Editor ausfuehren (Protokoll ansehen): Ist das
+ * Custom-Rules-Log erreichbar, in welchen Tab wird geschrieben, wie viele
+ * Eintraege gibt es? Schreibt NICHTS ins Sheet.
+ */
+function checkCustomRulesLogSetup() {
+  var sheetId = (PropertiesService.getScriptProperties().getProperty('CUSTOM_RULES_LOG_SHEET_ID') || '').trim();
+  Logger.log('CUSTOM_RULES_LOG_SHEET_ID: ' + (sheetId || '(nicht gesetzt - Admin-Einstellungen)'));
+  if (!sheetId) return;
+  try {
+    var ss = SpreadsheetApp.openById(sheetId);
+    Logger.log('Sheet: "' + ss.getName() + '" ' + ss.getUrl());
+    Logger.log('Tabs: ' + ss.getSheets().map(function(sh) { return sh.getName(); }).join(', '));
+    var tab = ss.getSheetByName('Custom');
+    Logger.log(tab ? 'Tab "Custom": ' + Math.max(0, tab.getLastRow() - 1) + ' Eintraege - hierhin schreibt der Import.'
+                   : 'Tab "Custom" fehlt - er wird beim ersten Eintrag angelegt.');
+  } catch (e) {
+    Logger.log('FEHLER beim Oeffnen: ' + e.message);
+  }
 }
 
 /**

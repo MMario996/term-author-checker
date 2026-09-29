@@ -1402,8 +1402,16 @@ function importOneRule(imp, SAFE_RULE_NAME, res) {
     Parameter: '-1',
     AllowedParameterValues: []
   };
-  if (idx !== -1) { _currentRulesData[idx] = rule; res.updated++; }
-  else { _importedRules.push(rule); _currentRulesData.push(rule); _pendingNewCustomRules.push(rule); res.added++; }
+  // Auch bereits vorhandene (gleichnamige) Regeln ans Log schicken: der Server
+  // trägt nur ein, was dort noch nicht steht (gleiche Sprache, Name, Beschreibung).
+  // Früher kamen nur neue Namen ins Log - ein erneuter Import blieb unsichtbar.
+  if (idx !== -1) {
+    var old = _currentRulesData[idx];
+    _currentRulesData[idx] = rule; res.updated++;
+    _pendingNewCustomRules = _pendingNewCustomRules.filter(function(p) { return p !== old; });
+  } else { _currentRulesData.push(rule); res.added++; }
+  _importedRules.push(rule);
+  _pendingNewCustomRules.push(rule);
 }
 
 // Was beim Löschen einer Kategorie passiert: eigene Regeln werden gelöscht,
