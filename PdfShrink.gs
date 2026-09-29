@@ -237,10 +237,55 @@ function _pdfImagePlaceholder_(num, gen, asSoftMask) {
  * Liefert ein "Modell" der neuen Datei:
  * { text, offsets: {num: pos}, compressed: {num: {stm, idx}}, rootNum, maxNum,
  *   trailerExtra, imagesRemoved, imagesKept, bytesRead }
+ *
+ * Läuft in einem Stück. Für große Dateien im Drive-Add-on gibt es dieselben
+ * Stufen einzeln (_pdfShrinkPlan_ ... _pdfShrinkFinish_), damit sie über mehrere
+ * Add-on-Aktionen verteilt werden können (siehe _drivePdfPrepStep_ in DriveAddon.gs).
  */
 function pdfRebuild_(reader, opts) {
   opts = opts || {};
   var budget = opts.imageBudget === undefined ? Infinity : opts.imageBudget;
+  var plan = _pdfShrinkPlan_(reader);
+  var texts = reader.readMany(plan.ranges.map(function(r) { return [r[0], r[1]]; }));
+  var bytesRead = 0;
+  texts.forEach(function(t) { bytesRead += t.length; });
+
+  var kept = {}, images = {}, fullNeeded = [];
+  plan.ranges.forEach(function(r, ri) {
+    var c = _pdfShrinkClassify_(r, texts[ri]);
+    for (var k in c.kept) if (c.kept.hasOwnProperty(k)) kept[k] = c.kept[k];
+    for (var i in c.images) if (c.images.hasOwnProperty(i)) images[i] = c.images[i];
+    Array.prototype.push.apply(fullNeeded, c.fullNeeded);
+  });
+  texts = null;
+
+  var sel = _pdfShrinkSelectImages_(images, budget);
+  for (var pk in sel.kept) if (sel.kept.hasOwnProperty(pk)) kept[pk] = sel.kept[pk];
+  sel.keepFromImage.forEach(function(num) { kept[num] = images[num].text; });
+  Array.prototype.push.apply(fullNeeded, sel.fullNeeded);
+
+  var full = _pdfShrinkFullRanges_(fullNeeded);
+  var parts = full.ranges.length ? reader.readMany(full.ranges) : [];
+  var joined = fullNeeded.map(function() { return []; });
+  parts.forEach(function(t, k) { bytesRead += t.length; joined[full.owners[k]].push(t); });
+  fullNeeded.forEach(function(o, idx) { kept[o[0]] = _pdfShrinkKeepText_(joined[idx].join('')); });
+
+  var model = _pdfShrinkFinish_(plan, kept);
+  model.imagesRemoved = sel.imagesRemoved;
+  model.imagesKept = sel.imagesKept;
+  model.bytesRead = bytesRead;
+  return model;
+}
+
+// Objekte werden kompakt als [num, off, end, gen] geführt (passt so auch in den
+// JSON-Zwischenstand der etappenweisen Vorbereitung).
+
+/**
+ * Stufe 1: Cross-Reference lesen und Lesebereiche planen. Liefert
+ * { ranges: [[start, readEnd, [obj, ...]], ...], compressed, maxNum, trailer,
+ *   sections, size }.
+ */
+function _pdfShrinkPlan_(reader) {
   var xr = _pdfShrinkReadXref_(reader);
   var objs = [], maxNum = 0, compressed = {};
   for (var key in xr.entries) {
@@ -271,54 +316,71 @@ function pdfRebuild_(reader, opts) {
   objs.forEach(function(o) {
     var big = o.end - o.off > PDF_SHRINK_BIG;
     var need = big ? o.off + PDF_SHRINK_PEEK : o.end;
+    var obj = [o.num, o.off, o.end, o.gen];
     if (cur && cur.end === o.off && need - cur.start <= PDF_SHRINK_CHUNK) {
       cur.end = big ? o.end : need; // bei "big" ist der Bereich danach abgeschlossen
       cur.readEnd = need;
-      cur.objs.push(o);
+      cur.objs.push(obj);
     } else {
-      cur = { start: o.off, end: big ? o.end : need, readEnd: need, objs: [o] };
+      cur = { start: o.off, end: big ? o.end : need, readEnd: need, objs: [obj] };
       ranges.push(cur);
     }
     if (big) cur = null;
   });
-  var texts = reader.readMany(ranges.map(function(r) { return [r.start, r.readEnd]; }));
-  var bytesRead = 0;
-  texts.forEach(function(t) { bytesRead += t.length; });
+  return {
+    ranges: ranges.map(function(r) { return [r.start, r.readEnd, r.objs]; }),
+    compressed: compressed, maxNum: maxNum, trailer: xr.trailer, sections: xr.sections, size: reader.size
+  };
+}
 
-  var kept = {};          // num -> vollständiger Objekttext
-  var images = {};        // num -> {o, size, smask, text?}
-  var fullNeeded = [];    // große Nicht-Bild-Objekte
+function _pdfShrinkKeepText_(full) {
+  var endIdx = full.lastIndexOf('endobj');
+  return (endIdx !== -1 ? full.slice(0, endIdx + 6) : full).replace(/^\s+/, '') + '\n';
+}
 
-  function keepText(o, full) {
-    var endIdx = full.lastIndexOf('endobj');
-    return (endIdx !== -1 ? full.slice(0, endIdx + 6) : full).replace(/^\s+/, '') + '\n';
-  }
-
-  ranges.forEach(function(r, ri) {
-    var t = texts[ri];
-    r.objs.forEach(function(o) {
-      var avail = t.slice(o.off - r.start, Math.min(o.end, r.readEnd) - r.start);
-      var complete = o.end <= r.readEnd;
-      var head = avail.slice(0, PDF_SHRINK_PEEK);
-      var hm = /^\s*(\d+)\s+(\d+)\s+obj\b/.exec(head);
-      if (!hm || parseInt(hm[1], 10) !== o.num) throw new Error('Object ' + o.num + ' not found at its xref offset.');
-      var parsed = _pdfParseValue_(head, hm[0].length, true);
-      var d = parsed.v && parsed.v.d;
-      var isStream = d && /^\s*stream/.test(head.slice(parsed.next));
-      var subtype = d && d.Subtype && d.Subtype.n, type = d && d.Type && d.Type.n;
-      if (isStream && subtype === 'Image') {
-        images[o.num] = { o: o, size: o.end - o.off, smask: d.SMask && d.SMask.r, text: complete ? keepText(o, avail) : null };
-      } else if (isStream && type === 'EmbeddedFile') {
-        kept[o.num] = o.num + ' ' + o.gen + ' obj\n<< /Type /EmbeddedFile /Length 0 >>\nstream\n\nendstream\nendobj\n';
-      } else if (complete) {
-        kept[o.num] = keepText(o, avail);
-      } else {
-        fullNeeded.push(o);
-      }
-    });
+/**
+ * Stufe 2: einen gelesenen Bereich (range aus _pdfShrinkPlan_, t = gelesener
+ * Text) einordnen. Liefert { kept: {num: text}, images: {num: {o, size, smask,
+ * text|null}}, fullNeeded: [obj] } - fullNeeded sind große Nicht-Bild-Objekte,
+ * die komplett nachgeladen werden müssen.
+ */
+function _pdfShrinkClassify_(range, t) {
+  var start = range[0], readEnd = range[1];
+  var out = { kept: {}, images: {}, fullNeeded: [] };
+  range[2].forEach(function(o) {
+    var num = o[0], off = o[1], end = o[2], gen = o[3];
+    var avail = t.slice(off - start, Math.min(end, readEnd) - start);
+    var complete = end <= readEnd;
+    var head = avail.slice(0, PDF_SHRINK_PEEK);
+    var hm = /^\s*(\d+)\s+(\d+)\s+obj\b/.exec(head);
+    if (!hm || parseInt(hm[1], 10) !== num) throw new Error('Object ' + num + ' not found at its xref offset.');
+    var parsed = _pdfParseValue_(head, hm[0].length, true);
+    var d = parsed.v && parsed.v.d;
+    var isStream = d && /^\s*stream/.test(head.slice(parsed.next));
+    var subtype = d && d.Subtype && d.Subtype.n, type = d && d.Type && d.Type.n;
+    if (isStream && subtype === 'Image') {
+      out.images[num] = { o: o, size: end - off, smask: (d.SMask && d.SMask.r) || null, text: complete ? _pdfShrinkKeepText_(avail) : null };
+    } else if (isStream && type === 'EmbeddedFile') {
+      out.kept[num] = num + ' ' + gen + ' obj\n<< /Type /EmbeddedFile /Length 0 >>\nstream\n\nendstream\nendobj\n';
+    } else if (complete) {
+      out.kept[num] = _pdfShrinkKeepText_(avail);
+    } else {
+      out.fullNeeded.push(o);
+    }
   });
+  return out;
+}
 
-  // Bilder auswählen: Bild + zugehörige Soft-Mask zählen gemeinsam.
+/**
+ * Stufe 3: Bilder auswählen (Bild + zugehörige Soft-Mask zählen gemeinsam).
+ * images: {num: {o, size, smask, text|ref}} - "vollständig vorhanden" heißt
+ * text !== null oder ref gesetzt. Liefert { kept: {num: Platzhaltertext},
+ * keepFromImage: [num] (vollständig gelesene, behaltene Bilder), fullNeeded:
+ * [obj] (behaltene, noch nachzuladende Bilder), imagesKept, imagesRemoved }.
+ */
+function _pdfShrinkSelectImages_(images, budget) {
+  function have(img) { return img.text != null || img.ref != null; }
+  var out = { kept: {}, keepFromImage: [], fullNeeded: [], imagesKept: 0, imagesRemoved: 0 };
   var isSoftMask = {};
   for (var ik in images) if (images.hasOwnProperty(ik) && images[ik].smask && images[images[ik].smask]) isSoftMask[images[ik].smask] = true;
   var candidates = [];
@@ -329,54 +391,65 @@ function pdfRebuild_(reader, opts) {
     candidates.push({ main: img, mask: sm, size: img.size + (sm ? sm.size : 0) });
   }
   candidates.sort(function(a, b) { return a.size - b.size; });
-  var used = 0, imagesKept = 0, imagesRemoved = 0;
+  var used = 0, handled = {};
+  function keep(m) {
+    handled[m.o[0]] = true;
+    if (have(m)) out.keepFromImage.push(m.o[0]); else out.fullNeeded.push(m.o);
+  }
   candidates.forEach(function(c) {
     var members = c.mask ? [c.main, c.mask] : [c.main];
     if (used + c.size <= budget) {
       used += c.size;
-      imagesKept++;
-      members.forEach(function(m) { if (m.text) kept[m.o.num] = m.text; else fullNeeded.push(m.o); });
+      out.imagesKept++;
+      members.forEach(keep);
     } else {
-      imagesRemoved++;
-      members.forEach(function(m) { kept[m.o.num] = _pdfImagePlaceholder_(m.o.num, m.o.gen, m === c.mask); });
+      out.imagesRemoved++;
+      members.forEach(function(m) {
+        handled[m.o[0]] = true;
+        out.kept[m.o[0]] = _pdfImagePlaceholder_(m.o[0], m.o[3], m === c.mask);
+      });
     }
   });
   // Soft-Masks ohne auffindbares Elternbild: wie ein normales Bild behandeln (behalten).
   for (var ik3 in images) {
-    if (images.hasOwnProperty(ik3) && !kept.hasOwnProperty(ik3) && fullNeeded.indexOf(images[ik3].o) === -1) {
-      if (images[ik3].text) kept[ik3] = images[ik3].text; else fullNeeded.push(images[ik3].o);
-    }
+    if (images.hasOwnProperty(ik3) && !handled[ik3]) keep(images[ik3]);
   }
+  return out;
+}
 
-  // Große Objekte, die gebraucht werden, komplett nachladen (ggf. in mehreren Teilen).
-  var fullRanges = [], owners = [];
-  fullNeeded.forEach(function(o, idx) {
-    for (var p = o.off; p < o.end; p += PDF_SHRINK_CHUNK) {
-      fullRanges.push([p, Math.min(o.end, p + PDF_SHRINK_CHUNK)]);
+/**
+ * Stufe 4 (Planung): Lesebereiche, um große Objekte komplett nachzuladen (ggf.
+ * in mehreren Teilen). Liefert { ranges: [[start, end]], owners: [Index in objs] }.
+ */
+function _pdfShrinkFullRanges_(objs) {
+  var ranges = [], owners = [];
+  objs.forEach(function(o, idx) {
+    for (var p = o[1]; p < o[2]; p += PDF_SHRINK_CHUNK) {
+      ranges.push([p, Math.min(o[2], p + PDF_SHRINK_CHUNK)]);
       owners.push(idx);
     }
   });
-  var parts = fullRanges.length ? reader.readMany(fullRanges) : [];
-  var joined = fullNeeded.map(function() { return []; });
-  parts.forEach(function(t, k) { bytesRead += t.length; joined[owners[k]].push(t); });
-  fullNeeded.forEach(function(o, idx) { kept[o.num] = keepText(o, joined[idx].join('')); });
+  return { ranges: ranges, owners: owners };
+}
 
-  var rootM = /\/Root\s+(\d+)\s+\d+\s+R/.exec(xr.trailer);
+/** Stufe 5: aus allen behaltenen Objekttexten die neue PDF schreiben. */
+function _pdfShrinkFinish_(plan, kept) {
+  var maxNum = plan.maxNum;
+  var rootM = /\/Root\s+(\d+)\s+\d+\s+R/.exec(plan.trailer);
   if (!rootM) throw new Error('No /Root in the PDF trailer.');
-  var infoM = /\/Info\s+\d+\s+\d+\s+R/.exec(xr.trailer);
-  var encM = /\/Encrypt\s+\d+\s+\d+\s+R/.exec(xr.trailer);
-  var idM = /\/ID\s*\[[^\]]*\]/.exec(xr.trailer);
-  var sizeM = /\/Size\s+(\d+)/.exec(xr.trailer);
+  var infoM = /\/Info\s+\d+\s+\d+\s+R/.exec(plan.trailer);
+  var encM = /\/Encrypt\s+\d+\s+\d+\s+R/.exec(plan.trailer);
+  var idM = /\/ID\s*\[[^\]]*\]/.exec(plan.trailer);
+  var sizeM = /\/Size\s+(\d+)/.exec(plan.trailer);
   maxNum = Math.max(maxNum, sizeM ? parseInt(sizeM[1], 10) - 1 : 0);
   var trailerExtra = (infoM ? ' ' + infoM[0] : '') + (encM ? ' ' + encM[0] : '') + (idM ? ' ' + idM[0] : '');
 
-  var written = _pdfWriteObjects_(kept, compressed, parseInt(rootM[1], 10), trailerExtra, maxNum);
+  var written = _pdfWriteObjects_(kept, plan.compressed, parseInt(rootM[1], 10), trailerExtra, maxNum);
   return {
-    text: written.text, offsets: written.offsets, compressed: compressed,
+    text: written.text, offsets: written.offsets, compressed: plan.compressed,
     rootNum: parseInt(rootM[1], 10), maxNum: maxNum, trailerExtra: trailerExtra, encrypted: !!encM,
-    imagesRemoved: imagesRemoved, imagesKept: imagesKept, bytesRead: bytesRead,
     // Struktur der ORIGINAL-Datei (für Incremental Updates an großen PDFs, siehe DriveAddon.gs)
-    origStartxref: xr.sections[0], origTrailer: xr.trailer
+    origStartxref: plan.sections[0], origTrailer: plan.trailer
   };
 }
 
