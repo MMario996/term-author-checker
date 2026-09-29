@@ -1,0 +1,506 @@
+# Standardregeln (Regelsprache Deutsch)
+
+Diese Regeln sind im Author Check bereits eingebaut. Keine eigenen Regeln erzeugen, die dasselbe prüfen – stattdessen im Bericht auf die Standardregel (Name) verweisen, damit sie im Popup eingeschaltet werden kann.
+
+Format: `Name` | Typ | Unterabschnitt | Beschreibung
+
+## Grammar
+
+- `CASE` | Grammar | Other Grammar | Kasus anpassen
+- `NUMBER` | Grammar | Other Grammar | Plural nicht vergessen
+- `ANA` | Grammar | Other Grammar | Anaphorisches (rückbezügliches) Pronomen
+- `GENUS` | Grammar | Other Grammar | Genus-Meldung
+- `gc8de` | Grammar | Other Grammar | Übereinstimmung von Objekt und Prädikatsnomen kontrollieren
+- `gc6de` | Grammar | Other Grammar | Übereinstimmung von Subjekt und Prädikatsnomen kontrollieren
+- `gc7de` | Grammar | Other Grammar | Pronomen kontrollieren
+- `gc3de` | Grammar | Other Grammar | "derjenige" vermeiden
+- `gc2de` | Grammar | Other Grammar | Personenbezeichnungen kontrollieren
+- `gc1de` | Grammar | Other Grammar | Plural statt Singular verwenden
+- `gc4de` | Grammar | Other Grammar | "mancher" oder "manch einer" vermeiden
+- `431de` | Grammar | Other Grammar | Verwendung von Artikeln überprüfen
+- `724de` | Grammar | Other Grammar | Endungen im Dativ Singular kontrollieren
+- `420de` | Grammar | Other Grammar | Verblose Konstruktionen vermeiden
+- `392de` | Grammar | Other Grammar | Erkennung überflüssiger Wörter
+- `391001de` | Grammar | Other Grammar | Doppelter Superlativ mit "am"
+- `391de` | Grammar | Other Grammar | Wortfolge überprüfen
+- `292de` | Grammar | Other Grammar | Erkennung falscher Wortformen
+- `291de` | Grammar | Other Grammar | Erkennung mutmaßlicher Wortverwechslung
+- `5251de` | Grammar | Punctuation & Commas | Fragezeichen statt Punkt setzen
+- `462de` | Grammar | Other Grammar | Erkennung von fehlendem "zu" bei Infinitiv mit Modalverb
+- `4649de` | Grammar | Other Grammar | Fragliche Satzstruktur
+- `4639de` | Grammar | Other Grammar | Erkennung von falschen Verbgruppen mit zwei finiten Verben
+- `4637de` | Grammar | Other Grammar | Erkennung von falschen Verbgruppen mit identischem Verb
+- `46291de` | Grammar | Other Grammar | Erkennung von falscher Verbkoordination
+- `4629de` | Grammar | Other Grammar | Erkennung von falschen Verbgruppen
+- `73de` | Grammar | Punctuation & Commas | Kommasetzung überprüfen
+- `523de` | Grammar | Other Grammar | Erkennung von fehlendem Satzendezeichen
+- `522de` | Grammar | Other Grammar | Satzendezeichen überprüfen
+- `52142de` | Grammar | Punctuation & Commas | Fehlendes Komma vor "und zwar"
+- `5214de` | Grammar | Punctuation & Commas | Erkennung von fehlendem Komma in Teilsätzen
+- `524512de` | Grammar | Other Grammar | Falsche Kommasetzung bei Erläuterung zwischen Adjektiv und Substantiv
+- `524511de` | Grammar | Other Grammar | Falsche Kommasetzung bei Erläuterung zwischen Artikelwort und Substantiv
+- `521511de` | Grammar | Other Grammar | Fehlendes Komma vor Erläuterung zwischen Adjektiv und Substantiv
+- `52131de` | Grammar | Punctuation & Commas | Kommasetzung bei erweitertem Infinitiv überprüfen
+- `52130de` | Grammar | Punctuation & Commas | Kommasetzung beim Infinitivsatz überprüfen
+- `262202de` | Grammar | Other Grammar | Falscher Superlativ (hinten)
+- `262201de` | Grammar | Other Grammar | Doppelter Superlativ
+- `42219de` | Grammar | Other Grammar | Übereinstimmung von Satzteilen überprüfen
+- `421210de` | Grammar | Other Grammar | Verbform nach Präposition überprüfen
+- `4212de` | Grammar | Other Grammar | Erkennung von fehlender Präpositionalergänzung
+- `421170de` | Grammar | Other Grammar | Erkennung von Artikel nach kontrahierter Präposition
+- `421153de` | Grammar | Other Grammar | Erkennung von nichtstandardsprachlichem Präpositionalkasus bei "statt"
+- `421152de` | Grammar | Other Grammar | Erkennung von nichtstandardsprachlichem Präpositionalkasus bei "pro"
+- `421150de` | Grammar | Other Grammar | Erkennung von nichtstandardsprachlichem Präpositionalkasus
+- `4211de` | Grammar | Other Grammar | Kasus der Präpositionalergänzung überprüfen
+- `41170de` | Grammar | Other Grammar | Beugung von "diesen" und "jenen" überprüfen
+- `411de` | Grammar | Other Grammar | Nominalkongruenz überprüfen
+- `44115de` | Grammar | Punctuation & Commas | Fehlendes Komma vor "sondern"
+- `4412de` | Grammar | Punctuation & Commas | Kommasetzung überprüfen (überflüssiges Komma)
+- `5249de` | Grammar | Punctuation & Commas | Falsche Kommasetzung
+- `5242de` | Grammar | Punctuation & Commas | Falsche Kommasetzung vor vermeintlichem Nachfeld
+- `524de` | Grammar | Other Grammar | Falsche Kommasetzung vor dem Hauptsatzverb
+- `52123de` | Grammar | Punctuation & Commas | Kommasetzung beim Relativsatz überprüfen
+- `1110de` | Grammar | Other Grammar | Erkennung von fremdsprachlichen Textpassagen
+
+## Inclusive Language / Corporate Policy
+
+- `957303de` | Style | Non-Discriminatory Language | Diskriminierende Phrasen zur geschlechtlichen Identität überprüfen
+- `955502de` | Style | Non-Discriminatory Language | Diskriminierende Phrasen, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen, vermeiden
+- `951402de` | Style | Non-Discriminatory Language | Negative genderspezifische Personenbezeichnungen vermeiden
+- `951111de` | Style | Non-Discriminatory Language | Paarform als Gendermethode verwenden
+- `951115de` | Style | Non-Discriminatory Language | Schrägstrich als Gendermethode verwenden
+- `951113de` | Style | Non-Discriminatory Language | Doppelpunkt als Gendermethode verwenden
+- `951116de` | Style | Non-Discriminatory Language | Gender-Gap als Gendermethode verwenden
+- `951112de` | Style | Non-Discriminatory Language | Gender-Stern als Gendermethode verwenden
+- `951114de` | Style | Non-Discriminatory Language | Binnen-I als Gendermethode verwenden
+- `951103de` | Style | Non-Discriminatory Language | "Kunde" ungegendert erlauben
+- `951000de` | Style | Non-Discriminatory Language | Inklusive Sprache verwenden
+- `955402de` | Style | Non-Discriminatory Language | Diskriminierende Verben, die sich auf körperliche oder geistige Beeinträchtigungen beziehen, vermeiden
+- `958101de` | Style | Non-Discriminatory Language | Stark diskriminierende Personenbezeichnungen, die sich auf die soziale Herkunft beziehen
+- `958102de` | Style | Non-Discriminatory Language | Diskriminierende Personenbezeichnung, die sich auf die soziale Herkunft beziehen, vermeiden
+- `958201de` | Style | Non-Discriminatory Language | Stark diskriminierende Bezeichnungen, die sich auf die soziale Herkunft beziehen
+- `958202de` | Style | Non-Discriminatory Language | Diskriminierende Bezeichnungen, die sich auf die soziale Herkunft beziehen, vermeiden
+- `958203de` | Style | Non-Discriminatory Language | Diskriminierende Bezeichnungen, die sich auf die soziale Herkunft beziehen, überprüfen
+- `958301de` | Style | Non-Discriminatory Language | Stark diskriminierende Adjektive, die sich auf die soziale Herkunft beziehen
+- `958302de` | Style | Non-Discriminatory Language | Diskriminierende Adjektive, die sich auf die soziale Herkunft beziehen, vermeiden
+- `958303de` | Style | Non-Discriminatory Language | Diskriminierende Adjektive, die sich auf die soziale Herkunft beziehen, überprüfen
+- `958403de` | Style | Non-Discriminatory Language | Diskriminierende Verben, die sich auf die soziale Herkunft beziehen, überprüfen
+- `950004de` | Style | Non-Discriminatory Language | Unfreundliche und abwertende Ausdrücke vermeiden
+- `950003de` | Style | Non-Discriminatory Language | Generalisierungen vermeiden
+- `950002de` | Style | Non-Discriminatory Language | Relativierende Phrasen vermeiden
+- `950001de` | Style | Non-Discriminatory Language | Allgemeine Diskriminierung vermeiden
+- `957202de` | Style | Non-Discriminatory Language | Diskriminierende Bezeichnungen zur geschlechtlichen Identität vermeiden.
+- `955503de` | Style | Non-Discriminatory Language | Diskriminierende Phrasen, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen, überprüfen
+- `955203de` | Style | Non-Discriminatory Language | Diskriminierende Adjektive überprüfen, die sich auf Menschen mit Behinderungen beziehen
+- `955201de` | Style | Non-Discriminatory Language | Stark diskriminierende Adjektive, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen
+- `955303de` | Style | Non-Discriminatory Language | Diskriminierende Bezeichnungen, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen, überprüfen
+- `955302de` | Style | Non-Discriminatory Language | Diskriminierende Bezeichnungen, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen, vermeiden
+- `955301de` | Style | Non-Discriminatory Language | Stark diskriminierende Bezeichnungen, die sich auf Menschen mit körperlichen oder geistigen Beeinträchtigungen beziehen
+- `955103de` | Style | Non-Discriminatory Language | Diskriminierende Personenbezeichnungen für Menschen mit Behinderung überprüfen
+- `955102de` | Style | Non-Discriminatory Language | Diskriminierende Personenbezeichnungen für Menschen mit Behinderung vermeiden
+- `953202de` | Style | Non-Discriminatory Language | Diskriminierende Bezeichnungen vermeiden, die sich auf die sexuelle Orientierung von Personen beziehen
+- `953102de` | Style | Non-Discriminatory Language | Diskriminierende Personenbezeichnungen aufgrund der sexuellen Orientierung vermeiden
+- `952401de` | Style | Non-Discriminatory Language | Wörter mit diskriminierenden Personenbezeichnungen
+- `952701de` | Style | Non-Discriminatory Language | Stark diskriminierende Verben, die sich auf die Herkunft von Personen beziehen
+- `952803de` | Style | Non-Discriminatory Language | Diskriminierende Adjektive, die sich auf die Herkunft von Personen beziehen, überprüfen
+- `952802de` | Style | Non-Discriminatory Language | Diskriminierende Adjektive, die sich auf die Herkunft von Personen beziehen, vermeiden
+- `952103de` | Style | Non-Discriminatory Language | Diskriminierende Personenbezeichnungen aufgrund der Herkunft überprüfen
+- `952101de` | Style | Non-Discriminatory Language | Stark diskriminierende Personenbezeichnungen aufgrund der Herkunft
+- `956201de` | Style | Non-Discriminatory Language | Diskriminierende Bezeichnungen zu Religion und Weltanschauung
+- `954502de` | Style | Non-Discriminatory Language | Altersdiskriminierende Verben vermeiden
+- `954401de` | Style | Non-Discriminatory Language | Stark altersdiskriminierende Adjektive
+- `954402de` | Style | Non-Discriminatory Language | Altersdiskriminierende Adjektive vermeiden
+- `954303de` | Style | Non-Discriminatory Language | Altersdiskriminierende Bezeichnungen überprüfen
+- `954302de` | Style | Non-Discriminatory Language | Altersdiskriminierende Bezeichnungen vermeiden
+- `954301de` | Style | Non-Discriminatory Language | Stark altersdiskriminierende Bezeichnungen
+- `952503de` | Style | Non-Discriminatory Language | Geopolitisch fragwürdige Bezeichnungen überprüfen
+- `952303de` | Style | Non-Discriminatory Language | Geografische Bezeichnung überprüfen
+- `957102de` | Style | Non-Discriminatory Language | Diskriminierende Personenbezeichnung zur geschlechtlichen Identität vermeiden
+- `957101de` | Style | Non-Discriminatory Language | Stark diskriminierende Personenbezeichnungen zur geschlechtlichen Identität
+- `954103de` | Style | Non-Discriminatory Language | Diskriminierende Bezeichnungen überprüfen, die sich auf ein bestimmtes Alter von Menschen beziehen
+- `954102de` | Style | Non-Discriminatory Language | Diskriminierende Personenbezeichnungen aufgrund des Alters vermeiden
+- `953101de` | Style | Non-Discriminatory Language | Stark diskriminierende Personenbezeichnungen aufgrund der sexuellen Orientierung
+- `952601de` | Style | Non-Discriminatory Language | Stark diskriminierende oder beschönigende Bezeichnungen
+- `955202de` | Style | Non-Discriminatory Language | Diskriminierende Adjektive vermeiden, die sich auf Menschen mit Behinderungen beziehen
+- `955101de` | Style | Non-Discriminatory Language | Stark diskriminierende Personenbezeichnungen für Menschen mit Behinderung
+- `953203de` | Style | Non-Discriminatory Language | Diskriminierende Bezeichnungen überprüfen, die sich auf die sexuelle Orientierung von Personen beziehen
+- `951302de` | Style | Non-Discriminatory Language | Genderspezifische Pronomen vermeiden
+- `951202de` | Style | Non-Discriminatory Language | Bezeichnungen mit genderspezifischem Bezug vermeiden
+- `951102de` | Style | Non-Discriminatory Language | Genderspezifische Personenbezeichnungen vermeiden
+- `956101de` | Style | Non-Discriminatory Language | Stark diskriminierende Personenbezeichnungen aufgrund der Religionszugehörigkeit
+- `952801de` | Style | Non-Discriminatory Language | Stark diskriminierende Adjektive, die sich auf die Herkunft von Personen beziehen
+- `952302de` | Style | Non-Discriminatory Language | Diskriminierende geografische Bezeichnungen vermeiden
+- `952102de` | Style | Non-Discriminatory Language | Rassistische Personenbezeichnungen vermeiden
+- `952602de` | Style | Non-Discriminatory Language | Diskriminierende Herkunftsbezeichnungen vermeiden
+
+## Spelling
+
+- `764de` | Abbreviation | General | Schreibung von mehrteiligen Punktabkürzungen ohne Leerzeichen
+- `332de` | Abbreviation | General | "beziehungsweise" und "bzw." vermeiden
+- `763de` | Abbreviation | General | Flektierte Formen von Akronymen ohne Apostroph bilden
+- `762de` | Abbreviation | General | Wortdopplung bei Abkürzungen
+- `7611de` | Abbreviation | General | Plural von Akronymen gemäß Vorgaben aus dem BW oder mit "s" bilden
+- `761de` | Abbreviation | General | Plural von Akronymen mit "s" bilden
+- `760de` | Abbreviation | General | Pluralverwendung von Akronymen vermeiden
+- `533de` | Abbreviation | General | "d. h." in Einschüben vermeiden
+- `141de` | Abbreviation | General | Keine Klammern verwenden
+- `371de` | Abbreviation | General | Abkürzungen ohne darauffolgende Zahl ausschreiben
+- `45` | Spelling | Capitalization | Erkennung falscher Kleinschreibung substantivischer Wörter
+- `44` | Spelling | Capitalization | Erkennung falscher Großschreibung nicht substantivischer Wörter
+- `44EWfrag` | Spelling | Capitalization | Erkennung falscher Großschreibung nicht substantivischer Wörter am Anfang unvollständiger Sätze
+- `43` | Spelling | Capitalization | Erkennung falscher Kleinschreibung am Satzanfang
+- `nhaequ` | Spelling | Unknown & Misspelled Words | Erkennung fehlenden Bindestrichs
+- `letter` | Spelling | Unknown & Misspelled Words | Erkennung von Einzelbuchstaben
+- `ff` | Spelling | Other Spelling | Erkennung falscher Fuge
+- `uh` | Spelling | Unknown & Misspelled Words | Erkennung von Bindestrichkomposita mit unbekanntem erstem Teil
+- `unknown` | Spelling | Unknown & Misspelled Words | Erkennung unbekannter Wörter (Tippfehler)
+- `unknownstreet` | Spelling | Unknown & Misspelled Words | Erkennung unbekannter Wörter als mutmaßliche Straßennamen
+- `unknowntopo` | Spelling | Unknown & Misspelled Words | Erkennung unbekannter Wörter als mutmaßliche Ortsnamen
+- `unknownpers` | Spelling | Unknown & Misspelled Words | Erkennung unbekannter Wörter als mutmaßliche Familiennamen oder Vornamen
+- `alt` | Spelling | Other Spelling | Erkennung alter Rechtschreibung
+- `nie` | Spelling | Other Spelling | Erkennung von lexikalisch erfasster Falschschreibung
+- `space_bl` | Abbreviation | General | Erkennung mehrteiliger Punktabkürzungen ohne oder mit zu vielen Leerzeichen
+- `space` | Abbreviation | General | Erkennung mehrteiliger Punktabkürzungen ohne Leerzeichen
+- `fabk` | Abbreviation | General | Erkennung falsch geschriebener Abkürzungen
+- `kon` | Spelling | Other Spelling | Erkennung konservativer Schreibweise
+- `2633de` | Spelling | Other Spelling | Bindestrichsetzung überprüfen
+- `2417de` | Spelling | Other Spelling | Groß-/Kleinschreibung des Pronomens überprüfen
+- `215de` | Spelling | Other Spelling | Erkennung von falsch gesetzten Zeichen im Wort
+- `212de` | Spelling | Other Spelling | Schreibung von Akronymen etc. überprüfen
+- `211de` | Spelling | Other Spelling | Erkennung von Falschschreibungen (unbekannter Wortbestandteil, unbekanntes Wortbildungsmuster u.?.)
+- `741de#2` | Spelling | Other Spelling | Schreibung von "dass" überprüfen
+- `3143de` | Spelling | Other Spelling | Getrenntschreibung von Ziffer und Nachsilbe überprüfen
+- `3131de` | Spelling | Other Spelling | Getrenntschreibung der Adjektive überprüfen
+- `313129de` | Spelling | Other Spelling | Getrenntschreibung von Superlativ und Adjektiv bedeutungsabhängig überprüfen
+- `313121de` | Spelling | Other Spelling | Getrenntschreibung von Superlativ und Adjektiv überprüfen
+- `313119de` | Spelling | Other Spelling | Getrenntschreibung der Adjektive bedeutungsabhängig überprüfen
+- `313118de` | Spelling | Other Spelling | Getrenntschreibung der Adjektive verwendungsabhängig überprüfen
+- `31311pro` | Spelling | Other Spelling | Getrenntschreibung der Adjektive bei progressiver Schreibweise überprüfen
+- `24214de` | Spelling | Other Spelling | Großschreibung von attributiv-elliptisch gebrauchten Adjektiven überprüfen
+- `24213de` | Spelling | Other Spelling | Großschreibung von nicht-substantivischen Bruchzahlen überprüfen
+- `24212de` | Spelling | Other Spelling | Großschreibung von aus Substantiven entstandenen Wörtern überprüfen
+- `24211de` | Spelling | Other Spelling | Großschreibung nicht-substantivischer Wörter überprüfen
+- `31132de` | Spelling | Other Spelling | Getrenntschreibung von Adjektiv und Verb (untrennbare Zusammensetzung) überprüfen
+- `31131de` | Spelling | Other Spelling | Getrenntschreibung von Adjektiv und Verb (trennbare Zusammensetzung) überprüfen
+- `311519pro` | Spelling | Other Spelling | Getrenntschreibung der Verben bei progressiver Schreibweise bedeutungsabhängig überprüfen
+- `311511pro` | Spelling | Other Spelling | Getrenntschreibung der Verben bei progressiver Schreibweise überprüfen
+- `311319de` | Spelling | Other Spelling | Getrenntschreibung von Adjektiv und Verb bedeutungsabhängig überprüfen
+- `311319pro` | Spelling | Other Spelling | Getrenntschreibung von Adjektiv und Verb bei progressiver Schreibweise bedeutungsabhängig überprüfen
+- `311311pro` | Spelling | Other Spelling | Getrenntschreibung von Adjektiv und Verb bei progressiver Schreibweise prüfen
+- `3132de` | Spelling | Other Spelling | Getrenntschreibung von Substantiv und Adjektiv überprüfen
+- `313220de` | Spelling | Other Spelling | Getrenntschreibung von Substantiv und Partizip überprüfen
+- `2515de` | Spelling | Other Spelling | Zusammenschreibung von nicht verblasstem Substantiv und Verb überprüfen
+- `252de` | Spelling | Other Spelling | Zusammenschreibung von Substantiv und Adjektiv überprüfen
+- `24141de` | Spelling | Other Spelling | Groß-/Kleinschreibung des Adjektivs überprüfen
+- `241412pro` | Spelling | Other Spelling | Kleinschreibung der adverbialen Wendung bei progressiver Schreibweise überprüfen
+- `241411pro` | Spelling | Other Spelling | Kleinschreibung der festen adverbialen Wendung bei progressiver Schreibweise überprüfen
+- `349de` | Spelling | Other Spelling | Wortverdopplung überprüfen
+- `34de` | Spelling | Other Spelling | Wortverdoppelung überprüfen
+- `31621de` | Spelling | Other Spelling | Erkennung von fehlendem Bindestrich bei Zusammensetzungen mit Abkürzungen aus dem Benutzerwörterbuch
+- `3162de` | Spelling | Other Spelling | Erkennung von fehlendem Bindestrich
+- `31622de` | Spelling | Other Spelling | Erkennung von fehlendem Bindestrich bei Zusammensetzungen mit Wortgruppen
+- `3161de` | Spelling | Other Spelling | Erkennung von fehlendem Ergänzungsstrich
+- `31611de` | Spelling | Other Spelling | Erkennung von falsch gesetztem Ergänzungsstrich
+- `31603de` | Spelling | Other Spelling | Erkennung von falscher Getrenntschreibung nach Bindestrich
+- `31602de` | Spelling | Other Spelling | Bindestrichsetzung überprüfen
+- `31601de` | Spelling | Other Spelling | Leerzeichen in Bindestrichzusammensetzungen löschen
+- `31121de` | Spelling | Other Spelling | Getrenntschreibung von verkürztem Adverb und Verb überprüfen
+- `315de#2` | Spelling | Other Spelling | Getrenntschreibung von Substantiv und Verb überprüfen
+- `24162de` | Spelling | Other Spelling | Groß-/Kleinschreibung überprüfen
+- `24161de` | Spelling | Other Spelling | Groß-/Kleinschreibung der Tageszeitangabe überprüfen
+- `24151de` | Spelling | Other Spelling | Groß-/Kleinschreibung bei Mehrwortausdrücken überprüfen
+- `24146de` | Spelling | Other Spelling | Groß-/Kleinschreibung des Infinitivs überprüfen
+- `241454de` | Spelling | Other Spelling | Groß-/Kleinschreibung der Interjektion überprüfen
+- `241453de` | Spelling | Other Spelling | Groß-/Kleinschreibung der Konjunktion überprüfen
+- `241452de` | Spelling | Other Spelling | Groß-/Kleinschreibung der Präposition überprüfen
+- `241451de` | Spelling | Other Spelling | Groß-/Kleinschreibung des Adverbs überprüfen
+- `241442de` | Spelling | Other Spelling | Kleinschreibung der Ordnungszahl überprüfen
+- `241441de` | Spelling | Other Spelling | Kleinschreibung der Bruchzahl überprüfen
+- `24143de` | Spelling | Other Spelling | Kleinschreibung des Zahlworts überprüfen
+- `24142de` | Spelling | Other Spelling | Kleinschreibung des Pronomens überprüfen
+- `42232de` | Spelling | Other Spelling | Schreibung von "das" und Kommasetzung überprüfen
+- `42231de` | Spelling | Other Spelling | Schreibung von "das" überprüfen
+- `317de#2` | Spelling | Other Spelling | Getrenntschreibung überprüfen
+- `3142de` | Spelling | Other Spelling | Getrenntschreibung der Zahlableitung überprüfen
+- `3141de` | Spelling | Other Spelling | Getrenntschreibung der Zahlwörter überprüfen
+- `2413de` | Spelling | Other Spelling | Kleinschreibung nach Doppelpunkt überprüfen
+- `2422de` | Spelling | Other Spelling | Großschreibung nach Doppelpunkt überprüfen
+- `31112de` | Spelling | Other Spelling | Getrenntschreibung von Präfix und Verb (untrennbare Zusammensetzung) überprüfen
+- `31111de` | Spelling | Other Spelling | Getrenntschreibung von präpositionalem Präfix und Verb (trennbare Zusammensetzung) überprüfen
+- `311119de` | Spelling | Other Spelling | Getrenntschreibung von Korrelat und Verb bedeutungsabhängig überprüfen
+- `311111pro` | Spelling | Other Spelling | Getrenntschreibung von Partikel und Verb bei progressiver Schreibweise überprüfen
+- `31142de` | Spelling | Other Spelling | Getrenntschreibung von Substantiv und Verb überprüfen. Untrennbare Zusammensetzung
+- `31141de` | Spelling | Other Spelling | Getrenntschreibung von verblasstem Substantiv und Verb überprüfen
+- `312de#2` | Spelling | Other Spelling | Getrenntschreibung von Präposition und Substantiv überprüfen
+- `214de` | Spelling | Other Spelling | Erkennung von unbekannten Einzelteilen bei zusammengesetzten Wörtern
+- `213de` | Spelling | Other Spelling | Erkennung von falscher Zusammenschreibung
+- `acronym` | Abbreviation | General | Unbekanntes Akronym
+- `useracro` | Abbreviation | General | Bekannte Bedeutung
+- `NEU05` | Abbreviation | General | Prüft, ob in Fließtexten und Langbeschreibungen gängige Abkürzungen verwendet werden, und fordert das vollständige Ausschreiben (z. B. „z. B.“ zu „zum Beispiel“, „d. h.“ zu „das heißt“). Nicht ausformulierte Texte (z. B. Kurzbeschreibungen, technische Daten, Tabellen, Features / Benefits) Abkürzungen werden verwendet mit geschütztem Leerzeichen dazwischen. Beispiel: (z. B. Milch, Teige, Soßen, Säfte)
+
+## Style (General)
+
+- `def108de` | Style | Punctuation, Brackets & Compounds | Verschachtelte Relativsätze vermeiden
+- `def107de` | Style | Punctuation, Brackets & Compounds | Koordination innerhalb von Relativsätzen vermeiden
+- `def106de` | Style | Punctuation, Brackets & Compounds | Kein Komma, Semikolon oder Spiegelstrich
+- `def105de` | Style | Punctuation, Brackets & Compounds | Verb zu Beginn der Definition vermeiden
+- `def104de` | Style | Punctuation, Brackets & Compounds | Keine eingebetteten Phrasen als vorangestelltes Attribut
+- `def103de` | Style | Punctuation, Brackets & Compounds | Oberbegriff ohne quantifizierende Angaben
+- `def102de` | Style | Punctuation, Brackets & Compounds | Maximal ein Adjektiv vor dem Oberbegriff
+- `def101de` | Style | Punctuation, Brackets & Compounds | Oberbegriff ohne Artikelwort
+- `def220de` | Style | Punctuation, Brackets & Compounds | Bestimmte Formulierungen bei Bestandsbeziehungen vermeiden
+- `def210de` | Style | Punctuation, Brackets & Compounds | "um zu"-Konstruktion als Ergänzung des Oberbegriffs vermeiden
+- `3444de` | Style | Word Choice | "leicht" und "sicher" vermeiden
+- `3443de` | Style | Word Choice | "betragen" vermeiden
+- `3442de` | Style | Word Choice | "verfügen über" vermeiden
+- `3441de` | Style | Word Choice | "besitzen" vermeiden
+- `3391de` | Style | Punctuation, Brackets & Compounds | Füllwörter vermeiden
+- `1601de` | Style | Punctuation, Brackets & Compounds | Komposita ohne Bindestrich schreiben (< 5)
+- `725de` | Style | Punctuation, Brackets & Compounds | Kompositum mit Term als Kopfwort vermeiden
+- `221de` | Style | Punctuation, Brackets & Compounds | Mehrdeutige Bezüge vermeiden
+- `240de` | Style | Punctuation, Brackets & Compounds | Verb-Nomen-Ambiguität vermeiden
+- `193de` | Style | Punctuation, Brackets & Compounds | Löscht bestimmte Regelcodes im Zusammenhang mit Auslassungspunkten am Satzende
+- `3912de` | Style | Punctuation, Brackets & Compounds | 'Aber' als Hauptsatzkonjunktion vermeiden
+- `79003de` | Style | Punctuation, Brackets & Compounds | Blindtext vermeiden
+- `143de` | Style | Punctuation, Brackets & Compounds | Typografische Anführungszeichen verwenden
+- `353de` | Style | Word Choice | Ausnahmeformulierung überprüfen
+- `3691de` | Style | Word Choice | "selber" vermeiden
+- `3941de` | Style | Punctuation, Brackets & Compounds | Komplizierte Wortbildungen vermeiden
+- `339de` | Style | Word Choice | überflüssige Wörter vermeiden
+- `368de` | Style | Word Choice | "siehe auch" vermeiden
+- `367de` | Style | Word Choice | "nötig" und "notwendig" vermeiden
+- `345de` | Style | Word Choice | Veraltete Wörter vermeiden
+- `317de` | Style | Word Choice | Unpersönliche Pronomen vermeiden
+- `316de` | Style | Word Choice | Ungenaue Angaben vermeiden
+- `315de` | Style | Word Choice | Ungenaue Verben vermeiden
+- `780de` | Style | Word Choice | Zu viele Adjektive vermeiden
+- `772de` | Style | Punctuation, Brackets & Compounds | Löscht ADM in unmittelbarer Nachbarschaft von Vorzugstermen
+- `380de` | Style | Word Choice | "Und" am Satzanfang vermeiden
+- `752de` | Style | Sentence Structure | Endungslose Verbformen vermeiden
+- `192de` | Style | Punctuation, Brackets & Compounds | Auslassungspunkte überprüfen
+- `191de` | Style | Punctuation, Brackets & Compounds | Semikolon vermeiden
+- `142de` | Style | Punctuation, Brackets & Compounds | Schweifklammern vermeiden
+- `190de` | Style | Punctuation, Brackets & Compounds | Ausrufezeichen am Satzende vermeiden
+- `441de` | Style | Punctuation, Brackets & Compounds | Auslassungen bei weit voneinander entfernten Wörtern vermeiden
+- `334de` | Style | Word Choice | Bedingungssatz mit "falls" vermeiden
+- `114de` | Style | Punctuation, Brackets & Compounds | Sätze nicht durch Listen unterbrechen
+- `337de` | Style | Word Choice | "wenn" vermeiden
+- `336de` | Style | Word Choice | "und/oder" vermeiden
+- `230de` | Style | Punctuation, Brackets & Compounds | Mehrdeutige Ortsangaben vermeiden
+- `723de` | Style | Sentence Structure | Endungen im Genitiv Singular kontrollieren: es-Form verwenden
+- `7221de` | Style | Sentence Structure | Endung im Genitiv bei Wörtern auf -sch kontrollieren
+- `722de` | Style | Sentence Structure | Endungen im Genitiv Singular kontrollieren: s-Form verwenden
+- `346de` | Style | Word Choice | Ungebräuchliche Adjektive vermeiden
+- `442de` | Style | Punctuation, Brackets & Compounds | Auslassungen bei zusammengesetzten Nomen vermeiden
+- `440de` | Style | Punctuation, Brackets & Compounds | Auslassungen bei zusammengesetzten Wörtern vermeiden
+- `770de` | Style | Punctuation, Brackets & Compounds | Wortdoppelungen vermeiden
+- `622de` | Style | Sentence Structure | Ortsangabe vor das Objekt der Handlung setzen
+- `220de` | Style | Punctuation, Brackets & Compounds | Mehrdeutige Genitiv-Konstruktionen vermeiden
+- `150de` | Style | Punctuation, Brackets & Compounds | Doppelpunkt nach Präpositionalphrasen setzen
+- `132de` | Style | Punctuation, Brackets & Compounds | Schreibweise von Ordinalzahlen kontrollieren
+- `121de` | Style | Punctuation, Brackets & Compounds | Verweise in eigene Zeile setzen
+- `750de` | Style | Sentence Structure | Futur vermeiden
+- `753de` | Style | Sentence Structure | Vergangenheitsformen vermeiden
+- `740de` | Style | Sentence Structure | Doppelte Verneinung vermeiden
+- `514de` | Style | Sentence Structure | Komplexe Attribute vermeiden
+- `741de` | Style | Sentence Structure | Starke Verneinung vermeiden
+- `113de` | Style | Punctuation, Brackets & Compounds | Keine Überprüfung von Groß-/Kleinschreibung am Anfang von Listen- und Tabellenelementen
+- `342de` | Style | Word Choice | "zur Abrechnung gelangen" vermeiden
+- `361de` | Style | Word Choice | "alle zwei" vermeiden
+- `542de` | Style | Sentence Structure | Zusammengesetzte Zeiten vermeiden
+- `541de` | Style | Sentence Structure | Verschachtelte "zu"-Konstruktionen vermeiden
+- `210de` | Style | Punctuation, Brackets & Compounds | Pronomen vermeiden
+- `550de` | Style | Sentence Structure | "es" am Satzanfang vermeiden (anstelle des Subjekts)
+- `543de` | Style | Sentence Structure | "es" anstelle eines Nebensatzes vermeiden
+- `540de` | Style | Sentence Structure | Modalverben mit Infinitiven vermeiden
+- `311de` | Style | Word Choice | "geschehen" vermeiden
+- `314de` | Style | Word Choice | "bisherig" vermeiden
+- `313de` | Style | Word Choice | "durchführen" vermeiden
+- `310de` | Style | Word Choice | "betätigen" vermeiden
+- `350de` | Style | Word Choice | "sollen" vermeiden
+- `360de` | Style | Word Choice | "außerdem" vermeiden
+- `344de` | Style | Word Choice | "sich befinden" vermeiden
+- `341de` | Style | Word Choice | "vermögen" vermeiden
+- `771de` | Style | Punctuation, Brackets & Compounds | Relativsatzanschluss mit Pronomen/Artikel-Verdoppelung vermeiden
+- `340de` | Style | Word Choice | "welcher" als Relativpronomen vermeiden
+- `630de` | Style | Sentence Structure | Bei Mehrdeutigkeit Subjekt vor Objekt setzen
+- `611de` | Style | Sentence Structure | Nebensatz an das Satzende stellen
+- `534de` | Style | Sentence Structure | Lange Klammereinschübe vermeiden
+- `343de` | Style | Word Choice | "mittels" vermeiden
+- `331de` | Style | Word Choice | "alt" vermeiden
+- `330de` | Style | Word Choice | "man" vermeiden
+- `312de` | Style | Word Choice | "anbringen" vermeiden
+- `730de` | Style | Sentence Structure | "sein"+"zu"+Infinitiv vermeiden
+- `511de` | Style | Sentence Structure | Zu viele Präpositionalphrasen vermeiden
+- `711de` | Style | Sentence Structure | Passiv vermeiden
+- `720de` | Style | Sentence Structure | Zu viele Nominalisierungen vermeiden
+- `710de` | Style | Sentence Structure | Passiv mit Täterangabe ("von", "durch") vermeiden
+- `734de` | Style | Sentence Structure | Modalverben im Passiv vermeiden
+- `733de` | Style | Sentence Structure | "müssen" mit Passiv vermeiden
+- `430de` | Style | Punctuation, Brackets & Compounds | Artikellose Nominalphrasen vermeiden
+- `410de` | Style | Word Choice | Bedingungssatz mit "wenn" einleiten
+- `751de` | Style | Sentence Structure | Konjunktiv vermeiden
+- `335de` | Style | Word Choice | "nachfolgend" vermeiden
+- `512de` | Style | Sentence Structure | Zu viele Bedeutungseinheiten vermeiden
+- `532de` | Style | Sentence Structure | Hauptsatzkoordination vermeiden
+- `531de` | Style | Sentence Structure | Distanz zwischen Verbteilen verkürzen
+- `610de` | Style | Sentence Structure | Verb weiter nach vorn setzen
+- `561de` | Style | Sentence Structure | Mehrzahlnennung in Klammern vermeiden
+- `562de` | Style | Sentence Structure | Drei und mehr Klammereinschübe vermeiden
+- `560de` | Style | Sentence Structure | Zwei und mehr Klammereinschübe vermeiden
+- `173de` | Style | Punctuation, Brackets & Compounds | Verwendung von Leerzeichen bei Schrägstrichen vermeiden
+- `172de` | Style | Punctuation, Brackets & Compounds | &-Zeichen in Wortbildungen vermeiden
+- `171de` | Style | Punctuation, Brackets & Compounds | Pluszeichen in Wortbildungen vermeiden
+- `182de` | Style | Punctuation, Brackets & Compounds | Zu lange Überschriften vermeiden
+- `181de` | Style | Punctuation, Brackets & Compounds | Nebensätze in Überschriften vermeiden
+- `180de` | Style | Punctuation, Brackets & Compounds | Ganze Sätze in Überschriften vermeiden
+- `140de` | Style | Punctuation, Brackets & Compounds | Ganze Sätze in Klammern vermeiden
+- `111de` | Style | Punctuation, Brackets & Compounds | Mehrere Nebensätze als Liste darstellen
+- `110de` | Style | Punctuation, Brackets & Compounds | Aufzählungen als Liste darstellen
+- `521de` | Style | Punctuation, Brackets & Compounds | Zwei und mehr Bedingungen innerhalb eines Satzes vermeiden
+- `520de` | Style | Punctuation, Brackets & Compounds | Mehrere Bedingungen als Liste darstellen
+- `362de` | Style | Word Choice | Schreibweise von "vorn" kontrollieren
+- `363de` | Style | Word Choice | Schreibweise von "Tür" kontrollieren
+- `366de` | Style | Word Choice | Wiederholungszahl mit Zahlwort schreiben (zweimal)
+- `365de` | Style | Word Choice | Wiederholungszahl mit Ziffer schreiben (2-mal)
+- `364de` | Style | Word Choice | Schreibweise von "gern" kontrollieren
+- `510de` | Style | Sentence Structure | Attributanhäufungen vermeiden
+- `620de` | Style | Sentence Structure | Zeitliche Abfolge bei Anweisungen beachten
+- `5301de` | Style | Sentence Structure | Satzlänge verkürzen (für bestimmte Elemente)
+- `530de` | Style | Sentence Structure | Satzlänge verkürzen
+- `1691de` | Style | Punctuation, Brackets & Compounds | Kein Bindestrich nach Fugenelementen e, (e)r und (e)n
+- `168de` | Style | Punctuation, Brackets & Compounds | Kein Bindestrich bei drei gleichen aufeinandertreffenden Buchstaben
+- `167de` | Style | Punctuation, Brackets & Compounds | Zu langes Kompositum (>4) als Genitivkonstruktion formulieren
+- `1662de` | Style | Punctuation, Brackets & Compounds | Zusammensetzungen mit Namensbestandteilen mit Bindestrich schreiben
+- `1661de` | Style | Punctuation, Brackets & Compounds | Komposita mit englischsprachigen Bestandteilen mit Bindestrich schreiben
+- `166de` | Style | Punctuation, Brackets & Compounds | Komposita mit Entlehnungen (nicht: griechischen oder lateinischen Ursprungs) mit Bindestrich schreiben
+- `165de` | Style | Punctuation, Brackets & Compounds | Komposita mit Entlehnungen mit Bindestrich schreiben
+- `164de` | Style | Punctuation, Brackets & Compounds | Komposita mit Zahlwörtern bilden
+- `162de` | Style | Punctuation, Brackets & Compounds | Zu langes Kompositum aufgliedern (=3)
+- `161de` | Style | Punctuation, Brackets & Compounds | Zu langes Kompositum aufgliedern (>4)
+- `160de` | Style | Punctuation, Brackets & Compounds | Zu langes Kompositum aufgliedern (>3)
+- `169de` | Style | Punctuation, Brackets & Compounds | Kein Bindestrich nach Fugen-S
+- `funit` | Style | Punctuation, Brackets & Compounds | Erkennung falschgeschriebener Maßeinheiten
+- `apo` | Style | Punctuation, Brackets & Compounds | Erkennung von falschem Apostroph
+- `72de` | Style | Punctuation, Brackets & Compounds | Anführungszeichen überprüfen
+- `71de` | Style | Punctuation, Brackets & Compounds | Klammersetzung überprüfen
+- `6131de` | Style | Punctuation, Brackets & Compounds | Erkennung von mehrfachen Leerzeichen
+- `612de` | Style | Punctuation, Brackets & Compounds | überflüssiges Leerzeichen entfernen
+- `611de#2` | Style | Sentence Structure | Fehlendes Leerzeichen nach Satzzeichen ergänzen
+- `6281de` | Style | Punctuation, Brackets & Compounds | Schreibung der Währungsangabe überprüfen (Leerzeichen verwenden)
+- `628de` | Style | Punctuation, Brackets & Compounds | Schreibung der Währungsangabe überprüfen (&nbsp; verwenden)
+- `6270de` | Style | Punctuation, Brackets & Compounds | Schreibung der Maßangabe überprüfen (ohne Leerzeichen)
+- `6271de` | Style | Punctuation, Brackets & Compounds | Schreibung der Maßangabe überprüfen (Leerzeichen verwenden)
+- `627de` | Style | Punctuation, Brackets & Compounds | Schreibung der Maßangabe überprüfen (&nbsp; verwenden)
+- `6261de` | Style | Punctuation, Brackets & Compounds | Schreibung der Paragrafenangabe überprüfen (Leerzeichen verwenden)
+- `626de` | Style | Punctuation, Brackets & Compounds | Schreibung der Paragrafenangabe überprüfen (&nbsp; verwenden)
+- `6251de` | Style | Punctuation, Brackets & Compounds | Schreibung des Rechen- oder Verhältniszeichens überprüfen (Leerzeichen verwenden)
+- `6241de` | Style | Punctuation, Brackets & Compounds | Schreibung der Gradangabe überprüfen (Leerzeichen zwischen Zahl und Gradzeichen verwenden)
+- `6231de` | Style | Punctuation, Brackets & Compounds | Schreibung der Prozentangabe überprüfen (Leerzeichen verwenden)
+- `6211de` | Style | Punctuation, Brackets & Compounds | Zwischenräume bei Datumsangaben überprüfen (Leerzeichen zwischen Tag und Monat verwenden)
+- `5225de` | Style | Punctuation, Brackets & Compounds | Satzzeichen in Aufzählungen und Tabellen überprüfen
+- `6230de` | Style | Punctuation, Brackets & Compounds | Schreibung der Prozentangabe überprüfen (ohne Leerzeichen)
+- `341de#2` | Style | Word Choice | Punktverdoppelung überprüfen
+- `614de` | Style | Punctuation, Brackets & Compounds | Leerzeichen vor Apostroph überprüfen
+- `NEU01` | Style | Punctuation, Brackets & Compounds | Erfordert nach dem Markennamen „Kärcher“ zwingend ein normales Leerzeichen und verbietet die Kopplung mit Bindestrichen (z. B. „Kärcher-Reinigungsmittel“ wird zu „Kärcher Reinigungsmittel“).
+- `NEU02` | Style | Punctuation, Brackets & Compounds | Prüft in Fließtexten und Langbeschreibungen, ob gängige Maßeinheiten und gekoppelte Begriffe fälschlicherweise abgekürzt wurden, und fordert das Ausschreiben des Wortes (z. B. „100-l-Tank“ zu „100-Liter-Tank“).
+- `NEU03` | Style | Punctuation, Brackets & Compounds | Kontrolliert, ob Bezeichnungen der Produktklasse (wie „-Reihe“, „-Modell“, „-Gerät“, „-Maschine“) korrekt mit einem Bindestrich an den eigentlichen Produktnamen angeschlossen sind (z. B. „FC 5-Modell“)
+- `NEU04` | Style | Punctuation, Brackets & Compounds | Weist darauf hin, dass zusammengesetzte Adjektive mit dem Markennamen (wie „kärcherexklusiv“ oder „Kärcher’sche“) vermieden und stattdessen durch substantivische Umschreibungen (z. B. „exklusiv bei Kärcher“) ersetzt werden sollten. Eine Ausnahme bildet lediglich „kärchereigen“.
+- `NEU06` | Style | Punctuation, Brackets & Compounds | Kontrolliert die kontextabhängige Schreibung von „bis“. Fordert im Fließtext das ausgeschriebene Wort „bis“ (z. B. „2 bis 3 Liter“), in Tabellen und technischen Daten hingegen den Gedankenstrich mit geschütztem Leerzeichen (z. B. „220 – 240 V“).
+- `NEU07` | Style | Punctuation, Brackets & Compounds | Stellt sicher, dass in Tabellen, Klammerwerten und Features/Benefits die standardisierten Einheiten-Kürzel verwendet werden (z. B. „55 cm“, „100-l-Tank“), statt die Wörter in nicht ausformulierten Texten auszuschreiben.
+- `NEU08` | Style | Punctuation, Brackets & Compounds | Erfordert im Fließtext die ausgeschriebene Form „Prozent“ (z. B. „10 Prozent“), in Tabellen und Kurzbeschreibungen hingegen das Symbol mit geschütztem Leerzeichen (z. B. „5 %“). Ausnahme: Ab zwei Nachkommastellen gilt immer das Symbol (z. B. „99,99 %“).
+- `NEU09` | Style | Punctuation, Brackets & Compounds | Stellt sicher, dass Aufzählungspunkte, die explizit werbliche Vorteile (Benefits) beschreiben, am Ende immer mit einem Schlusspunkt versehen werden – auch wenn es sich um syntaktisch unvollständige Sätze handelt (z. B. „- 50 Prozent Zeitersparnis beim Bügeln.“).
+- `NEU10` | Style | Punctuation, Brackets & Compounds | Schließt die Verwendung von Tausender-Trennpunkten für Zahlenwerte innerhalb von Tabellenstrukturen explizit aus, um die Datenlesbarkeit zu wahren (z. B. „10000“ statt „10.000“).
+- `NEU11` | Style | Punctuation, Brackets & Compounds | Erfordert, dass die Marken-URL www.karcher.com im Fließtext konsequent kleingeschrieben wird – dies gilt ausdrücklich auch dann, wenn sie direkt auf einen Schlusspunkt des vorhergehenden Satzes folgt.
+- `NEU12` | Style | Punctuation, Brackets & Compounds | Kontrolliert, ob Fußnoten regelkonform formatiert sind. Der Text muss mit einem Großbuchstaben beginnen und mit einem Schlusspunkt enden. Einzige Ausnahme ist das alleinstehende Kennzeichnungswort „NEU“.
+
+## Style (Marketing)
+
+- `3692de` | Style | Tone & Address | Anglizismen vermeiden
+- `3922de` | Style | Superlatives & Overselling | Steigerungsform des Adjektivs überprüfen
+- `3921de` | Style | Superlatives & Overselling | Steigerungsformen von verstärkten Adjektiven vermeiden
+- `3911de` | Style | Tone & Address | Negativ besetzte Ausdrücke vermeiden
+- `79002de` | Style | Tone & Address | Emoticons und Emojis vermeiden
+- `79001de` | Style | Tone & Address | Netzjargon vermeiden
+- `3930de` | Style | Superlatives & Overselling | überhebliche Floskeln vermeiden
+- `338de` | Style | Tone & Address | Floskeln vermeiden
+- `369de` | Style | Tone & Address | Umgangssprachliche Wörter vermeiden
+- `781de` | Style | Tone & Address | Superlative vermeiden
+- `736de` | Style | Tone & Address | Direkte Anredeform vermeiden
+- `737de` | Style | Tone & Address | Duzen statt Siezen
+- `333de` | Style | Tone & Address | "bitte" vermeiden
+- `625de` | Style | Tone & Address | Nutzen vor dem Merkmal nennen
+- `731de` | Style | Tone & Address | 2. Person Singular vermeiden
+- `732de` | Style | Tone & Address | 1. Person Singular und Plural vermeiden
+- `352de` | Style | Tone & Address | Weichmacher vermeiden
+- `351de` | Style | Tone & Address | Ausnahmeformulierungen vermeiden
+- `735de` | Style | Tone & Address | Infinitiv als Anredeform vermeiden
+- `625de#2` | Style | Tone & Address | Schreibung des Rechen- oder Verhältniszeichens überprüfen (&nbsp; verwenden)
+
+## Style (Technical Documentation)
+
+- `gk6001de` | Style | Constituent Recognition (GK) | GK: Satzobjekte in bestimmten Elementen
+- `gk5002de` | Style | Constituent Recognition (GK) | GK: Allein stehende Nebensätze, Hauptsätze mit Verberststellung oder andere spezielle finite Sätze
+- `gk5001de` | Style | Constituent Recognition (GK) | GK: Satzobjekte ohne Infinitiv
+- `gk4001de` | Style | Constituent Recognition (GK) | GK: Satzobjekte, die durchgängig als Phrasen erkannt wurden
+- `gk3005de` | Style | Constituent Recognition (GK) | GK: Satzobjekte mit "z.B." am Anfang oder am Ende
+- `gk3004de` | Style | Constituent Recognition (GK) | GK: Segmente, die nicht mindestens aus einem Substantiv und einem Verb bestehen
+- `gk3003de` | Style | Constituent Recognition (GK) | GK: Satzobjekte mit Sonderzeichen am Anfang und ohne Infinitiv
+- `gk3002de` | Style | Constituent Recognition (GK) | GK: Satzobjekte, die nur aus drei Substantiven bestehen
+- `gk3001de` | Style | Constituent Recognition (GK) | GK: Satzobjekte, die nur aus zwei Substantiven bestehen
+- `gk2001de` | Style | Constituent Recognition (GK) | GK: Satzobjekte, die nur aus erkannten Termen bestehen
+- `gk1006de` | Style | Constituent Recognition (GK) | GK: Satzobjekte mit öffnender Klammer am Anfang
+- `gk1005de` | Style | Constituent Recognition (GK) | GK: Satzobjekte mit schließender Klammer vorn oder öffnender Klammer hinten
+- `gk1004de` | Style | Constituent Recognition (GK) | GK: Satzobjekte mit Klammerkonstrukt
+- `gk1003de` | Style | Constituent Recognition (GK) | GK: Satzobjekte mit aufeinanderfolgenden Unterstrichen oder mehr als drei aufeinanderfolgenden Punkten
+- `gk1002de` | Style | Constituent Recognition (GK) | GK: Satzobjekte mit Kästchen (U+2160)
+- `gk1001de` | Style | Constituent Recognition (GK) | GK: Satzobjekte mit "#" am Anfang
+- `gk0002de` | Style | Constituent Recognition (GK) | GK: Satzobjekte ohne drei Kleinbuchstaben in Folge
+- `gk0001de` | Style | Constituent Recognition (GK) | GK: Satzobjekte ohne Leerzeichen
+- `def110de` | Style | Definitions & Structure | Funktionsbeschreibungen ohne direktes Objekt vermeiden
+- `1382de` | Style | Numbers & Units | Schreibung der Durchmesserangabe überprüfen
+- `1381de` | Style | Numbers & Units | Schreibung von Uhrzeiten überprüfen
+- `1221de` | Style | Numbers & Units | Schreibweise von Maßeinheit und Spannungsart kontrollieren (Leerzeichen verwenden)
+- `122de` | Style | Numbers & Units | Schreibweise von Maßeinheit und Spannungsart kontrollieren (&nbsp; verwenden)
+- `138de` | Style | Numbers & Units | Schreibung des Malzeichens überprüfen
+- `1372de` | Style | Numbers & Units | Darstellung von Zahlenbereichen überprüfen
+- `1371de` | Style | Numbers & Units | bis-Zeichen und Streckenstrich überprüfen (kein Leerzeichen)
+- `137de` | Style | Numbers & Units | bis-Zeichen überprüfen
+- `136de` | Style | Numbers & Units | Schreibung von Tausenderzahlen überprüfen (kein Trennzeichen verwenden)
+- `135de` | Style | Numbers & Units | Schreibung von Tausenderzahlen überprüfen (&nbsp; verwenden)
+- `1311de` | Style | Numbers & Units | Ziffern am Satzende vermeiden
+- `322de` | Style | Definitions & Structure | Funktionsverbgefüge vermeiden (mit Korrekturvorschlag)
+- `134de` | Style | Numbers & Units | Schreibung von Tausenderzahlen überprüfen (Punkt verwenden)
+- `139de` | Style | Numbers & Units | Schreibung von Dezimalzahlen überprüfen (Punkt verwenden)
+- `1321de` | Style | Numbers & Units | Schreibweise von Ordinalzahlen kontrollieren (&nbsp;)
+- `133de` | Style | Numbers & Units | Schreibung von Dezimalzahlen überprüfen (Komma verwenden)
+- `372de` | Style | Definitions & Structure | Schreibweise von etablierten Abkürzungen kontrollieren
+- `721de` | Style | Definitions & Structure | Prozedurale Nominalgruppen vermeiden
+- `131de` | Style | Numbers & Units | Schreibweise von Kardinalzahlen kontrollieren
+- `1303de` | Style | Numbers & Units | Ordinalzahlen von 1.-12. ausschreiben und größer 12. nicht ausschreiben
+- `1301de` | Style | Numbers & Units | Ordinalzahlen von 1.-12. ausschreiben
+- `1302de` | Style | Numbers & Units | Kardinalzahlen von 0-12, Zahlen größer 12 nicht ausschreiben
+- `130de` | Style | Numbers & Units | Kardinalzahlen von 0-12 ausschreiben
+- `623de` | Style | Definitions & Structure | Ziel der Handlung nach vorn setzen
+- `112de` | Style | Numbers & Units | Keine Überprüfung von Satzendezeichen in Listen und Tabellen
+- `321de` | Style | Definitions & Structure | Funktionsverbgefüge vermeiden
+- `563de` | Style | Definitions & Structure | Mehrzahlendung in Klammern vermeiden
+- `170de` | Style | Definitions & Structure | Schrägstriche vermeiden (Ausnahme: zwischen Ziffern oder Einheiten)
+- `163de` | Style | Definitions & Structure | Komposita mit Ziffern bilden
+- `624de` | Style | Definitions & Structure | Schreibung der Gradangabe überprüfen (&nbsp; zwischen Zahl und Gradzeichen verwenden)
+- `623de#2` | Style | Definitions & Structure | Schreibung der Prozentangabe überprüfen (&nbsp; verwenden)
+- `621de` | Style | Definitions & Structure | Zwischenräume bei Datumsangaben überprüfen (&nbsp; zwischen Tag und Monat verwenden)
+
+## Terminology
+
+- `DEFTERM` | Terminology | Term Status | Default Term-Meldung
+- `VARPREF` | Terminology | Spelling Variants | Schreibvarianten von Vorzugstermen
+- `VARCAP` | Terminology | Spelling Variants | Vorzugsterme in Versalienschreibung
+- `VARPOSADM` | Terminology | Term Status | Variante eines Vorzugsterms und erlaubter Term
+- `VARPOSNEG` | Terminology | Term Status | Variante von POSNEG
+- `VARDEPR` | Terminology | Term Status | Schreibvarianten von Negativtermen
+- `PARTDEPR` | Terminology | Term Status | Negativterm als Bestandteil eines Kompositums
+- `POSNEG` | Terminology | Term Status | Negativ-/Vorzugsterm, Vorschlag für Negativterm
+- `DEPR` | Terminology | Term Status | Negativterm, positiver Vorschlag
+- `ADM` | Terminology | Term Status | Anzeige von admitted
+- `NIETERM` | Terminology | Spelling Variants | Schreibvarianten von Termen aus dem Benutzerwörterbuch
