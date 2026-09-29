@@ -21,7 +21,8 @@ var DRIVE_PDF_WEB_ANNOTATE_BUDGET_MS = 200000; // kommentierte PDF: Upload-Stuec
 // lieferte im Add-on die Adresse einer Bereitstellung ohne Web-App-Zugang, das
 // Fenster zeigte dann Googles 404-Seite ("Sorry, unable to open the file").
 function _drivePdfWebAppUrl_() {
-  var url = String(PropertiesService.getScriptProperties().getProperty('WEBAPP_URL') || '').trim();
+  // Ein versehentlich mitkopierter Zusatz (?page=pdfcheck, #...) wird abgeschnitten.
+  var url = String(PropertiesService.getScriptProperties().getProperty('WEBAPP_URL') || '').trim().replace(/[?#].*$/, '');
   // Nur eine veroeffentlichte Bereitstellung (/exec) taugt fuer alle Nutzer.
   return /^https:\/\/script\.google\.com\/.+\/exec$/.test(url) ? url : '';
 }
