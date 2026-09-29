@@ -6,6 +6,8 @@ const DEFAULT_AI_PROMPT = 'Du bist ein Terminologie-Assistent für Kärcher, Her
 // 1. WEB APP ENTRY & ROUTING
 // ============================================================================
 function doGet(e) {
+  // PDF-Prüffenster aus dem Drive-Add-on (siehe DrivePdfWeb.gs)
+  if (e && e.parameter && e.parameter.page === 'pdfcheck') return _renderPdfCheckPage_(e);
   return HtmlService.createTemplateFromFile('TermSearch').evaluate()
     .setTitle('Kärcher TermCheck – Terminology Search')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)

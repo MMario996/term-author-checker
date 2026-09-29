@@ -32,9 +32,11 @@ var DRIVE_PDF_MAX_PARTS = 60;
 
 /**
  * Fuehrt Vorbereitungs-Einheiten aus, bis die Vorbereitung fertig ist oder die
- * Zeit der Aktion nicht mehr reicht, und liefert die passende Card-Antwort.
+ * Zeit (lim, siehe _drivePdfLimits_) nicht mehr reicht. Liefert { done: false }
+ * (Zwischenstand gespeichert) oder - wenn gleich weitergeprueft und fertig
+ * wurde - { done: true, resultId }.
  */
-function _drivePdfAdvance_(job, started) {
+function _drivePdfAdvance_(job, started, lim) {
   var prep = job.prep;
   // Ist die letzte Aktion mitten in der Vorbereitung abgebrochen (Zeitlimit)?
   // Dann diesmal kleinere Einheiten.
@@ -57,8 +59,8 @@ function _drivePdfAdvance_(job, started) {
       // geschrieben werden (Store/Pakete + Zwischenstand) - das mit einplanen.
       var flushMs = _drivePdfFlushEstimate_(ctx);
       // Die erste Einheit einer Aktion laeuft immer (dafuer ist der Klick da).
-      if (units > 0 && (elapsed > DRIVE_PREP_START_BEFORE_MS ||
-          elapsed + estimate * 1.3 + flushMs > DRIVE_PREP_LIMIT_MS)) break;
+      if (units > 0 && (elapsed > lim.prepStart ||
+          elapsed + estimate * 1.3 + flushMs > lim.prepLimit)) break;
       var phase = job.phase, t0 = Date.now();
       _drivePdfPrepUnit_(job, ctx);
       prep.ms = prep.ms || {};
@@ -92,20 +94,16 @@ function _drivePdfAdvance_(job, started) {
 
   if (job.phase === 'check') {
     job.prep = { ms: prep.ms }; // Vorbereitungsdaten werden nicht mehr gebraucht
-    var parts = job.parts;
-    // Kleine PDF, schnell vorbereitet: gleich in dieser Aktion pruefen.
-    if (parts.length === 1 && parts[0].len <= DRIVE_PDF_DIRECT_MAX_BYTES && Date.now() - started < DRIVE_PDF_DIRECT_BEFORE_MS) {
-      return _drivePdfCheckStep_(job, started);
+    var parts = job.parts, elapsedNow = Date.now() - started;
+    // Gleich in dieser Aktion weiterpruefen: im PDF-Fenster, solange Zeit ist;
+    // im Seitenbereich nur bei einer kleinen, schnell vorbereiteten PDF.
+    if (lim.web ? elapsedNow < lim.checkStart
+                : (parts.length === 1 && parts[0].len <= DRIVE_PDF_DIRECT_MAX_BYTES && elapsedNow < DRIVE_PDF_DIRECT_BEFORE_MS)) {
+      return _drivePdfCheckStep_(job, started, lim);
     }
-    _drivePdfSaveJob_(job);
-    return CardService.newActionResponseBuilder()
-      .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfProgressCard_(job, parts)))
-      .build();
   }
   _drivePdfSaveJob_(job);
-  return CardService.newActionResponseBuilder()
-    .setNavigation(CardService.newNavigation().updateCard(_buildDrivePdfPrepCard_(job)))
-    .build();
+  return { done: false };
 }
 
 // Eine Einheit der Vorbereitung ausfuehren (siehe Kopfkommentar).

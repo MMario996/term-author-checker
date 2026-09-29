@@ -10,6 +10,21 @@ Alle Texte gibt es in 15 Sprachen. HTML-Oberflächen: `I18n.html`.
 Karten (Startkarte, Drive-PDF-Check) und vom Server erzeugte Texte: `CardI18n.gs`.
 Neue Texte bitte in beiden Fällen für alle Sprachen ergänzen (Englisch ist Fallback).
 
+## PDF-Prüfung in Drive (eigenes Fenster)
+
+„PDF prüfen“ im Drive-Seitenbereich öffnet ein eigenes Fenster (Web-App,
+`PdfCheck.html`), das alle Etappen automatisch abarbeitet – ohne Klicks auf
+„Weiter“. Voraussetzungen:
+
+- Web-App-Einstellungen im Manifest: *Ausführen als: Nutzer, der zugreift*,
+  *Zugriff: Domain* (`appsscript.json`). Beim ersten Öffnen bestätigt jede
+  Person einmal die Berechtigungen.
+- Skripteigenschaft `WEBAPP_URL` = die `…/exec`-URL der Bereitstellung
+  (Bereitstellen > Bereitstellungen verwalten > Web-App-URL).
+
+Ohne gültige `WEBAPP_URL` (oder über den Link „Stattdessen schrittweise im
+Seitenbereich prüfen“) läuft die Prüfung wie bisher im Seitenbereich mit „Weiter“.
+
 ## Skripteigenschaften (optional)
 
 - `EXPORT_FOLDER_ID`: Zielordner für `exportProjectToTxt` (Quellcode-Export).
