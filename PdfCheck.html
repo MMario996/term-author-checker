@@ -214,7 +214,7 @@ function run(fn, args, ok, fail){
 }
 
 var TYPES = ['terminology', 'grammar', 'style'];
-var PHASES = ['plan', 'fetch', 'full', 'assemble', 'split', 'check'];
+var PHASES = ['plan', 'fetch', 'full', 'assemble', 'split', 'check', 'doc'];
 var _info = {}, _selected = {}, _lastSt = null, _lastStAt = 0, _finalTimes = null;
 
 document.addEventListener('DOMContentLoaded', function(){
@@ -313,7 +313,7 @@ function setStep(n){
 // Gemessene Dauer je Phase vom Server (timeline), die laufende Phase zählt live
 // weiter. "Übertragung & Zwischenspeichern" = Gesamtzeit minus gemessene Phasen.
 function timelineHtml(st, final){
-  var tl = (st && st.timeline) || {}, cur = st ? (st.done ? '' : st.phase) : 'plan';
+  var tl = (st && st.timeline) || {}, cur = st ? (st.done ? '' : (st.docPrompts ? 'doc' : st.phase)) : 'plan';
   var curIdx = cur ? PHASES.indexOf(cur) : PHASES.length;
   var liveMs = st && !final ? Date.now() - _lastStAt : 0;
   var total = final ? _duration * 1000 : Date.now() - _t0, sum = 0, rows = '';
@@ -322,6 +322,7 @@ function timelineHtml(st, final){
     if (ph === cur && !final) { state = 'active'; ms += liveMs; }
     else if (e) state = 'done';
     else if (i < curIdx) return; // übersprungen (z. B. kleine PDF ohne Verkleinern)
+    else if (ph === 'doc') return; // nur, wenn es Gesamtdokument-Prompts gibt
     else state = 'pending';
     if (final && !e) return;
     sum += ms;
@@ -372,7 +373,9 @@ function onStatus(st){
   if (st.done) { finishProgress(); showResult(st.result); return; }
   setStep(st.step || 1);
   if (typeof st.etaSec === 'number') setEta(st.etaSec);
-  if (st.phase === 'check') {
+  if (st.docPrompts) {
+    setStatus(t('d.docRunning', { n: st.docPrompts }));
+  } else if (st.phase === 'check') {
     setStatus(st.pagesTotal
       ? t('d.progress', { done: st.pagesDone, total: st.pagesTotal, n: st.issuesSoFar })
       : esc(T['d.checking']));
@@ -421,7 +424,7 @@ function showResult(res){
   if (info.pagesTotal) { _info.pages = info.pagesTotal; _info.parts = info.partsTotal; renderChips(); }
   $('summary').textContent = (issues.length ? '🔎 ' : '🎉 ') + t('d.issuesFound', { n: issues.length }).replace(/<[^>]+>/g, '');
   var prep = 0, tl = (_lastSt && _lastSt.timeline) || {};
-  PHASES.forEach(function(ph){ if (ph !== 'check' && tl[ph]) prep += tl[ph].ms; });
+  PHASES.forEach(function(ph){ if (ph !== 'check' && ph !== 'doc' && tl[ph]) prep += tl[ph].ms; });
   var tiles = [[issues.length, T['w.statIssues']], [fmtTime(_duration), T['w.statTime']]];
   if (info.pagesTotal) tiles.push([info.pagesTotal, T['w.statPages']]);
   tiles.push([_info.mb ? _info.mb + ' MB' : '–', T['w.statSize']]);
@@ -430,6 +433,17 @@ function showResult(res){
   if (info.imagesRemoved) notes += '<div class="note">ℹ️ ' + t('d.shrunk', { mb: (info.fileSize / 1048576).toFixed(1), kept: info.imagesKept, removed: info.imagesRemoved }) + '</div>';
   if (info.failedRanges && info.failedRanges.length) notes += '<div class="note">⚠️ ' + t('d.failedPages', { pages: info.failedRanges.join(', ') }) + '</div>';
   if (!issues.length) notes += '<div class="note">✅ ' + t('d.noErrors') + '</div>';
+  // Bericht der Gesamtdokument-Prompts (eigenes Google Doc)
+  var doc = res.docResult;
+  if (doc) {
+    notes += '<div class="note"><b>📄 ' + esc(T['d.docTitle']) + '</b>';
+    if (doc.url) notes += '<div class="actions"><a class="btn primary" target="_blank" rel="noopener noreferrer" href="' + esc(doc.url) + '">' + esc(T['d.docReport']) + ' ↗</a></div>';
+    (doc.items || []).forEach(function(it){
+      if (it.error) notes += '<div>⚠️ <b>' + esc(it.title) + ':</b> ' + esc(it.error) + '</div>';
+    });
+    if (doc.error) notes += '<div>⚠️ ' + esc(doc.error) + '</div>';
+    notes += '</div>';
+  }
   $('notes').innerHTML = notes;
   $('timeline2').innerHTML = timelineHtml(_lastSt, true);
   _finalTimes = true;

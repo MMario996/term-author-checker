@@ -200,8 +200,10 @@ function _buildAuthorCheckPromptParts_(lang, labels) {
       return "- [" + r.Type + "] " + r.Description + param;
     }).join('\n');
 
+  // Gesamtdokument-Prompts laufen getrennt (siehe DocPrompts.gs) und gehoeren
+  // nicht in den Prompt pro Abschnitt.
   var customPromptsStr = activeRules
-    .filter(function(r) { return r.RuleKind === 'PROMPT' || (r.CustomPrompt && r.CustomPrompt.trim().length > 0); })
+    .filter(function(r) { return !_isDocScopePrompt_(r) && (r.RuleKind === 'PROMPT' || (r.CustomPrompt && r.CustomPrompt.trim().length > 0)); })
     .map(function(r) {
       return "- " + labels.specificCheckPrefix + " [" + (r.Type || "Custom") + " -> " + r.Description + "]: " + r.CustomPrompt;
     }).join('\n');
@@ -209,7 +211,7 @@ function _buildAuthorCheckPromptParts_(lang, labels) {
   var rulesStr = (standardRulesStr || labels.noStandardRules) +
     (customPromptsStr ? '\n\n' + labels.additionalChecksHeader + ':\n' + customPromptsStr : '');
 
-  return { glossary: glossary, termListStr: termListStr, rulesStr: rulesStr };
+  return { glossary: glossary, termListStr: termListStr, rulesStr: rulesStr, docPrompts: _docPromptsFromRules_(activeRules) };
 }
 
 // Parst die Gemini-Antwort im {"issues":[...]} Format, gemeinsam genutzt von
@@ -303,6 +305,12 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
   }
 
   var chunks = _splitTextIntoChunks_(text, AUTHORCHECK_CHUNK_CHARS);
+  // Gesamtdokument-Prompts: eigene Anfragen mit dem ganzen Text, parallel zu den
+  // Abschnitten (siehe DocPrompts.gs).
+  var docPrompts = promptParts.docPrompts;
+  var docCtx = { fileName: _activeFileName_(), text: text, isPdf: false };
+  var docCfg = { apiUrl: apiUrl, model: model, apiKey: apiKey, temperature: temperature };
+  var docRequests = docPrompts.map(function (dp) { return _docPromptRequest_(docCfg, dp, docCtx, null); });
   var requests = chunks.map(function (chunk) {
     var call = _buildGeminiRequest_(apiUrl, model, apiKey, {
       contents: [{ role: 'user', parts: [{ text: buildPrompt(chunk) }] }],
@@ -314,9 +322,15 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
     };
   });
 
-  var responses = requests.length === 1
-    ? [_fetchGeminiWithRetry_(requests[0].url, requests[0])]
-    : UrlFetchApp.fetchAll(requests);
+  var allRequests = requests.concat(docRequests);
+  var allResponses = allRequests.length === 1
+    ? [_fetchGeminiWithRetry_(allRequests[0].url, allRequests[0])]
+    : UrlFetchApp.fetchAll(allRequests);
+  var responses = allResponses.slice(0, requests.length);
+  var docReports = allResponses.slice(requests.length).map(function (res, i) {
+    if (GEMINI_RETRYABLE_CODES.indexOf(res.getResponseCode()) !== -1) res = _fetchGeminiWithRetry_(docRequests[i].url, docRequests[i], 2);
+    return _docPromptResult_(docPrompts[i], res);
+  });
 
   var issues = [];
   var seen = {};
@@ -339,7 +353,10 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
       if (!firstError) firstError = e;
     }
   });
-  if (failedParts === responses.length) throw firstError;
+  // Ohne Gesamtdokument-Bericht bricht ein komplett fehlgeschlagener Lauf ab;
+  // mit Bericht wird der Bericht trotzdem geliefert.
+  var reports = docReports.length ? _finishDocPromptReports_(docCtx.fileName, docReports) : null;
+  if (failedParts === responses.length && !(reports && reports.url)) throw firstError;
 
   issues.forEach(function (issue, i) {
     issue.id = 'ac_' + i;
@@ -355,7 +372,8 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
     failedParts: failedParts,
     truncated: truncated,
     maxChars: AUTHORCHECK_MAX_CHARS,
-    scopeRef: scopeRef
+    scopeRef: scopeRef,
+    reports: reports
   };
 }
 

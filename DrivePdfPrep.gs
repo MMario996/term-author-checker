@@ -77,6 +77,7 @@ function _drivePdfAdvance_(job, started, lim) {
       Logger.log('_drivePdfAdvance_: Neuaufbau fehlgeschlagen, sende Original: ' + (err.message || err));
       _drivePdfPrepDiscard_(job, ctx);
       job.parts = [{ from: 0, to: 0, start: 0, len: job.fileSize, file: job.fileId }];
+      job.whole = { file: job.fileId, start: 0, len: job.fileSize };
       job.phase = 'check';
     } else if (job.fileSize > DRIVE_PDF_MAX_BYTES && /^(plan|fetch|full|assemble)$/.test(job.phase)) {
       Logger.log('_drivePdfAdvance_: Verkleinern fehlgeschlagen: ' + (err.message || err));
@@ -94,6 +95,8 @@ function _drivePdfAdvance_(job, started, lim) {
   prep.inflight = false;
 
   if (job.phase === 'check') {
+    // Ganze (verkleinerte) PDF merken - fuer Gesamtdokument-Prompts (DocPrompts.gs).
+    if (!job.whole && prep.rebuiltId && prep.model) job.whole = { file: prep.rebuiltId, start: 0, len: prep.model.length };
     job.prep = { ms: prep.ms }; // Vorbereitungsdaten werden nicht mehr gebraucht
     var parts = job.parts, elapsedNow = Date.now() - started;
     // Gleich in dieser Aktion weiterpruefen: im PDF-Fenster, solange Zeit ist;
