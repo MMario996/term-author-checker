@@ -96,6 +96,7 @@ var CARD_I18N = {
     'type.grammar': 'Grammar',
     'type.terminology': 'Terminology',
     'type.style': 'Style',
+    'type.prompt': 'Custom prompt',
     'c.suggestion': 'Suggestion',
     'c.slide': 'Slide {n}'
   },
@@ -186,6 +187,7 @@ var CARD_I18N = {
     'type.grammar': 'Grammatik',
     'type.terminology': 'Terminologie',
     'type.style': 'Stil',
+    'type.prompt': 'Eigener Prompt',
     'c.suggestion': 'Vorschlag',
     'c.slide': 'Folie {n}'
   },

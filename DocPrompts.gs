@@ -48,10 +48,75 @@ function _docPromptText_(dp, ctx) {
               : 'The complete document text follows after the instructions between """ markers.'
   ].filter(String).join('\n');
   return 'CONTEXT (provided by the tool):\n' + facts + '\n\n' +
-    'Follow the instructions below exactly, including their output format. Answer in Markdown. ' +
-    'Work on the WHOLE document, not on single pages.\n\n' +
-    '=== INSTRUCTIONS ===\n' + dp.prompt + '\n=== END OF INSTRUCTIONS ===' +
+    'Follow the instructions below exactly. Work on the WHOLE document, not on single pages. ' +
+    'Write your answer in Markdown, in the output format the instructions define.\n\n' +
+    '=== INSTRUCTIONS ===\n' + dp.prompt + '\n=== END OF INSTRUCTIONS ===\n\n' +
+    DOC_PROMPT_FINDINGS_RULES +
     (ctx.isPdf ? '' : '\n\n"""\n' + String(ctx.text || '').replace(/"""/g, "'''") + '\n"""');
+}
+
+// Zusatz des Tools (hat Vorrang vor "antworte ausschliesslich mit ..." im Prompt):
+// nach dem Bericht dieselben Befunde maschinenlesbar, damit sie als Kommentar an
+// der richtigen Stelle im Dokument landen (kommentierte PDF, Notiz in Docs/
+// Sheets/Slides). Jede beteiligte Stelle eines Befunds wird ein eigener Eintrag.
+var DOC_PROMPT_MARKER = '===TERMCHECK_FINDINGS===';
+var DOC_PROMPT_FINDINGS_RULES =
+  'TOOL REQUIREMENT (takes precedence over any "answer only with ..." rule above): after your complete answer, ' +
+  'add a line containing only ' + DOC_PROMPT_MARKER + ' and then valid JSON (no markdown, no code block) in exactly this structure:\n' +
+  '{"issues":[{"location":"...","original":"...","suggestion":"...","explanation":"...","replaceable":false}]}\n' +
+  'Rules for this JSON:\n' +
+  '- One entry per affected passage. A finding that involves several pages (e.g. a contradiction between page 3 and page 90) ' +
+  'gets one entry for EACH involved passage, so every passage can be commented in the document.\n' +
+  '- "original": an EXACT, contiguous, verbatim quote from the document (a few words up to one sentence, ' +
+  'copied character by character, no ellipsis, no paraphrase), so it can be found in the document text.\n' +
+  '- "location": page number as "Page N" (PDF) or the section/heading, if identifiable.\n' +
+  '- "suggestion": the concrete correction for this passage (replacement text if the passage itself should be reworded, ' +
+  'otherwise a short instruction).\n' +
+  '- "explanation": the finding in the language of the instructions, including the other involved pages/passages ' +
+  '(e.g. "Contradiction 1: contradicts page 105 ...").\n' +
+  '- "replaceable": true ONLY if "suggestion" is a drop-in replacement text for "original", otherwise false.\n' +
+  '- No findings: {"issues":[]}.';
+
+// Trennt die Antwort in Bericht (Markdown) und Befunde (JSON nach dem Marker).
+function _splitDocPromptAnswer_(text) {
+  var idx = text.lastIndexOf(DOC_PROMPT_MARKER);
+  var report = idx === -1 ? text : text.slice(0, idx);
+  var tail = idx === -1 ? '' : text.slice(idx + DOC_PROMPT_MARKER.length);
+  var issues = [];
+  if (tail) {
+    var clean = tail.replace(/```json/gi, '').replace(/```/g, '').trim();
+    var start = clean.indexOf('{'), end = clean.lastIndexOf('}');
+    try {
+      var parsed = JSON.parse(clean.slice(start, end + 1));
+      issues = Array.isArray(parsed.issues) ? parsed.issues : [];
+    } catch (e) {
+      Logger.log('_splitDocPromptAnswer_: Befunde nicht lesbar: ' + (e.message || e));
+    }
+  }
+  return { report: report.trim(), issues: issues };
+}
+
+// Befunde eines Gesamtdokument-Prompts in das normale Issue-Format bringen
+// (Typ "prompt", Regelname fuer Anzeige und Kommentar).
+function _docPromptIssues_(dp, raw) {
+  return (raw || []).filter(function(i) { return i && i.original && String(i.original).trim(); }).map(function(i) {
+    return {
+      type: 'prompt',
+      rule: dp.title,
+      location: String(i.location || ''),
+      original: String(i.original).trim(),
+      suggestion: String(i.suggestion || '').trim() || '–',
+      explanation: String(i.explanation || ''),
+      replaceable: i.replaceable === true
+    };
+  });
+}
+
+// Alle Befunde aus den Berichten (fuer die Issue-Liste).
+function _docPromptAllIssues_(reports) {
+  var out = [];
+  (reports || []).forEach(function(r) { (r.issues || []).forEach(function(i) { out.push(i); }); });
+  return out;
 }
 
 // Baut die UrlFetch-Anfrage fuer einen Gesamtdokument-Prompt. pdfBytes ODER text.
@@ -76,7 +141,8 @@ function _docPromptResult_(dp, res) {
     var text = cand && cand.content && cand.content.parts
       ? cand.content.parts.map(function(p) { return p.text || ''; }).join('') : '';
     if (!text.trim()) return { title: dp.title, error: 'Empty AI response' + (cand && cand.finishReason ? ' (' + cand.finishReason + ')' : '') + '.' };
-    var out = { title: dp.title, markdown: text };
+    var split = _splitDocPromptAnswer_(text);
+    var out = { title: dp.title, markdown: split.report || text, issues: _docPromptIssues_(dp, split.issues) };
     if (cand.finishReason === 'MAX_TOKENS') out.truncated = true;
     return out;
   } catch (e) {
@@ -136,7 +202,9 @@ function _buildDocPromptReport_(fileName, reports) {
 // Berichte erzeugen und Fehler beim Anlegen des Docs nicht die ganze Pruefung
 // kippen lassen. Liefert { url, items: [{ title, error, truncated }] }.
 function _finishDocPromptReports_(fileName, reports) {
-  var out = { url: '', items: reports.map(function(r) { return { title: r.title, error: r.error || '', truncated: !!r.truncated }; }) };
+  var out = { url: '', items: reports.map(function(r) {
+    return { title: r.title, error: r.error || '', truncated: !!r.truncated, findings: (r.issues || []).length };
+  }) };
   if (!reports.length) return out;
   try { out.url = _buildDocPromptReport_(fileName, reports); }
   catch (e) {
@@ -224,4 +292,11 @@ function _activeFileName_() {
   } catch (e) {
     return 'Document';
   }
+}
+
+// Anzeige-Kategorie eines Fundes: terminology, grammar, prompt (Gesamtdokument-
+// Prompt) oder style (alles andere).
+function _issueTypeKey_(issue) {
+  var t = issue && issue.type;
+  return (t === 'terminology' || t === 'grammar' || t === 'prompt') ? t : 'style';
 }

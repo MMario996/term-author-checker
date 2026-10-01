@@ -106,6 +106,7 @@ h1{ font-family:var(--ff-head); font-size:22px; font-weight:600; letter-spacing:
 .badge.terminology{ background:var(--yellow); color:var(--ink); }
 .badge.grammar{ background:var(--gray-200); color:var(--gray-600); }
 .badge.style{ background:var(--ink); color:var(--yellow); }
+.badge.prompt{ background:#fff; color:var(--ink); border:1px solid var(--ink); }
 .issue-body{ padding:10px 12px; }
 .diff{ font-size:15px; line-height:1.5; word-break:break-word; }
 .diff s{ color:var(--red); text-decoration-thickness:1.5px; }
@@ -213,7 +214,7 @@ function run(fn, args, ok, fail){
   r[fn].apply(r, args);
 }
 
-var TYPES = ['terminology', 'grammar', 'style'];
+var TYPES = ['prompt', 'terminology', 'grammar', 'style'];
 var PHASES = ['plan', 'fetch', 'full', 'assemble', 'split', 'check', 'doc'];
 var _info = {}, _selected = {}, _lastSt = null, _lastStAt = 0, _finalTimes = null;
 
@@ -414,7 +415,7 @@ function showError(msg){
   $('errorText').innerHTML = '⚠️ <b>' + esc(T['d.error']) + ':</b> ' + esc(msg);
 }
 
-function typeOf(it){ return (it.type === 'terminology' || it.type === 'grammar') ? it.type : 'style'; }
+function typeOf(it){ return (it.type === 'terminology' || it.type === 'grammar' || it.type === 'prompt') ? it.type : 'style'; }
 
 function showResult(res){
   _result = res;
@@ -486,7 +487,7 @@ function onSelectionChange(){
   resetButtons();
   $('issues').innerHTML = sel.map(function(it, i){
     var type = typeOf(it);
-    return '<div class="issue"><div class="issue-head"><span class="issue-no">' + (i + 1) + '</span><span class="badge ' + type + '">' + esc(T['type.' + type]) + '</span>' +
+    return '<div class="issue"><div class="issue-head"><span class="issue-no">' + (i + 1) + '</span><span class="badge ' + type + '">' + esc(type === 'prompt' && it.rule ? it.rule : T['type.' + type]) + '</span>' +
       (it.location ? '<span>📍 ' + esc(it.location) + '</span>' : '') + '</div>' +
       '<div class="issue-body"><div class="diff"><s>' + esc(it.original) + '</s><span class="arrow">→</span><b>' + esc(it.suggestion) + '</b></div>' +
       (it.explanation ? '<div class="expl">💡 ' + esc(it.explanation) + '</div>' : '') + '</div></div>';

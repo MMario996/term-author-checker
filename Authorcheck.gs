@@ -356,11 +356,19 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
   // Ohne Gesamtdokument-Bericht bricht ein komplett fehlgeschlagener Lauf ab;
   // mit Bericht wird der Bericht trotzdem geliefert.
   var reports = docReports.length ? _finishDocPromptReports_(docCtx.fileName, docReports) : null;
-  if (failedParts === responses.length && !(reports && reports.url)) throw firstError;
+  var promptIssues = _docPromptAllIssues_(docReports);
+  if (failedParts === responses.length && !(reports && reports.url) && !promptIssues.length) throw firstError;
+  // Befunde der Gesamtdokument-Prompts kommen in dieselbe Liste (Springen, Notiz).
+  promptIssues.forEach(function (issue) {
+    var key = issue.original + '\u0000' + issue.suggestion;
+    if (seen[key]) return;
+    seen[key] = true;
+    issues.push(issue);
+  });
 
   issues.forEach(function (issue, i) {
     issue.id = 'ac_' + i;
-    if (issue.type !== 'terminology' && issue.type !== 'style') issue.type = 'grammar';
+    if (issue.type !== 'terminology' && issue.type !== 'style' && issue.type !== 'prompt') issue.type = 'grammar';
   });
 
   logAuditEvent_(getUserEmail_(), 'AUTHOR_CHECK_RUN', 'Found ' + issues.length + ' issue(s), lang=' + lang + ', parts=' + chunks.length + (failedParts ? ', failed=' + failedParts : ''));
@@ -768,7 +776,7 @@ function apiExportAuditReport(issues) {
 
   issues.forEach(function(issue) {
     rows.push([
-      (issue.type || "style").toUpperCase(),
+      (issue.type === "prompt" && issue.rule ? "PROMPT: " + issue.rule : (issue.type || "style").toUpperCase()),
       issue.original || "",
       issue.suggestion || "",
       issue.explanation || ""

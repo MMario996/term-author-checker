@@ -37,7 +37,7 @@ Seitenbereich prüfen“) läuft die Prüfung wie bisher im Seitenbereich mit �
 Eine eigene Regel vom Typ „KI-Prompt“ hat einen Geltungsbereich:
 
 - **Pro Abschnitt** (Standard): Der Prompt wird als zusätzliche Prüfanweisung in die normale Prüfung eingebaut. Diese läuft abschnittsweise (PDF: je 4 Seiten), die Funde erscheinen in der Liste (Original → Vorschlag).
-- **Gesamtdokument**: Der Prompt geht unverändert zusammen mit dem kompletten Dokument in einer eigenen Anfrage an Gemini, ohne JSON-Zwang. Die Antwort (Markdown, z. B. ein Cross-Check auf Widersprüche und Prozesslogik zwischen Seiten) wird als Google Doc im Ordner „Terminology“ angelegt und im Ergebnis verlinkt. Datum, Dateiname und Seitenzahl gibt das Tool dabei mit.
+- **Gesamtdokument**: Der Prompt geht unverändert zusammen mit dem kompletten Dokument in einer eigenen Anfrage an Gemini. Das Tool verlangt zusätzlich, jeden Befund pro betroffener Stelle mit wörtlichem Zitat und Seitenangabe zu liefern. Diese Befunde landen wie alle anderen Funde in der Liste (Typ = Regelname) und damit in der kommentierten PDF, im Sheet und als Kommentar/Notiz in Docs, Sheets und Slides. „Ersetzen“ gibt es nur, wenn der Vorschlag ein direkter Ersatztext ist. Die komplette Antwort im Format des Prompts wird zusätzlich als Google Doc im Ordner „Terminology“ gespeichert und im Ergebnis verlinkt.
 
 Umschalten lässt sich das im Formular „Neue Regel“ oder per Klick auf das Etikett „Pro Abschnitt“/„Gesamtdokument“ an der Regel, danach „Einstellungen speichern“. Bei PDFs laufen Gesamtdokument-Prompts nur im PDF-Fenster (nicht im 30-s-Seitenbereich), und die verkleinerte PDF darf höchstens 15 MB groß sein.
 
