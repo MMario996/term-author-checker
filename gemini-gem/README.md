@@ -1,14 +1,16 @@
 # Gemini-Gem „Kärcher Regel-Importer“
 
-Wandelt einen Redaktionsleitfaden (PDF) in eigene Regeln für den Author Check um.
-Das Ergebnis ist eine JSON-Datei, die im Author Check über **Regeln → JSON-Import**
-eingelesen wird.
+Wandelt einen Redaktionsleitfaden (PDF) in eigene Regeln für den Author Check um
+(**Modus L**) oder macht aus einem fertigen Prüf-Prompt eine einzelne KI-Prompt-Regel
+(**Modus P**), z. B. einen Cross-Check auf Widersprüche und Prozesslogik über das ganze
+Dokument. Das Ergebnis ist eine JSON-Datei, die im Author Check über
+**Regeln → JSON-Import** eingelesen wird.
 
 ## Gem einrichten (einmalig, ca. 5 Minuten)
 
 1. <https://gemini.google.com> öffnen → **Gem-Manager** → **Neues Gem**.
 2. **Name:** `Kärcher Regel-Importer`
-3. **Beschreibung:** `Macht aus einem Redaktionsleitfaden (PDF) importierbare Regeln für den Kärcher Author Check (JSON).`
+3. **Beschreibung:** den Text aus [Beschreibung im Gem](#beschreibung-im-gem) einfügen.
 4. **Anweisungen:** den kompletten Inhalt von [`gem-anweisungen.md`](gem-anweisungen.md) einfügen.
 5. **Wissen:** die Dateien [`standardregeln_de.md`](standardregeln_de.md) und
    [`standardregeln_en.md`](standardregeln_en.md) hochladen. Mit ihnen erkennt der Gem,
@@ -19,7 +21,32 @@ Im Regel-Popup öffnen zwei 🤖-Buttons die Gems: „Regel mit Gemini vorbereit
 einzelne Regel formulieren) und „JSON-Regelsatz aus Leitfaden (PDF)“ (dieser Gem). Die
 Freigabe-Links stehen in `GEM_URLS` in `AuthorCheck.html`.
 
-## Benutzen
+## Beschreibung im Gem
+
+```text
+Turns an editorial style guide (PDF) or a finished check prompt into rules you can import into Kärcher Author Check 🗂️
+
+Style guide (PDF):
+1) Upload the PDF and state the rule language (DE or EN).
+2) Round 1 – the Gem reads the whole guide point by point and replies without JSON:
+   ⚠️ Rules that already exist as standard rules – include them in the new category? (A all / B none / C pick)
+   📊 Overview of new rules per chapter
+   ❓ Open questions
+   🚫 What is not taken over (with reasons)
+3) Answer these questions.
+4) Round 2 – you get one JSON code block (max. 40 rules per part).
+
+Check prompt (e.g. cross-check for contradictions across pages):
+1) Paste the prompt (or upload it as a file). Optionally add the style guide PDF if the prompt refers to it.
+2) Round 1 – the Gem summarises the prompt, proposes the scope ("Whole document" or "Per passage") and lists what will not work at check time (knowledge files, logs, placeholders, links) with a fix for each.
+3) Answer the questions.
+4) Round 2 – you get one JSON code block with exactly one AI prompt rule containing your complete prompt.
+
+Then: save the code block as a .json file. In Author Check go to Rules → select rule language → JSON Import → Save Settings.
+New rules appear under "Custom: …". Check PDFs with a "Whole document" rule in the PDF window.
+```
+
+## Benutzen: Leitfaden (Modus L)
 
 1. Den Gem öffnen, den Leitfaden als PDF hochladen, z. B. mit
    „Bitte in Regeln umwandeln, Regelsprache Deutsch.“
@@ -42,6 +69,33 @@ Freigabe-Links stehen in `GEM_URLS` in `AuthorCheck.html`.
 Nach dem Import meldet der Author Check, wie viele Standardregeln angepasst und wie
 viele eigene Regeln übernommen wurden. Alle eigenen Regeln stehen unter **„Custom: …“**.
 
+## Benutzen: fertiger Prompt (Modus P)
+
+1. Den Gem öffnen und den Prompt einfügen, z. B. „Mach daraus eine KI-Prompt-Regel:
+   <Prompt>“. Bezieht sich der Prompt auf einen Leitfaden, das Leitfaden-PDF mit
+   hochladen.
+2. **Runde 1:** Der Gem antwortet ohne JSON:
+   1. **Zusammenfassung**, was der Prompt prüft
+   2. **Geltungsbereich** mit Begründung: „Gesamtdokument“ (Prompt geht mit dem ganzen
+      Dokument in einer eigenen Anfrage an Gemini, eigener Bericht und Kommentare an den
+      Fundstellen) oder „Pro Abschnitt“ (wie alle anderen Regeln)
+   3. **Was zur Prüfzeit nicht funktioniert**, mit Vorschlag: Wissensdateien („in diesem
+      Gem hinterlegt“), vorgelagerte Logs, Platzhalter wie „[FÜGE HIER … EIN]“,
+      Basis-URLs, Rückfragen. Leitfaden-Vorgaben, die der Prompt braucht, kann der Gem
+      wörtlich in den Prompt übernehmen.
+   4. **Offene Fragen**: Titel, Kategorie, Regelsprache, Änderungen aus 3 übernehmen
+      (A alle / B keine / C einzeln)
+3. Antworten.
+4. **Runde 2:** ein JSON-Codeblock mit **genau einer** Regel. Der ganze Prompt steht
+   ungekürzt in `CustomPrompt` (bis 50.000 Zeichen).
+5. Speichern und importieren wie oben. PDFs mit einer „Gesamtdokument“-Regel im
+   **PDF-Fenster** prüfen (nicht im Drive-Seitenbereich).
+
+Beispiel: [`beispiel_prompt_crosscheck_de.json`](beispiel_prompt_crosscheck_de.json) ist
+der Cross-Check-Prompt für Betriebstechnische Anleitungen, schon für den Author Check
+angepasst: ohne Gem-Wissensdatei und Log, mit Seiten „X von Y“ statt Links und mit
+lückenloser Zuordnung aller Seiten zu Clustern.
+
 ## Regeln verwalten
 
 - **Papierkorb an einer eigenen Regel:** löscht diese Regel.
@@ -63,6 +117,9 @@ viele eigene Regeln übernommen wurden. Alle eigenen Regeln stehen unter **„Cu
   Regeln nur in diesen Sprachen.
 - `RuleKind: "RULE"` mit leerem `CustomPrompt` geht als `- [Typ] Beschreibung` an die KI.
   `RuleKind: "PROMPT"` geht als „SPECIFIC CHECK“ mit dem `CustomPrompt` an die KI.
+- `"PromptScope": "DOCUMENT"` (nur bei `PROMPT`): Der `CustomPrompt` läuft als eigene
+  Anfrage mit dem ganzen Dokument (siehe `DocPrompts.gs`). Ohne das Feld gilt
+  „Pro Abschnitt“. Im Popup lässt sich das an der Regel umschalten.
 - Beispiel mit beiden Arten: [`beispiel_RL2026_de.json`](beispiel_RL2026_de.json).
 
 ## Standardregeln aktualisieren
