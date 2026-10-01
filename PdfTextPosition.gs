@@ -987,3 +987,46 @@ function _pdfGlyphLineBoxes_(glyphs, idxList) {
   });
   return boxes;
 }
+
+// ─── TEXT ALLER SEITEN (fuer Gesamtdokument-Prompts ohne PDF-Anhang) ───────
+// Wie _pdfBuildPageModel_, aber mit Zeilenumbruechen, damit Ueberschriften,
+// Schrittfolgen und Tabellen als Zeilen erkennbar bleiben.
+function _pdfPageTextFromGlyphs_(glyphs) {
+  var out = [], prev = null;
+  for (var g = 0; g < glyphs.length; g++) {
+    var gl = glyphs[g];
+    if (!gl.u) continue;
+    if (prev) {
+      var len = Math.sqrt(prev.dx * prev.dx + prev.dy * prev.dy) || 1;
+      var ux = prev.dx / len, uy = prev.dy / len;
+      var ddx = gl.ox - prev.ex, ddy = gl.oy - prev.ey;
+      var along = ddx * ux + ddy * uy, perp = -ddx * uy + ddy * ux;
+      var h = Math.max(prev.h, 1);
+      var last = out[out.length - 1];
+      if (Math.abs(perp) > h * 0.5 || along < -h * 2) { if (!/\n$/.test(last)) out.push('\n'); }
+      else if ((along < -h * 0.5 || along > h * 0.15) && !/\s$/.test(last) && !/^\s/.test(gl.u)) out.push(' ');
+    }
+    out.push(gl.u);
+    prev = gl;
+  }
+  return out.join('').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/**
+ * Liest den Text aller Seiten einer PDF (Binaerstring, 1 Zeichen = 1 Byte).
+ * Liefert ein Array mit einem String pro Seite ('' fuer Seiten ohne lesbaren
+ * Text, z. B. reine Bilder oder nicht unterstuetzte Schriften).
+ */
+function _pdfExtractPageTexts_(text) {
+  var offsets = _pdfScanObjectOffsets_(text);
+  var doc = _pdfOpenDoc_(text, offsets);
+  var pages = _pdfCollectPages_(text, offsets, _pdfFindRootRef_(text), doc);
+  return pages.map(function(page) {
+    try {
+      var glyphs = _pdfExtractPageGlyphs_(doc, page);
+      return glyphs && glyphs.length ? _pdfPageTextFromGlyphs_(glyphs) : '';
+    } catch (e) {
+      return '';
+    }
+  });
+}

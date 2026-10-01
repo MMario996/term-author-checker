@@ -16,28 +16,107 @@
 
 var DOC_PROMPT_SCOPE = 'DOCUMENT';
 var DOC_PROMPT_MAX = 5; // so viele Gesamtdokument-Prompts pro Pruefung (parallel)
+// Groesste PDF, die einem Gesamtdokument-Prompt direkt beiliegt. Gemini nimmt
+// hoechstens 20 MB pro Anfrage, Base64 macht aus 13 MB ~17,3 MB, dazu kommt der
+// Prompt (bis 50.000 Zeichen). Frueher galt hier dieselbe Grenze wie fuer die
+// Seitenpakete (15 MB, als Base64 ~20 MB): grosse Anleitungen lagen nach dem
+// Verkleinern knapp darunter, die Anfrage mit der ganzen PDF scheiterte (am
+// Limit oder am Proxy davor) und der Prompt fehlte im Ergebnis.
+// Skripteigenschaft DOC_PROMPT_PDF_MAX_MB setzt einen anderen Wert (z. B. wenn
+// ein Proxy weniger annimmt). Groessere PDFs laufen ueber den Seitentext, eine
+// abgelehnte Anfrage mit PDF wird mit dem Seitentext wiederholt (DriveAddon.gs).
+var DOC_PROMPT_PDF_MAX_BYTES = 13 * 1024 * 1024;
+// So viel Text aus den uebrigen eigenen Regeln (z. B. importierter
+// Redaktionsleitfaden) geht als Referenz mit.
+var DOC_PROMPT_GUIDE_MAX_CHARS = 30000;
+
+function _docPromptPdfMaxBytes_() {
+  var mb = parseFloat(PropertiesService.getScriptProperties().getProperty('DOC_PROMPT_PDF_MAX_MB') || '');
+  return mb > 0 ? Math.round(mb * 1024 * 1024) : DOC_PROMPT_PDF_MAX_BYTES;
+}
 
 function _isDocScopePrompt_(r) {
   return !!(r && r.PromptScope === DOC_PROMPT_SCOPE && (r.RuleKind === 'PROMPT' || r.CustomPrompt));
 }
 
 // Aktive Gesamtdokument-Prompts einer Regelliste (nur Felder, die gebraucht werden).
+// guide: die uebrigen aktiven eigenen Regeln als Referenz (siehe _docPromptGuide_).
 function _docPromptsFromRules_(rules) {
+  var guide = _docPromptGuide_(rules);
   return (rules || []).filter(function(r) { return r.IsEnabled && _isDocScopePrompt_(r); })
     .slice(0, DOC_PROMPT_MAX)
     .map(function(r) {
-      return { name: r.Name, title: String(r.Description || r.Name || 'Prompt'), prompt: String(r.CustomPrompt || r.Description || '') };
+      return { name: r.Name, title: String(r.Description || r.Name || 'Prompt'), prompt: String(r.CustomPrompt || r.Description || ''), guide: guide };
     });
 }
 
-// Gesamtdokument-Prompts fuer eine Pruefsprache (Regelwerke gibt es nur fuer DE/EN).
-function _docPromptsForLanguage_(lang) {
-  return _rulesLanguageSupported_(lang) ? _docPromptsFromRules_(apiGetRulesConfig(lang)) : [];
+// Ein Prompt aus einem Gem verweist oft auf den "hinterlegten Redaktionsleitfaden".
+// Zur Pruefzeit gibt es keine Gem-Wissensdateien - die aus dem Leitfaden
+// importierten eigenen Regeln liegen aber im Regelwerk. Sie gehen deshalb als
+// Referenz mit (nur eigene Regeln, keine Standardregeln, keine Gesamtdokument-Prompts).
+function _docPromptGuide_(rules) {
+  var lines = [], len = 0, more = 0;
+  (rules || []).forEach(function(r) {
+    if (!r || !r.IsEnabled || _isDocScopePrompt_(r) || String(r.Name || '').indexOf('CUSTOM_') !== 0) return;
+    var head = [r.Section, r.Subsection].filter(function(x) { return x && x !== 'General'; }).join(' > ');
+    var line = '- ' + (head ? '[' + head + '] ' : '') + String(r.Description || '').replace(/\s+/g, ' ').trim();
+    var p = r.RuleKind === 'PROMPT' && r.CustomPrompt && r.CustomPrompt !== r.Description
+      ? String(r.CustomPrompt).replace(/\s+/g, ' ').trim() : '';
+    if (p) line += ' -- ' + p;
+    if (len + line.length > DOC_PROMPT_GUIDE_MAX_CHARS) { more++; return; }
+    lines.push(line);
+    len += line.length + 1;
+  });
+  if (more) lines.push('- (' + more + ' further rules omitted for length)');
+  return lines.join('\n');
+}
+
+// Hinweise, warum bei einer Pruefung kein (oder nicht jeder) Gesamtdokument-Prompt
+// lief. Frueher lief die Pruefung dann einfach ohne - fuer den Nutzer sah es aus,
+// als sei der importierte Prompt ignoriert worden. Liefert Texte in der UI-Sprache.
+function _docPromptNotes_(lang, rules) {
+  var notes = [];
+  var mine = (rules || []).filter(function(r) { return r && String(r.Name || '').indexOf('CUSTOM_') === 0 && r.RuleKind === 'PROMPT'; });
+  if (!_rulesLanguageSupported_(lang)) {
+    var other = [];
+    ['de', 'en'].forEach(function(l) {
+      try {
+        apiGetRulesConfig(l).forEach(function(r) { if (r.IsEnabled && _isDocScopePrompt_(r)) other.push(r.Description || r.Name); });
+      } catch (e) {}
+    });
+    if (other.length) notes.push(_ct_('d.docNoteLang', { lang: String(lang || '').toUpperCase(), names: other.join(', ') }));
+    return notes;
+  }
+  var active = mine.filter(function(r) { return r.IsEnabled && _isDocScopePrompt_(r); });
+  if (active.length > DOC_PROMPT_MAX) {
+    notes.push(_ct_('d.docNoteMax', { n: active.length, max: DOC_PROMPT_MAX,
+      names: active.slice(DOC_PROMPT_MAX).map(function(r) { return r.Description || r.Name; }).join(', ') }));
+  }
+  mine.forEach(function(r) {
+    if (!r.IsEnabled && _isDocScopePrompt_(r)) notes.push(_ct_('d.docNoteDisabled', { name: r.Description || r.Name }));
+    // Lange Pruefanweisungen mit eigenem Berichtsformat gehen "pro Abschnitt"
+    // (je 4 Seiten, nur Funde im Listenformat) praktisch unter.
+    else if (r.IsEnabled && !_isDocScopePrompt_(r) && String(r.CustomPrompt || '').length > 2000) {
+      notes.push(_ct_('d.docNotePassage', { name: r.Description || r.Name }));
+    }
+  });
+  if (!active.length) {
+    var otherLang = lang === 'de' ? 'en' : 'de', there = [];
+    try {
+      apiGetRulesConfig(otherLang).forEach(function(r) { if (r.IsEnabled && _isDocScopePrompt_(r)) there.push(r.Description || r.Name); });
+    } catch (e) {}
+    if (there.length) {
+      notes.push(_ct_('d.docNoteOtherLang', { lang: lang.toUpperCase(), other: otherLang.toUpperCase(), names: there.join(', ') }));
+    }
+  }
+  return notes;
 }
 
 // Rahmen um den Prompt: nur Fakten, die das Modell sonst nicht kennt (Datum,
 // Dateiname, Seitenzahl). Der Prompt selbst bleibt unveraendert und bestimmt
 // Vorgehen und Ausgabeformat.
+// ctx: { fileName, pages, isPdf, text, fromPdf } - fromPdf: der Text wurde aus
+// einer PDF gelesen, die fuer eine Anfrage zu gross war (Seitenmarken im Text).
 function _docPromptText_(dp, ctx) {
   var today = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Europe/Berlin', 'dd.MM.yyyy');
   var facts = [
@@ -45,12 +124,22 @@ function _docPromptText_(dp, ctx) {
     'Document: ' + (ctx.fileName || '(unnamed)'),
     ctx.pages ? 'Total pages: ' + ctx.pages : '',
     ctx.isPdf ? 'The complete original document is attached as a PDF. Page numbers refer to the PDF pages.'
-              : 'The complete document text follows after the instructions between """ markers.'
+      : ctx.fromPdf ? 'The PDF was too large to attach. Its complete text (all pages, extracted page by page, without images) ' +
+                      'follows after the instructions between """ markers. Each page starts with a line "=== Page N of M ==="; ' +
+                      'page numbers refer to these markers. Text in images or drawings is not available - mark findings that depend on it as uncertain.'
+      : 'The complete document text follows after the instructions between """ markers.'
   ].filter(String).join('\n');
+  var guide = dp.guide
+    ? '=== REFERENCE: RULES FROM THE USER\'S RULE SET ===\n' +
+      'These are the custom rules active in the user\'s rule set (for example imported from the editorial style guide / ' +
+      'Redaktionsleitfaden). If the instructions refer to a style guide, Redaktionsleitfaden or knowledge file, ' +
+      'use these rules as that reference. Knowledge files of a Gemini Gem are not available.\n' +
+      dp.guide + '\n=== END OF REFERENCE ===\n\n'
+    : '';
   return 'CONTEXT (provided by the tool):\n' + facts + '\n\n' +
     'Follow the instructions below exactly. Work on the WHOLE document, not on single pages. ' +
     'Write your answer in Markdown, in the output format the instructions define.\n\n' +
-    '=== INSTRUCTIONS ===\n' + dp.prompt + '\n=== END OF INSTRUCTIONS ===\n\n' +
+    '=== INSTRUCTIONS ===\n' + dp.prompt + '\n=== END OF INSTRUCTIONS ===\n\n' + guide +
     DOC_PROMPT_FINDINGS_RULES +
     (ctx.isPdf ? '' : '\n\n"""\n' + String(ctx.text || '').replace(/"""/g, "'''") + '\n"""');
 }
@@ -135,7 +224,7 @@ function _docPromptRequest_(cfg, dp, ctx, pdfBytes) {
 function _docPromptResult_(dp, res) {
   try {
     var code = res.getResponseCode();
-    if (code !== 200) return { title: dp.title, error: 'AI request failed (' + code + ').' };
+    if (code !== 200) return { title: dp.title, error: 'AI request failed (' + code + ').', code: code };
     var data = JSON.parse(res.getContentText());
     var cand = data.candidates && data.candidates[0];
     var text = cand && cand.content && cand.content.parts
@@ -177,7 +266,7 @@ function _buildDocPromptReport_(fileName, reports, folderKey) {
   var body = reports.map(function(r, i) {
     var head = reports.length > 1 ? '<h1>' + _mdEsc_(r.title) + '</h1>' : '';
     if (r.error) return head + '<p><i>' + _mdEsc_(r.error) + '</i></p>';
-    return head + _markdownToHtml_(r.markdown) +
+    return head + (r.note ? '<p><i>' + _mdEsc_(r.note) + '</i></p>' : '') + _markdownToHtml_(r.markdown) +
       (r.truncated ? '<p><i>The AI answer was cut off at the maximum output length.</i></p>' : '') +
       (i < reports.length - 1 ? '<hr>' : '');
   }).join('');
@@ -200,10 +289,11 @@ function _buildDocPromptReport_(fileName, reports, folderKey) {
 }
 
 // Berichte erzeugen und Fehler beim Anlegen des Docs nicht die ganze Pruefung
-// kippen lassen. Liefert { url, items: [{ title, error, truncated }] }.
-function _finishDocPromptReports_(fileName, reports, folderKey) {
-  var out = { url: '', items: reports.map(function(r) {
-    return { title: r.title, error: r.error || '', truncated: !!r.truncated, findings: (r.issues || []).length };
+// kippen lassen. Liefert { url, items: [{ title, error, truncated }], notes }.
+// notes (optional): Hinweise in der UI-Sprache (siehe _docPromptNotes_).
+function _finishDocPromptReports_(fileName, reports, folderKey, notes) {
+  var out = { url: '', notes: notes || [], items: reports.map(function(r) {
+    return { title: r.title, error: r.error || '', note: r.note || '', truncated: !!r.truncated, findings: (r.issues || []).length };
   }) };
   if (!reports.length) return out;
   try { out.url = _buildDocPromptReport_(fileName, reports, folderKey); }

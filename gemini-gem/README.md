@@ -91,6 +91,16 @@ viele eigene Regeln übernommen wurden. Alle eigenen Regeln stehen unter **„Cu
 5. Speichern und importieren wie oben. PDFs mit einer „Gesamtdokument“-Regel im
    **PDF-Fenster** prüfen (nicht im Drive-Seitenbereich).
 
+Zur Prüfzeit bekommt eine „Gesamtdokument“-Regel die übrigen aktiven eigenen Regeln
+derselben Regelsprache als Referenz mit, z. B. den mit Modus L importierten
+Redaktionsleitfaden. Prompt und Leitfaden deshalb in **derselben Regelsprache**
+importieren. Ist die PDF für eine Anfrage zu groß, läuft der Prompt mit dem Text aller
+Seiten (ohne Bilder); das Ergebnis weist darauf hin.
+
+Vor dem Import prüfen (wie die CI): `node ci/gem.test.js meine_regeln_de.json`. Das
+meldet z. B. Namen ohne `CUSTOM_`, fehlenden Geltungsbereich oder Stellen im Prompt, die
+zur Prüfzeit nicht funktionieren (Platzhalter, Gem-Wissensdatei, Log, Basis-URL).
+
 Beispiel: [`beispiel_prompt_crosscheck_de.json`](beispiel_prompt_crosscheck_de.json) ist
 der Cross-Check-Prompt für Betriebstechnische Anleitungen, schon für den Author Check
 angepasst: ohne Gem-Wissensdatei und Log, mit Seiten „X von Y“ statt Links und mit

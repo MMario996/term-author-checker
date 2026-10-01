@@ -39,7 +39,11 @@ Eine eigene Regel vom Typ „KI-Prompt“ hat einen Geltungsbereich:
 - **Pro Abschnitt** (Standard): Der Prompt wird als zusätzliche Prüfanweisung in die normale Prüfung eingebaut. Diese läuft abschnittsweise (PDF: je 4 Seiten), die Funde erscheinen in der Liste (Original → Vorschlag).
 - **Gesamtdokument**: Der Prompt geht unverändert zusammen mit dem kompletten Dokument in einer eigenen Anfrage an Gemini. Das Tool verlangt zusätzlich, jeden Befund pro betroffener Stelle mit wörtlichem Zitat und Seitenangabe zu liefern. Diese Befunde landen wie alle anderen Funde in der Liste (Typ = Regelname) und damit in der kommentierten PDF, im Sheet und als Kommentar/Notiz in Docs, Sheets und Slides. „Ersetzen“ gibt es nur, wenn der Vorschlag ein direkter Ersatztext ist. Die komplette Antwort im Format des Prompts wird zusätzlich als Google Doc gespeichert (siehe Ablage unten) und im Ergebnis verlinkt.
 
-Umschalten lässt sich das im Formular „Neue Regel“ oder per Klick auf das Etikett „Pro Abschnitt“/„Gesamtdokument“ an der Regel, danach „Einstellungen speichern“. Bei PDFs laufen Gesamtdokument-Prompts nur im PDF-Fenster (nicht im 30-s-Seitenbereich), und die verkleinerte PDF darf höchstens 15 MB groß sein.
+Umschalten lässt sich das im Formular „Neue Regel“ oder per Klick auf das Etikett „Pro Abschnitt“/„Gesamtdokument“ an der Regel, danach „Einstellungen speichern“. Bei PDFs laufen Gesamtdokument-Prompts nur im PDF-Fenster (nicht im 30-s-Seitenbereich).
+
+- **Große PDFs:** Ist die (verkleinerte) PDF größer als 13 MB (Skripteigenschaft `DOC_PROMPT_PDF_MAX_MB`) oder lehnt Gemini bzw. der Proxy davor die Anfrage mit der PDF ab, läuft der Prompt mit dem vollständigen Text aller Seiten („=== Page N of M ===“, ohne Bilder). Das Ergebnis sagt das dazu. Früher fehlte der Prompt in diesem Fall im Ergebnis.
+- **Redaktionsleitfaden als Referenz:** Ein Gesamtdokument-Prompt bekommt die übrigen aktiven eigenen Regeln derselben Regelsprache mit (z. B. den per JSON importierten Leitfaden). Verweise wie „laut Redaktionsleitfaden“ aus einem Gem-Prompt laufen so nicht ins Leere.
+- **Hinweise statt Schweigen:** Läuft ein Gesamtdokument-Prompt nicht, steht der Grund im Ergebnis: Prüfsprache ohne Regelwerk (nur DE/EN), Prompt nur unter der anderen Regelsprache gespeichert, ausgeschaltet, mehr als 5 aktiv oder ein langer Prompt mit Geltungsbereich „Pro Abschnitt“.
 
 ## Ablage im eigenen Drive
 
@@ -64,13 +68,34 @@ Welche PHRASE-Termbase zu welchem Bereich gehört, wird am Namen erkannt, zum Be
 
 ## CI / CD
 
-- **CI** (`.github/workflows/ci.yml`): bei jedem Push und Pull Request prüft
-  `node ci/check.js` die Syntax aller `.gs`-Dateien, `appsscript.json`,
-  doppelt definierte Funktionen und ob jede aus HTML (`google.script.run`),
-  Cards (`setFunctionName`) oder dem Manifest (`runFunction`) aufgerufene
-  Server-Funktion existiert. Lokal: `node ci/check.js`.
+- **CI** (`.github/workflows/ci.yml`) bei jedem Push und Pull Request:
+  - `node ci/check.js`: Syntax aller `.gs`-Dateien, `appsscript.json`, doppelt
+    definierte Funktionen, jede aus HTML (`google.script.run`), Cards
+    (`setFunctionName`) oder dem Manifest (`runFunction`) aufgerufene
+    Server-Funktion existiert, jeder benutzte Text steht in `CardI18n.gs`.
+  - `node ci/gem.test.js`: Die JSON-Dateien in `gemini-gem/` lassen sich mit dem
+    echten Import aus `AuthorCheck.html` übernehmen, KI-Prompt-Regeln enthalten
+    nichts, was zur Prüfzeit nicht funktioniert (Platzhalter, Gem-Wissensdateien,
+    Logs, Basis-URLs), und `standardregeln_*.md` passen zu `Rules.gs`. Eine vom
+    Gem erzeugte Datei vor dem Import prüfen: `node ci/gem.test.js meine_regeln_de.json`.
+  - `node ci/doc-prompt.test.js`: End-to-End wie im Fachbereich, mit dem echten
+    Server-Code (Drive und Gemini simuliert, Gemini mit Größenlimit): Gem-Prompt
+    und Leitfaden importieren → PDF im PDF-Fenster prüfen → Bericht, Befunde in
+    der Liste, kommentierte PDF. Dazu große PDFs (Bilder entfernt, Prompt über den
+    Seitentext), ein Proxy, der die PDF ablehnt (400/413/502), gescannte PDFs,
+    falsche Regelsprache, ausgeschaltete Prompts, Docs-Prüfung.
+  - `node ci/ui-smoke.js`, `node ci/ui-pdfcheck.js`: Terminologiesuche und
+    PDF-Fenster in Chromium (Playwright) mit dem echten Server-Code.
+  - **Live-Check** (`node ci/live-check.js`): dieselbe PDF-Prüfung mit dem echten
+    Gemini, bei Push auf `main` und manuell über „Run workflow“ (dort auch mit
+    26-MB-Test-PDF oder einer eigenen PDF aus dem Repository). Braucht das Secret
+    `GEMINI_API_KEY` (optional `GEMINI_API_URL`, Variable `AI_MODEL`), sonst wird
+    er mit Warnung übersprungen. Bericht und Befunde als Artefakt „live-check“.
+  - Alles lokal: `node ci/run-all.js` (Browser-Tests nur mit installiertem
+    `playwright`, Live-Check nur mit `GEMINI_API_KEY`).
 - **CD** (`.github/workflows/deploy.yml`): bei jedem Push auf `main` (oder
-  manuell über "Run workflow") wird der Code per
+  manuell über "Run workflow") läuft zuerst die komplette CI (ohne Live-Check);
+  nur wenn sie besteht, wird der Code per
   [clasp](https://github.com/google/clasp) ins Apps-Script-Projekt übertragen
   und eine neue Version angelegt. Übertragen werden nur `*.gs`, `*.html` und
   `appsscript.json` (siehe `.claspignore`).

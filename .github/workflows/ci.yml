@@ -1,26 +1,108 @@
 name: CI
 
+# Prüft jeden Push und Pull Request. Wird außerdem von deploy.yml aufgerufen:
+# nach Apps Script geht nur Code, der alle Prüfungen besteht.
+#
+#   check  Statische Prüfung, Gem-Dateien, Gesamtdokument-Prompts End-to-End
+#          (echter Server-Code, Drive und Gemini simuliert)
+#   ui     Oberflächen im Browser: Terminologiesuche und PDF-Fenster
+#   live   Optional: dieselbe PDF-Prüfung mit dem echten Gemini (Secrets
+#          GEMINI_API_KEY, optional GEMINI_API_URL, Variable AI_MODEL). Läuft bei
+#          Push auf main und manuell ("Run workflow"); Bericht als Artefakt.
+#          Blockiert das Deployment nicht.
 on:
   push:
     branches: ['**']
   pull_request:
+  workflow_dispatch:
+    inputs:
+      live:
+        description: Live-Check mit dem echten Gemini ausführen
+        type: boolean
+        default: true
+      live_large:
+        description: Live-Check mit 26-MB-Test-PDF (Bilder werden entfernt, Prompt läuft über den Seitentext)
+        type: boolean
+        default: false
+      live_pdf:
+        description: Eigene PDF aus dem Repository für den Live-Check (Pfad, leer = Test-BTA)
+        type: string
+        default: ''
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
   check:
+    name: Prüfung und Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Syntax, Manifest und doppelte Funktionen prüfen
+      - name: Syntax, Manifest, doppelte Funktionen, Server-Aufrufe, Texte
         run: node ci/check.js
+      - name: Gem-Dateien (JSON-Import, Prompt-Regeln, Wissensdateien aktuell)
+        run: node ci/gem.test.js
+      - name: Gesamtdokument-Prompts End-to-End (Import, PDF-Prüfung, Bericht, kommentierte PDF)
+        run: node ci/doc-prompt.test.js
+
+  ui:
+    name: Oberflächen im Browser
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Playwright installieren
         run: |
           npm install --no-save --no-package-lock playwright@1.63.0
           npx playwright install --with-deps chromium
       - name: UI-Test Terminologiesuche (Server-Code + Oberfläche im Browser)
         run: node ci/ui-smoke.js
+      - name: UI-Test PDF-Fenster (Gesamtdokument-Prompt, Hinweise, Befunde)
+        run: node ci/ui-pdfcheck.js
+
+  live:
+    name: Live-Check mit Gemini
+    needs: check
+    # Nicht im Aufruf aus deploy.yml (github.workflow ist dort "Deploy to Apps Script").
+    if: (github.event_name == 'workflow_dispatch' && inputs.live) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && github.workflow == 'CI')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_URL: ${{ secrets.GEMINI_API_URL }}
+      AI_MODEL: ${{ vars.AI_MODEL }}
+      LIVE_LARGE: ${{ inputs.live_large && '1' || '' }}
+      LIVE_PDF: ${{ inputs.live_pdf }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Zugangsdaten vorhanden?
+        id: cfg
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::warning::Secret GEMINI_API_KEY fehlt - Live-Check übersprungen."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: PDF prüfen (echter Server-Code, echtes Gemini)
+        if: steps.cfg.outputs.ready == 'true'
+        run: node ci/live-check.js
+      - name: Bericht und Befunde hochladen
+        if: always() && steps.cfg.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-check
+          path: ci-output/
+          if-no-files-found: ignore

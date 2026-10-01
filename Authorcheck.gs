@@ -211,7 +211,9 @@ function _buildAuthorCheckPromptParts_(lang, labels) {
   var rulesStr = (standardRulesStr || labels.noStandardRules) +
     (customPromptsStr ? '\n\n' + labels.additionalChecksHeader + ':\n' + customPromptsStr : '');
 
-  return { glossary: glossary, termListStr: termListStr, rulesStr: rulesStr, docPrompts: _docPromptsFromRules_(activeRules) };
+  var docNotes = [];
+  try { docNotes = _docPromptNotes_(lang, allRules); } catch (e) { console.warn('Doc prompt notes: ' + e.message); }
+  return { glossary: glossary, termListStr: termListStr, rulesStr: rulesStr, docPrompts: _docPromptsFromRules_(activeRules), docNotes: docNotes };
 }
 
 // Parst die Gemini-Antwort im {"issues":[...]} Format, gemeinsam genutzt von
@@ -355,7 +357,9 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
   });
   // Ohne Gesamtdokument-Bericht bricht ein komplett fehlgeschlagener Lauf ab;
   // mit Bericht wird der Bericht trotzdem geliefert.
-  var reports = docReports.length ? _finishDocPromptReports_(docCtx.fileName, docReports, 'reports') : null;
+  var docNotes = promptParts.docNotes || [];
+  var reports = docReports.length ? _finishDocPromptReports_(docCtx.fileName, docReports, 'reports', docNotes)
+    : (docNotes.length ? { url: '', items: [], notes: docNotes } : null);
   var promptIssues = _docPromptAllIssues_(docReports);
   if (failedParts === responses.length && !(reports && reports.url) && !promptIssues.length) throw firstError;
   // Befunde der Gesamtdokument-Prompts kommen in dieselbe Liste (Springen, Notiz).
