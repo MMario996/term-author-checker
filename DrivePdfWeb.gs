@@ -91,7 +91,7 @@ function _drivePdfWebStatus_(job, status) {
   }
   if (status.done) {
     out.result = {
-      resultId: status.resultId, issues: job.issues,
+      resultId: status.resultId, issues: job.issues, docResult: job.docResult || null,
       info: { fileSize: job.fileSize, imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept,
               failedRanges: job.failedRanges, annotateSteps: job.fileSize > DRIVE_PDF_ANNOTATE_MAX_BYTES,
               pagesTotal: out.pagesTotal, partsTotal: out.partsTotal }
@@ -102,6 +102,8 @@ function _drivePdfWebStatus_(job, status) {
     out.pagesDone = job.next > 0 ? parts[job.next - 1].to : 0;
     out.partsDone = job.next;
     out.issuesSoFar = job.issues.length;
+    // Seiten fertig, jetzt die Gesamtdokument-Prompts (DocPrompts.gs).
+    if (job.docPhase) out.docPrompts = (job.docPrompts || []).length;
     // 0-100 fuer den Balken: Vorbereitung zaehlt 30 %, die Pruefung 70 %.
     out.pct = 30 + Math.round(70 * job.next / Math.max(1, parts.length));
   } else {
@@ -118,6 +120,7 @@ function _drivePdfWebStatus_(job, status) {
 // job.lastBatchMs) plus Erfahrungswerten fuer das, was noch nicht gemessen ist.
 // Bewusst grob ("ca."): die Antwortzeit von Gemini schwankt.
 var DRIVE_PDF_WEB_BATCH_MS_DEFAULT = 15000;   // eine Pruef-Etappe (bis 8 Pakete parallel)
+var DRIVE_PDF_WEB_DOC_MS_DEFAULT = 120000;    // Gesamtdokument-Prompts (eine Anfrage ueber die ganze PDF)
 var DRIVE_PDF_WEB_CALL_OVERHEAD = 0.08;       // Laden/Speichern des Zwischenstands pro Aufruf
 
 // Anzahl Seitenpakete: bekannt ab dem Aufteilen, vorher grob aus der Dateigroesse.
@@ -155,6 +158,7 @@ function _drivePdfWebEta_(job) {
   if (idx <= 4) ms += Math.max(0, parts - ((prep.split && prep.split.next) ? Math.ceil(prep.split.next / prep.split.per) : 0)) * (m.split || D.split);
   var partsLeft = Math.max(0, parts - (idx === 5 ? (job.next || 0) : 0));
   ms += Math.ceil(partsLeft / (job.batch || DRIVE_PDF_BATCH_PARTS)) * (job.lastBatchWallMs || job.lastBatchMs || DRIVE_PDF_WEB_BATCH_MS_DEFAULT);
+  if (job.docPrompts && job.docPrompts.length && !job.docReports) ms += DRIVE_PDF_WEB_DOC_MS_DEFAULT;
   return Math.round(ms * (1 + DRIVE_PDF_WEB_CALL_OVERHEAD) / 1000);
 }
 

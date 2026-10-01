@@ -265,6 +265,7 @@ body.popup-mode .btn-mini { font-size: 16px; }
 body.popup-mode #newRuleGroupSelect,
 body.popup-mode #newRuleCustomGroup,
 body.popup-mode #newRuleKind,
+body.popup-mode #newRuleScope,
 body.popup-mode #newRuleName,
 body.popup-mode #newRuleDesc {
   font-size: 15px !important;
@@ -277,6 +278,11 @@ body.popup-mode #newRulePrompt {
 .modal-foot .btn-mini { white-space: nowrap; flex: 0 0 auto; padding: 8px 14px; }
 body.popup-mode .modal-foot .btn-mini { font-size: 14px; padding: 8px 12px; }
 body.popup-mode .modal-foot .btn-check { font-size: 15px; }
+.scope-tag { font-family:var(--ff-head); font-size:10px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; border:1px solid var(--gray-300); background:#fff; color:var(--gray-500); padding:0 5px; margin-left:6px; white-space:nowrap; cursor:pointer; }
+.scope-tag.doc { background:var(--yellow); border-color:var(--yellow); color:var(--ink); }
+.scope-help { font-size:10px; color:var(--gray-500); margin:-2px 0 6px; line-height:1.4; }
+body.popup-mode .scope-help { font-size:13px; }
+.check-notice a.btn-mini { display:inline-block; margin-top:6px; text-decoration:none; }
 .check-notice{margin:0 0 10px;padding:8px 10px;background:#FFF8D6;border-left:3px solid var(--yellow);font-size:13px;line-height:1.45;color:#3A3A3A;}
 .remaining-hint{font-size:13px;color:#767676;margin:0 6px;}
 .failed-tag{font-size:13px;color:#D32F2F;margin-right:6px;}
@@ -556,6 +562,15 @@ function runCheck(){
     .apiRunAuthorCheck(lang, scope);
 }
 
+// Lesbare Fehlermeldung aus einem google.script.run-Fehler (kann ein Error, ein
+// String oder leer sein - früher stand dann "{msg}" im Toast).
+function errText(err){
+  if (!err) return t('err.generic');
+  var m = (typeof err === 'string') ? err : (err.message || err.name || '');
+  if (!m) { try { m = JSON.stringify(err); } catch (e) { m = String(err); } }
+  return (!m || m === '{}') ? t('err.generic') : m;
+}
+
 function exportAuditReport(){
   if (!_currentIssues || !_currentIssues.length) {
     showToast(t('ac.noIssuesToExport'));
@@ -567,7 +582,7 @@ function exportAuditReport(){
       openUrlOrOffer(url, '📊 ' + t('ac.openingReport'));
     })
     .withFailureHandler(function(err){
-      showToast('⚠️ ' + t('ac.exportError', { msg: err.message || err }));
+      showToast('⚠️ ' + t('ac.exportError', { msg: errText(err) }));
     })
     .apiExportAuditReport(_currentIssues);
 }
@@ -592,8 +607,21 @@ function checkNoticeHtml(res){
   var parts = [];
   if (res && res.truncated) parts.push(tl('ac.truncated', { n: Number(res.maxChars || 0).toLocaleString(getUiLang()) }));
   if (res && res.failedParts) parts.push(tl('ac.failedParts', { failed: res.failedParts, parts: res.parts }));
-  if (!parts.length) return '';
-  return '<div class="check-notice">⚠️ ' + parts.join('<br>⚠️ ') + '</div>';
+  var html = parts.length ? '<div class="check-notice">⚠️ ' + parts.join('<br>⚠️ ') + '</div>' : '';
+  return html + docReportHtml(res && res.reports);
+}
+
+// Bericht der Gesamtdokument-Prompts (eigenes Google Doc, siehe DocPrompts.gs).
+function docReportHtml(rep){
+  if (!rep) return '';
+  var html = '<div class="check-notice"><b>📄 ' + tl('ac.docReportTitle') + '</b>';
+  var url = safeHref(rep.url);
+  if (url) html += '<br><a class="btn-mini primary" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + tl('ac.docReportOpen') + ' ↗</a>';
+  (rep.items || []).forEach(function(it){
+    if (it.error) html += '<br>⚠️ <b>' + esc(it.title) + ':</b> ' + esc(it.error);
+  });
+  if (rep.error) html += '<br>⚠️ ' + esc(rep.error);
+  return html + '</div>';
 }
 
 function renderIssues(wrap, res){
@@ -669,7 +697,7 @@ function jumpToIssue(id) {
     .withSuccessHandler(function(found) {
       if (!found) showToast('🤷 ' + t('ac.locationNotFound'));
     })
-    .withFailureHandler(function(err){ showToast('⚠️ ' + t('ac.error', { msg: err.message })); })
+    .withFailureHandler(function(err){ showToast('⚠️ ' + t('ac.error', { msg: errText(err) })); })
     .apiJumpToIssue(issue.original, _scopeRef);
 }
 
@@ -866,7 +894,7 @@ function openRulesSettings() {
   // Ruft das große Popup im Backend auf, falls wir uns in der Seitenleiste befinden
   google.script.run
     .withSuccessHandler(function(){ clearTimeout(timeoutId); resetBtn(); })
-    .withFailureHandler(function(err){ clearTimeout(timeoutId); resetBtn(); showToast('⚠️ ' + t('ac.error', { msg: err.message })); })
+    .withFailureHandler(function(err){ clearTimeout(timeoutId); resetBtn(); showToast('⚠️ ' + t('ac.error', { msg: errText(err) })); })
     .apiOpenRulesModal(HOST_APP);
 }
 
@@ -952,6 +980,14 @@ function renderRulesUI(rules) {
       '</select>' +
       '<input type="text" id="newRuleName"'+tAttrPh('ac.titlePh')+' style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
       '<input type="text" id="newRuleDesc"'+tAttrPh('ac.descPh')+' style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
+      '<div id="newRuleScopeWrap">' +
+        '<label style="font-size:10px; font-weight:bold; color:var(--gray-500); text-transform:uppercase;">'+tl('ac.scopeLabel')+'</label>' +
+        '<select id="newRuleScope" style="width:100%; margin-bottom:4px; padding:5px; font-size:11px; border:1px solid var(--gray-300);">' +
+          '<option value="" selected data-i18n="ac.scopePassage">'+esc(t('ac.scopePassage'))+'</option>' +
+          '<option value="DOCUMENT" data-i18n="ac.scopeDocument">'+esc(t('ac.scopeDocument'))+'</option>' +
+        '</select>' +
+        '<div class="scope-help">'+tl('ac.scopeHelp')+'</div>' +
+      '</div>' +
       '<textarea id="newRulePrompt"'+tAttrPh('ac.promptPh')+' style="width:100%; height:55px; margin-bottom:6px; padding:5px; font-size:11px; font-family:inherit;"></textarea>' +
       '<input type="text" id="newRuleRefUrl"'+tAttrPh('ac.refUrlPh')+' style="width:100%; margin-bottom:6px; padding:5px; font-size:11px;">' +
       '<button class="btn-mini primary" style="width:100%;" onclick="addNewCustomRule()">'+tl('ac.addRule')+'</button>' +
@@ -1014,6 +1050,7 @@ function renderRulesUI(rules) {
                 '<label><input type="checkbox" class="rule-checkbox" data-name="'+esc(r.Name)+'" data-group="'+esc(section)+'" data-subgroup="'+esc(subId)+'" onchange="updateGroupSelectAllState(\''+escJsAttr(section)+'\'); updateSubgroupSelectAllState(\''+escJsAttr(subId)+'\')" '+checked+'> ' + esc(r.Description) +
                   // Standardregel in einer Custom-Kategorie kenntlich machen (hat keinen Papierkorb).
                   (!isCustomRule(r) && r.DefaultSection && r.DefaultSection !== section ? ' <span class="std-tag"'+tAttrTitle('ac.stdTagTitle')+'>Standard</span>' : '') + '</label>' +
+                (isCustomRule(r) && r.RuleKind === 'PROMPT' ? scopeTagHtml(r) : '') +
                 inputHtml +
                 refLinkHtml +
                 '<button class="btn-move"'+tAttrTitle('ac.moveRuleTitle')+' onclick="openMoveRuleDialog(\''+escJsAttr(r.Name)+'\')">' +
@@ -1042,6 +1079,21 @@ function renderRulesUI(rules) {
   });
   // Aktive Suche nach dem Neuzeichnen wieder anwenden.
   filterRulesList();
+}
+// Umschalter "Pro Abschnitt" / "Gesamtdokument" an eigenen KI-Prompt-Regeln.
+function scopeTagHtml(r) {
+  var doc = r.PromptScope === 'DOCUMENT';
+  return '<button type="button" class="scope-tag' + (doc ? ' doc' : '') + '"' + tAttrTitle('ac.scopeToggleTitle') +
+    ' onclick="toggleRuleScope(\''+escJsAttr(r.Name)+'\')">' + tl(doc ? 'ac.scopeTagDocument' : 'ac.scopeTagPassage') + '</button>';
+}
+function toggleRuleScope(name) {
+  syncRulesFromDom();
+  var r = _currentRulesData.find(function(x) { return x.Name === name; });
+  if (!r) return;
+  r.PromptScope = r.PromptScope === 'DOCUMENT' ? '' : 'DOCUMENT';
+  _rulesDirty = true;
+  renderRulesUI(_currentRulesData);
+  showToast(t(r.PromptScope ? 'ac.scopeSetDocument' : 'ac.scopeSetPassage'));
 }
 function toggleGroupAll(section, checked) {
   var container = document.getElementById('rulesListContainer');
@@ -1206,6 +1258,8 @@ function toggleAddCustomRuleForm() {
 function onRuleKindChange(selectEl) {
   var promptEl = document.getElementById('newRulePrompt');
   if (promptEl) promptEl.style.display = (selectEl.value === 'RULE') ? 'none' : '';
+  var scopeEl = document.getElementById('newRuleScopeWrap');
+  if (scopeEl) scopeEl.style.display = (selectEl.value === 'RULE') ? 'none' : '';
 }
 
 function onCategorySelectChange(selectEl) {
@@ -1226,6 +1280,7 @@ function addNewCustomRule() {
   var desc = document.getElementById('newRuleDesc').value.trim();
   var prompt = document.getElementById('newRulePrompt').value.trim();
   var refUrl = document.getElementById('newRuleRefUrl').value.trim();
+  var scope = document.getElementById('newRuleScope').value;
   
   var finalGroup = (groupSelect === '__NEW__') ? customGroup : groupSelect;
   if (!finalGroup) {
@@ -1252,6 +1307,7 @@ function addNewCustomRule() {
     "Subsection": finalGroup,
     "RuleKind": kind,
     "CustomPrompt": kind === 'PROMPT' ? (prompt || desc) : '',
+    "PromptScope": kind === 'PROMPT' && scope === 'DOCUMENT' ? 'DOCUMENT' : '',
     "ReferenceUrl": refUrl || null,
     "IsEnabled": true,
     "IsConfigurable": false,
@@ -1302,7 +1358,7 @@ function saveRulesSettings() {
     .withFailureHandler(function(err) {
       btn.innerText = t('ac.save');
       btn.disabled = false;
-      showToast('⚠️ ' + t('ac.saveError', { msg: err.message }));
+      showToast('⚠️ ' + t('ac.saveError', { msg: errText(err) }));
     })
     .apiSaveRulesConfig(updatedRules, _currentRulesLang);
 }
@@ -1314,7 +1370,7 @@ function exportAllRulesToLogSheet() {
       showToast('✅ ' + t('ac.exportedLog', { n: res.exported }));
     })
     .withFailureHandler(function(err) {
-      showToast('⚠️ ' + t('ac.error', { msg: err.message || err }));
+      showToast('⚠️ ' + t('ac.error', { msg: errText(err) }));
     })
     .apiExportAllRulesToLogSheet(_currentRulesData, _currentRulesLang);
 }
@@ -1327,7 +1383,7 @@ function exportRulesOverview() {
       openUrlOrOffer(url, '📊 ' + t('ac.overviewReady'));
     })
     .withFailureHandler(function(err) {
-      showToast('⚠️ ' + t('ac.error', { msg: err.message || err }));
+      showToast('⚠️ ' + t('ac.error', { msg: errText(err) }));
     })
     .apiExportRulesOverview(_currentRulesData);
 }
@@ -1340,7 +1396,7 @@ function exportRulesToDrive() {
       showLinkToast('📤 ' + t('ac.jsonExported', { name: res.name }), res.url);
     })
     .withFailureHandler(function(err) {
-      showToast('⚠️ ' + t('ac.exportError', { msg: err.message }));
+      showToast('⚠️ ' + t('ac.exportError', { msg: errText(err) }));
     })
     .apiExportRulesToDrive(_currentRulesData, _currentRulesLang);
 }
@@ -1393,7 +1449,9 @@ function importOneRule(imp, SAFE_RULE_NAME, res) {
     Description: desc.slice(0, 1000),
     Type: RULE_TYPES.indexOf(imp.Type) !== -1 ? imp.Type : 'Style',
     RuleKind: kind,
-    CustomPrompt: kind === 'PROMPT' ? String(imp.CustomPrompt || desc).slice(0, 5000) : '',
+    // Lange Prüfanweisungen (z. B. Cross-Check über das ganze Dokument) nicht abschneiden.
+    CustomPrompt: kind === 'PROMPT' ? String(imp.CustomPrompt || desc).slice(0, 50000) : '',
+    PromptScope: kind === 'PROMPT' && imp.PromptScope === 'DOCUMENT' ? 'DOCUMENT' : '',
     Section: section,
     Subsection: String(imp.Subsection || 'General').trim().slice(0, 120) || 'General',
     ReferenceUrl: safeHref(imp.ReferenceUrl) || null,

@@ -1438,6 +1438,17 @@ var I18N_APPS = {
     'ac.noRules': 'No rules configured.',
     'ac.prepareGemini': 'Prepare a rule with Gemini',
     'ac.jsonGemini': 'JSON rule set from a style guide (PDF)',
+    'ac.scopeLabel': 'Scope',
+    'ac.scopePassage': 'Per passage (findings in the list)',
+    'ac.scopeDocument': 'Whole document (separate report)',
+    'ac.scopeHelp': '"Whole document": the prompt is sent unchanged, together with the complete document, in its own request. Gemini\'s answer (any format, e.g. a cross-check of contradictions between pages) appears as a Google Doc report. Use this for prompts that compare pages with each other or define their own output format.',
+    'ac.scopeTagPassage': 'Per passage',
+    'ac.scopeTagDocument': 'Whole document',
+    'ac.scopeToggleTitle': 'Switch between "per passage" (findings in the list) and "whole document" (own report)',
+    'ac.scopeSetDocument': 'Runs on the whole document (own report) – click "Save settings" to apply.',
+    'ac.scopeSetPassage': 'Runs per passage (findings in the list) – click "Save settings" to apply.',
+    'ac.docReportTitle': 'Whole-document prompts',
+    'ac.docReportOpen': 'Open report',
     'ac.logged': 'Custom rules log: {n} new entries, {d} already logged.',
     'ac.logError': 'Custom rules log not updated: {msg}',
     'ac.createRule': '+ Create New Rule / AI Prompt',
@@ -1617,6 +1628,17 @@ var I18N_APPS = {
     'ac.noRules': 'Keine Regeln konfiguriert.',
     'ac.prepareGemini': 'Regel mit Gemini vorbereiten',
     'ac.jsonGemini': 'JSON-Regelsatz aus Leitfaden (PDF)',
+    'ac.scopeLabel': 'Geltungsbereich',
+    'ac.scopePassage': 'Pro Abschnitt (Funde in der Liste)',
+    'ac.scopeDocument': 'Gesamtdokument (eigener Bericht)',
+    'ac.scopeHelp': '„Gesamtdokument“: Der Prompt geht unverändert zusammen mit dem kompletten Dokument in einer eigenen Anfrage an Gemini. Die Antwort (beliebiges Format, z. B. Cross-Check auf Widersprüche zwischen Seiten) erscheint als Google-Doc-Bericht. Für Prompts, die Seiten miteinander vergleichen oder ein eigenes Ausgabeformat vorgeben.',
+    'ac.scopeTagPassage': 'Pro Abschnitt',
+    'ac.scopeTagDocument': 'Gesamtdokument',
+    'ac.scopeToggleTitle': 'Umschalten zwischen „pro Abschnitt“ (Funde in der Liste) und „Gesamtdokument“ (eigener Bericht)',
+    'ac.scopeSetDocument': 'Läuft über das Gesamtdokument (eigener Bericht) – zum Übernehmen „Einstellungen speichern“ klicken.',
+    'ac.scopeSetPassage': 'Läuft pro Abschnitt (Funde in der Liste) – zum Übernehmen „Einstellungen speichern“ klicken.',
+    'ac.docReportTitle': 'Gesamtdokument-Prompts',
+    'ac.docReportOpen': 'Bericht öffnen',
     'ac.logged': 'Regel-Log: {n} neu eingetragen, {d} schon vorhanden.',
     'ac.logError': 'Regel-Log nicht aktualisiert: {msg}',
     'ac.createRule': '+ Neue Regel / KI-Prompt erstellen',
@@ -4054,7 +4076,10 @@ function applyI18n(root){
     var vars = null;
     var raw = el.getAttribute('data-i18n-args');
     if (raw) { try { vars = JSON.parse(raw); } catch(e) {} }
-    el.textContent = t(el.getAttribute('data-i18n'), vars);
+    // Fehlt ein Key (z. B. veraltete I18n-Datei im Projekt), den vorhandenen Text
+    // stehen lassen statt den rohen Key ("ac.restoreDefaults") anzuzeigen.
+    var key = el.getAttribute('data-i18n'), v = t(key, vars);
+    if (v !== key || !el.textContent.trim()) el.textContent = v;
   });
   root.querySelectorAll('[data-i18n-html]').forEach(function(el){
     el.innerHTML = t(el.getAttribute('data-i18n-html'));

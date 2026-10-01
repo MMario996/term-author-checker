@@ -30,6 +30,15 @@ Neue Texte bitte in beiden Fällen für alle Sprachen ergänzen (Englisch ist Fa
 Ohne gültige `WEBAPP_URL` (oder über den Link „Stattdessen schrittweise im
 Seitenbereich prüfen“) läuft die Prüfung wie bisher im Seitenbereich mit „Weiter“.
 
+## KI-Prompts über das Gesamtdokument
+
+Eine eigene Regel vom Typ „KI-Prompt“ hat einen Geltungsbereich:
+
+- **Pro Abschnitt** (Standard): Der Prompt wird als zusätzliche Prüfanweisung in die normale Prüfung eingebaut. Diese läuft abschnittsweise (PDF: je 4 Seiten), die Funde erscheinen in der Liste (Original → Vorschlag).
+- **Gesamtdokument**: Der Prompt geht unverändert zusammen mit dem kompletten Dokument in einer eigenen Anfrage an Gemini, ohne JSON-Zwang. Die Antwort (Markdown, z. B. ein Cross-Check auf Widersprüche und Prozesslogik zwischen Seiten) wird als Google Doc im Ordner „Terminology“ angelegt und im Ergebnis verlinkt. Datum, Dateiname und Seitenzahl gibt das Tool dabei mit.
+
+Umschalten lässt sich das im Formular „Neue Regel“ oder per Klick auf das Etikett „Pro Abschnitt“/„Gesamtdokument“ an der Regel, danach „Einstellungen speichern“. Bei PDFs laufen Gesamtdokument-Prompts nur im PDF-Fenster (nicht im 30-s-Seitenbereich), und die verkleinerte PDF darf höchstens 15 MB groß sein.
+
 ## Skripteigenschaften (optional)
 
 - `EXPORT_FOLDER_ID`: Zielordner für `exportProjectToTxt` (Quellcode-Export).

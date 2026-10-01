@@ -214,7 +214,7 @@ function _drivePdfCardResponse_(job, status) {
   var card;
   if (status.done) {
     card = _buildDrivePdfResultsCard_(status.resultId, job.fileName, job.issues,
-      { fileSize: job.fileSize, imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept, failedRanges: job.failedRanges });
+      { fileSize: job.fileSize, imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept, failedRanges: job.failedRanges, docResult: job.docResult });
   } else if (job.phase === 'check') {
     card = _buildDrivePdfProgressCard_(job, job.parts);
   } else {
@@ -381,6 +381,7 @@ function _driveReadRanges_(ranges) {
 function _drivePdfWork_(job, parts, started, lim, loadBatch) {
   var cfg = _driveGeminiConfig_();
   var prompt = _drivePdfPrompt_(job);
+  if (job.docPrompts === undefined) job.docPrompts = _docPromptsForLanguage_(job.language);
   var seen = {};
   job.issues.forEach(function(issue) { seen[issue.original + '\u0000' + issue.suggestion] = true; });
 
@@ -431,8 +432,19 @@ function _drivePdfWork_(job, parts, started, lim, loadBatch) {
     return { done: false };
   }
 
+  // Gesamtdokument-Prompts (DocPrompts.gs): eigene Etappe mit der ganzen PDF.
+  if (job.docPrompts.length && !job.docReports) {
+    if (batchesHere > 0 && Date.now() - started > lim.checkStart) {
+      job.docPhase = true;
+      _drivePdfSaveJob_(job);
+      return { done: false };
+    }
+    _drivePdfDocStep_(job, cfg, lim, parts);
+  }
+  var docResult = job.docReports ? _finishDocPromptReports_(job.fileName, job.docReports) : null;
+
   _drivePdfCleanupJob_(job);
-  if (job.failedRanges.length && job.failedRanges.length === parts.length) {
+  if (job.failedRanges.length && job.failedRanges.length === parts.length && !(docResult && docResult.url)) {
     throw new Error('The AI request failed for all pages. Please try again.');
   }
   logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_CHECK_RUN', job.fileName + ' - ' + job.issues.length + ' issue(s), ' + parts.length + ' part(s)' +
@@ -440,7 +452,8 @@ function _drivePdfWork_(job, parts, started, lim, loadBatch) {
 
   var resultId = Utilities.getUuid();
   var cachePayload = { fileId: job.fileId, fileName: job.fileName, language: job.language, issues: job.issues, fileSize: job.fileSize,
-                       imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept, failedRanges: job.failedRanges };
+                       imagesRemoved: job.imagesRemoved, imagesKept: job.imagesKept, failedRanges: job.failedRanges,
+                       docResult: docResult };
   try {
     var cache = CacheService.getUserCache();
     cache.put(_drivePdfResultCacheKey_(resultId), JSON.stringify(cachePayload), DRIVE_PDF_RESULT_CACHE_TTL);
@@ -449,7 +462,34 @@ function _drivePdfWork_(job, parts, started, lim, loadBatch) {
   } catch (cacheErr) {
     Logger.log('_drivePdfWork_: result cache failed (result possibly too large): ' + cacheErr);
   }
+  job.docResult = docResult;
   return { done: true, resultId: resultId };
+}
+
+// Fuehrt die Gesamtdokument-Prompts eines Jobs aus und legt job.docReports an.
+// Nur im PDF-Fenster (6 min pro Aufruf) - im Seitenbereich (30 s) reicht die
+// Zeit fuer eine Anfrage ueber das ganze Dokument nicht.
+function _drivePdfDocStep_(job, cfg, lim, parts) {
+  function failAll(msg) {
+    job.docReports = job.docPrompts.map(function(dp) { return { title: dp.title, error: msg }; });
+  }
+  if (!lim.web) return failAll('Whole-document prompts only run in the PDF window (not in the Drive side panel).');
+  // Ist der letzte Aufruf an dieser Stelle abgebrochen (Zeitlimit), nicht endlos wiederholen.
+  if (job.docInflight) return failAll('The whole-document check did not finish in time. Try a smaller PDF or a shorter prompt.');
+  var whole = job.whole;
+  if (!whole || !whole.len) return failAll('The PDF could not be prepared as a whole.');
+  if (whole.len > DRIVE_PDF_MAX_BYTES) {
+    return failAll('The PDF is ' + _driveMb_(whole.len) + ' MB after reduction - too large for one request (limit: ' + _driveMb_(DRIVE_PDF_MAX_BYTES) + ' MB).');
+  }
+  job.docInflight = true;
+  if (job.stateId) _drivePdfSaveJob_(job);
+  var t0 = Date.now();
+  var bytes = _driveReadRanges_([{ file: whole.file, start: whole.start || 0, len: whole.len }])[0];
+  var pages = parts.length ? parts[parts.length - 1].to : 0;
+  job.docReports = _runDocPrompts_(cfg, job.docPrompts, { fileName: job.fileName, pages: pages, isPdf: true }, bytes);
+  job.docInflight = false;
+  job.docPhase = false;
+  _drivePdfTrackTime_(job, 'doc', Date.now() - t0);
 }
 
 /** Schickt eine Etappe (mehrere Seitenpakete parallel) an Gemini. */
@@ -611,6 +651,18 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
     topSection.addWidget(CardService.newTextParagraph().setText(
       '⚠️ ' + _ct_('d.failedPages', { pages: _escapeCardHtml_(info.failedRanges.join(', ')) })));
   }
+  // Bericht der Gesamtdokument-Prompts (DocPrompts.gs)
+  var doc = info.docResult;
+  if (doc) {
+    if (doc.url) {
+      topSection.addWidget(_cardButton_(true).setText('📄 ' + _ct_('d.docReport'))
+        .setOpenLink(CardService.newOpenLink().setUrl(doc.url)));
+    }
+    (doc.items || []).forEach(function(it) {
+      if (it.error) topSection.addWidget(CardService.newTextParagraph().setText('⚠️ <b>' + _escapeCardHtml_(it.title) + ':</b> ' + _escapeCardHtml_(it.error)));
+    });
+    if (doc.error) topSection.addWidget(CardService.newTextParagraph().setText('⚠️ ' + _escapeCardHtml_(doc.error)));
+  }
   if (!issues.length) {
     topSection.addWidget(CardService.newTextParagraph().setText('✅ ' + _ct_('d.noErrors')));
     card.addSection(topSection);
@@ -681,7 +733,7 @@ function apiShowDrivePdfResult(e) {
     var data = _loadDrivePdfResult_(resultId);
     return CardService.newActionResponseBuilder()
       .setNavigation(CardService.newNavigation().pushCard(_buildDrivePdfResultsCard_(resultId, data.fileName, data.issues,
-        { fileSize: data.fileSize, imagesRemoved: data.imagesRemoved, imagesKept: data.imagesKept, failedRanges: data.failedRanges || [] })))
+        { fileSize: data.fileSize, imagesRemoved: data.imagesRemoved, imagesKept: data.imagesKept, failedRanges: data.failedRanges || [], docResult: data.docResult })))
       .build();
   } catch (err) {
     return CardService.newActionResponseBuilder()
