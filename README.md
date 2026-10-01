@@ -4,6 +4,8 @@
 🔍 **Terminologiesuche** (Seitenleiste und Web-App) und ✍️ **Author Check**
 (Grammatik-, Terminologie- und Stilprüfung in Docs, Sheets, Slides und für PDFs in Drive).
 
+> 📚 **Dokumentation:** Datenbanken, Script Properties, Abläufe und Diagramme in [`docs/DOKUMENTATION.md`](docs/DOKUMENTATION.md). Gesamtdokumentation aller acht Kärcher-Translation-Repositories (Systemlandkarte, alle Datenbanken, FAQ, Paket für Gemini Gem / NotebookLM): [`kaerchertranslationservices/wissensbasis`](https://github.com/MMario996/kaerchertranslationservices/tree/main/wissensbasis).
+
 ## Oberflächensprachen
 
 Alle Texte gibt es in 15 Sprachen. HTML-Oberflächen: `I18n.html`.
