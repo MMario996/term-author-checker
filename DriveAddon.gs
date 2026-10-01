@@ -182,6 +182,8 @@ function apiCheckDrivePdf(e) {
 
 // Neuen Prüf-Job anlegen (gemeinsam für Seitenbereich und PDF-Fenster).
 function _drivePdfNewJob_(fileId, fileName, language) {
+  // Reste abgebrochener Pruefungen (Fenster geschlossen) aufraeumen.
+  try { _tcSweepTempFiles_(); } catch (sweepErr) { Logger.log('_drivePdfNewJob_: Aufraeumen fehlgeschlagen: ' + sweepErr); }
   var file = DriveApp.getFileById(fileId);
   if (file.getMimeType && file.getMimeType() !== 'application/pdf') {
     throw new Error(_ct_('d.onlyPdfText', { name: _escapeCardHtml_(fileName || file.getName()) }).replace(/<[^>]+>/g, ''));
@@ -319,14 +321,16 @@ var DRIVE_PDF_DIRECT_MAX_BYTES = 4 * 1024 * 1024; // ... und das Paket höchsten
 
 function _drivePdfSaveJob_(job) {
   if (!job.stateId) {
-    job.stateId = _getOrCreateExportFolder_().createFile('.authorcheck-state-' + Utilities.getUuid() + '.json', '{}', 'application/json').getId();
+    job.stateId = _tcFolder_('temp').createFile('.authorcheck-state-' + Utilities.getUuid() + '.json', '{}', 'application/json').getId();
   }
   DriveApp.getFileById(job.stateId).setContent(JSON.stringify(job));
 }
 
 function _drivePdfLoadJob_(stateId) {
-  var file = DriveApp.getFileById(stateId);
-  if (file.isTrashed()) throw new Error('This check has already finished. Please start a new check if needed.');
+  // Zwischenstaende werden nach der Pruefung endgueltig geloescht (Folders.gs).
+  var file;
+  try { file = DriveApp.getFileById(stateId); } catch (e) { file = null; }
+  if (!file || file.isTrashed()) throw new Error('This check has already finished. Please start a new check if needed.');
   var job = JSON.parse(file.getBlob().getDataAsString());
   job.stateId = stateId;
   return job;
@@ -339,7 +343,7 @@ function _drivePdfSplitEntry_(job, idx, text) {
   var splitter = pdfPageSplitter_(pdfRebuild_(_pdfStringReader_(text)));
   var pieces = [];
   for (var i = 0; i < splitter.pageCount; i++) pieces.push(splitter.build(i, i + 1));
-  var fileId = _getOrCreateExportFolder_().createFile(Utilities.newBlob(
+  var fileId = _tcFolder_('temp').createFile(Utilities.newBlob(
     _pdfBinaryStringToBytes_(pieces.join('')), 'application/octet-stream',
     '.authorcheck-temp-' + Utilities.getUuid() + '.bin')).getId();
   job.extraFiles = (job.extraFiles || []).concat([fileId]);
@@ -354,7 +358,7 @@ function _drivePdfSplitEntry_(job, idx, text) {
 
 function _drivePdfCleanupJob_(job) {
   [job.tmpId, job.stateId].concat(job.extraFiles || []).forEach(function(id) {
-    if (id) { try { DriveApp.getFileById(id).setTrashed(true); } catch (e) {} }
+    if (id) _tcDeleteFile_(id);
   });
 }
 
@@ -441,7 +445,7 @@ function _drivePdfWork_(job, parts, started, lim, loadBatch) {
     }
     _drivePdfDocStep_(job, cfg, lim, parts);
   }
-  var docResult = job.docReports ? _finishDocPromptReports_(job.fileName, job.docReports) : null;
+  var docResult = job.docReports ? _finishDocPromptReports_(job.fileName, job.docReports, 'pdfs') : null;
   // Befunde der Gesamtdokument-Prompts in die normale Liste: so landen sie auch in
   // der kommentierten PDF und im Sheet.
   if (job.docReports && !job.docIssuesMerged) {
@@ -842,7 +846,7 @@ function _buildAnnotatedPdfFile_(fileId, fileName, issues) {
   var newBytes = buildAnnotatedPdfBytes_(bytes, result.pageAnnotations);
   var outName = fileName.replace(/\.pdf$/i, '') + ' (annotated).pdf';
   var newBlob = Utilities.newBlob(newBytes, 'application/pdf', outName);
-  var file = DriveApp.createFile(newBlob);
+  var file = _tcFolder_('pdfs').createFile(newBlob);
   logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_ANNOTATED', fileName + ' - ' + result.count + ' annotation(s), ' + result.positioned + ' precisely positioned -> ' + file.getId());
   return file.getUrl();
 }
@@ -956,7 +960,7 @@ function _driveLargeAnnotatedStart_(fileId, fileName, issues, started, budgetMs)
   }, result.pageAnnotations);
 
   // Der Anhang (wenige KB) wird bis zum Ende des Uploads als Temp-Datei geparkt.
-  var tmp = _getOrCreateExportFolder_().createFile(Utilities.newBlob(
+  var tmp = _tcFolder_('temp').createFile(Utilities.newBlob(
     _pdfBinaryStringToBytes_(appended), 'application/octet-stream', '.authorcheck-temp-' + Utilities.getUuid() + '.bin'));
 
   var total = fileSize + appended.length;
@@ -964,7 +968,7 @@ function _driveLargeAnnotatedStart_(fileId, fileName, issues, started, budgetMs)
   var init = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true', {
     method: 'post', contentType: 'application/json; charset=UTF-8',
     headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Upload-Content-Type': 'application/pdf', 'X-Upload-Content-Length': String(total) },
-    payload: JSON.stringify({ name: outName, mimeType: 'application/pdf' }),
+    payload: JSON.stringify({ name: outName, mimeType: 'application/pdf', parents: [_tcFolder_('pdfs').getId()] }),
     muteHttpExceptions: true
   });
   if (init.getResponseCode() !== 200) throw new Error('Drive upload could not be started (HTTP ' + init.getResponseCode() + ').');
@@ -1014,7 +1018,7 @@ function _driveLargeAnnotatedContinue_(state, started, budgetMs) {
     var code = up.getResponseCode();
     if (code === 200 || code === 201) {
       var fileId = JSON.parse(up.getContentText()).id;
-      try { DriveApp.getFileById(state.tmpId).setTrashed(true); } catch (trashErr) {}
+      _tcDeleteFile_(state.tmpId);
       logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_ANNOTATED', state.fileName + ' - ' + state.count + ' annotation(s), ' +
         state.positioned + ' precisely positioned, ' + _driveMb_(state.total) + ' MB (streamed) -> ' + fileId);
       return { done: true, url: 'https://drive.google.com/file/d/' + fileId + '/view' };
@@ -1113,6 +1117,7 @@ function _pdfPlaceNoteIcon_(mediaBox, model, lineBox, placed) {
 function _buildDrivePdfReportSheet_(issues, fileName, language) {
   var title = "AuthorCheck_PDF_" + fileName.replace(/\.pdf$/i, '').slice(0, 60) + "_" + new Date().toISOString().slice(0, 10);
   var ss = SpreadsheetApp.create(title);
+  _tcMoveToFolder_(ss.getId(), 'pdfs');
   var sheet = ss.getActiveSheet();
   sheet.setName("PDF Audit Report");
 

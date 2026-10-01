@@ -5765,17 +5765,11 @@
   ];
 
 /**
- * Hilfsfunktion: Holt oder erstellt den Ordner "TermCheck Rules" in Google Drive.
+ * Regelordner "Kärcher TermCheck/Rules" (frueher "TermCheck Rules", wird
+ * automatisch dorthin verschoben - siehe Folders.gs).
  */
 function _getOrCreateRulesFolder_() {
-  // Nur eigene Ordner: getFoldersByName() fand auch fremde, mit einem geteilte
-  // Ordner gleichen Namens - deren Custom-Prompts landeten dann im KI-Prompt.
-  var folders = DriveApp.searchFolders('title = "TermCheck Rules" and "me" in owners and trashed = false');
-  if (folders.hasNext()) {
-    return folders.next();
-  } else {
-    return DriveApp.createFolder("TermCheck Rules");
-  }
+  return _tcFolder_('rules');
 }
 
 // ============================================================================
@@ -6184,7 +6178,7 @@ function _writeActiveRulesFile_(rules, language) {
 }
 
 /**
- * "JSON Export": legt eine NEUE Exportdatei (mit Datum) im Ordner "TermCheck Rules"
+ * "JSON Export": legt eine NEUE Exportdatei (mit Datum) im Ordner "Kärcher TermCheck/JSON Export"
  * an, z.B. zum Teilen mit Kollegen. Frueher wurde dabei die aktive Regeldatei
  * ueberschrieben - ein "Export" aktivierte so ungespeicherte Custom-Regeln, und
  * wegen des Caches wirkte das erst bis zu einer Stunde spaeter.
@@ -6194,7 +6188,7 @@ function apiExportRulesToDrive(rules, language) {
   if (!Array.isArray(rules) || !rules.length) throw new Error("No rules to export.");
   var stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd_HH-mm");
   var fileName = "rules_export_" + language + "_" + stamp + ".json";
-  var file = _getOrCreateRulesFolder_().createFile(fileName, JSON.stringify(rules, null, 2), MimeType.PLAIN_TEXT);
+  var file = _tcFolder_('json').createFile(fileName, JSON.stringify(rules, null, 2), MimeType.PLAIN_TEXT);
   return { success: true, name: fileName, url: file.getUrl() };
 }
 

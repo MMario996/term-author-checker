@@ -37,9 +37,25 @@ Seitenbereich prüfen“) läuft die Prüfung wie bisher im Seitenbereich mit �
 Eine eigene Regel vom Typ „KI-Prompt“ hat einen Geltungsbereich:
 
 - **Pro Abschnitt** (Standard): Der Prompt wird als zusätzliche Prüfanweisung in die normale Prüfung eingebaut. Diese läuft abschnittsweise (PDF: je 4 Seiten), die Funde erscheinen in der Liste (Original → Vorschlag).
-- **Gesamtdokument**: Der Prompt geht unverändert zusammen mit dem kompletten Dokument in einer eigenen Anfrage an Gemini. Das Tool verlangt zusätzlich, jeden Befund pro betroffener Stelle mit wörtlichem Zitat und Seitenangabe zu liefern. Diese Befunde landen wie alle anderen Funde in der Liste (Typ = Regelname) und damit in der kommentierten PDF, im Sheet und als Kommentar/Notiz in Docs, Sheets und Slides. „Ersetzen“ gibt es nur, wenn der Vorschlag ein direkter Ersatztext ist. Die komplette Antwort im Format des Prompts wird zusätzlich als Google Doc im Ordner „Terminology“ gespeichert und im Ergebnis verlinkt.
+- **Gesamtdokument**: Der Prompt geht unverändert zusammen mit dem kompletten Dokument in einer eigenen Anfrage an Gemini. Das Tool verlangt zusätzlich, jeden Befund pro betroffener Stelle mit wörtlichem Zitat und Seitenangabe zu liefern. Diese Befunde landen wie alle anderen Funde in der Liste (Typ = Regelname) und damit in der kommentierten PDF, im Sheet und als Kommentar/Notiz in Docs, Sheets und Slides. „Ersetzen“ gibt es nur, wenn der Vorschlag ein direkter Ersatztext ist. Die komplette Antwort im Format des Prompts wird zusätzlich als Google Doc gespeichert (siehe Ablage unten) und im Ergebnis verlinkt.
 
 Umschalten lässt sich das im Formular „Neue Regel“ oder per Klick auf das Etikett „Pro Abschnitt“/„Gesamtdokument“ an der Regel, danach „Einstellungen speichern“. Bei PDFs laufen Gesamtdokument-Prompts nur im PDF-Fenster (nicht im 30-s-Seitenbereich), und die verkleinerte PDF darf höchstens 15 MB groß sein.
+
+## Ablage im eigenen Drive
+
+Alles, was das Add-on anlegt, landet im Ordner **Kärcher TermCheck** (wird automatisch angelegt):
+
+| Unterordner | Inhalt |
+|---|---|
+| `Rules` | aktive Regeldateien (`active_rules_….json`). Der frühere Ordner „TermCheck Rules“ wird beim ersten Zugriff automatisch hierher verschoben. |
+| `JSON Export` | „JSON Export“ der Regeln (`rules_export_….json`) |
+| `Checked PDFs` | Ergebnisse der PDF-Prüfung: kommentierte PDF, Sheet-Export, Gesamtdokument-Bericht |
+| `Reports` | Audit-Sheets aus Docs/Sheets/Slides, Regelübersicht, Exporte der Terminologiesuche |
+| `_Temp` | Zwischenstände und `.bin`-Dateien laufender Prüfungen. Sie werden nach der Prüfung endgültig gelöscht. Reste abgebrochener Prüfungen (älter als 6 h) räumt der Start der nächsten PDF-Prüfung auf, auch im alten Ordner „Terminology“. |
+
+## Bereiche der Terminologie (General / Home and Garden / Professional)
+
+Welche PHRASE-Termbase zu welchem Bereich gehört, wird am Namen erkannt, zum Beispiel „H&G TERMS ONLY“, „HNG“, „Home & Garden“, „PROF TERMS ONLY“, „Professional“, „[GENERAL]“ oder „General“. Fehlt ein Bereich, im Skript-Editor `checkTermbaseCategories()` ausführen: Das Protokoll zeigt jede Termbase mit erkanntem Bereich bzw. dem Grund, warum sie nicht verwendet wird. Abweichend benannte Termbases ordnest du in der Skripteigenschaft `TB_CATEGORY_OVERRIDES` von Hand zu, z. B. `uid1=HNG, uid2=PROF`.
 
 ## Skripteigenschaften (optional)
 

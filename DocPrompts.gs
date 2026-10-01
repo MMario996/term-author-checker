@@ -169,7 +169,7 @@ function _runDocPrompts_(cfg, docPrompts, ctx, pdfBytes) {
 // Das Add-on hat nur documents.currentonly (kein DocumentApp.create). Der Bericht
 // wird deshalb als HTML ueber die Drive-API hochgeladen und dabei in ein Google
 // Doc umgewandelt (Scope drive ist vorhanden). Liefert die URL.
-function _buildDocPromptReport_(fileName, reports) {
+function _buildDocPromptReport_(fileName, reports, folderKey) {
   var ok = reports.filter(function(r) { return r.markdown; });
   if (!ok.length) return '';
   var title = 'TermCheck_Report_' + String(fileName || 'Document').replace(/\.pdf$/i, '').slice(0, 60) + '_' +
@@ -184,7 +184,7 @@ function _buildDocPromptReport_(fileName, reports) {
   var html = '<html><head><meta charset="utf-8"></head><body>' + body + '</body></html>';
 
   var boundary = 'tc' + Utilities.getUuid().replace(/-/g, '');
-  var meta = { name: title, mimeType: 'application/vnd.google-apps.document', parents: [_getOrCreateExportFolder_().getId()] };
+  var meta = { name: title, mimeType: 'application/vnd.google-apps.document', parents: [_tcFolder_(folderKey || 'reports').getId()] };
   var payload = '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(meta) +
     '\r\n--' + boundary + '\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n' + html + '\r\n--' + boundary + '--';
   var res = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,webViewLink', {
@@ -201,12 +201,12 @@ function _buildDocPromptReport_(fileName, reports) {
 
 // Berichte erzeugen und Fehler beim Anlegen des Docs nicht die ganze Pruefung
 // kippen lassen. Liefert { url, items: [{ title, error, truncated }] }.
-function _finishDocPromptReports_(fileName, reports) {
+function _finishDocPromptReports_(fileName, reports, folderKey) {
   var out = { url: '', items: reports.map(function(r) {
     return { title: r.title, error: r.error || '', truncated: !!r.truncated, findings: (r.issues || []).length };
   }) };
   if (!reports.length) return out;
-  try { out.url = _buildDocPromptReport_(fileName, reports); }
+  try { out.url = _buildDocPromptReport_(fileName, reports, folderKey); }
   catch (e) {
     Logger.log('_finishDocPromptReports_: ' + (e.message || e));
     out.error = e.message || String(e);
