@@ -200,7 +200,7 @@ function _drivePdfPrepUnit_(job, ctx) {
     ctx.modelText = model.text;
     // Store-Dateien werden nicht mehr gebraucht.
     prep.storeFiles.forEach(function(id) {
-      try { DriveApp.getFileById(id).setTrashed(true); } catch (e) {}
+      _tcDeleteFile_(id);
       job.extraFiles = job.extraFiles.filter(function(x) { return x !== id; });
     });
     prep.storeFiles = [];
@@ -317,7 +317,7 @@ function _drivePdfPrepDiscard_(job, ctx) {
 function _driveTempFileFromString_(str) {
   var blob = Utilities.newBlob('', 'application/octet-stream', '.authorcheck-temp-' + Utilities.getUuid() + '.bin');
   blob.setDataFromString(str, 'ISO-8859-1');
-  return _getOrCreateExportFolder_().createFile(blob).getId();
+  return _tcFolder_('temp').createFile(blob).getId();
 }
 
 function _driveReadTempString_(id) {

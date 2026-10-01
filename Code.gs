@@ -330,17 +330,58 @@ function _termMatchesQuery_(text, rawQuery) {
   if (leading && !trailing) return t.length >= core.length && t.slice(-core.length) === core;
   return t.indexOf(core) !== -1;
 }
-var TERMSEARCH_CATEGORY_PATTERNS = {
-  HNG:     ['H&G TERMS ONLY', 'HNG'],
-  PROF:    ['PROF TERMS ONLY'],
-  GENERAL: ['[GENERAL]', 'GENERAL']
-};
+// Zuordnung Termbase -> Bereich anhand des Namens. Reihenfolge = Prioritaet,
+// jede Termbase bekommt hoechstens EINEN Bereich. Frueher nur exakt "H&G TERMS
+// ONLY"/"HNG" bzw. "PROF TERMS ONLY" - anders benannte Termbases (z. B.
+// "Home & Garden", "Professional") fielen still weg, in "Datenbank" stand dann
+// nur "General". Abweichende Namen: Skripteigenschaft TB_CATEGORY_OVERRIDES
+// ("uid1=HNG, uid2=PROF"), Pruefen mit checkTermbaseCategories() im Editor.
+var TERMSEARCH_CATEGORY_RULES = [
+  ['HNG',     /\b(H\s*&\s*G|HNG)\s+TERMS\s+ONLY\b/i],
+  ['PROF',    /\bPROF(ESSIONAL)?\s+TERMS\s+ONLY\b/i],
+  ['GENERAL', /\[GENERAL\]/i],
+  ['HNG',     /\bHNG\b|\bH\s*(&|\+|AND|N)\s*G\b|HOME\s*(&|\+|AND|UND)\s*GARDEN/i],
+  ['PROF',    /\bPROF(ESSIONAL)?\b/i],
+  ['GENERAL', /\bGENERAL\b/i]
+];
+var TERMSEARCH_CATEGORY_ORDER = ['HNG', 'PROF', 'GENERAL'];
+
+function _termbaseCategory_(tb, overrides) {
+  if (overrides && overrides[tb.uid]) return overrides[tb.uid];
+  var n = String(tb.name || '');
+  for (var i = 0; i < TERMSEARCH_CATEGORY_RULES.length; i++) {
+    if (TERMSEARCH_CATEGORY_RULES[i][1].test(n)) return TERMSEARCH_CATEGORY_RULES[i][0];
+  }
+  return null;
+}
+
+// "uid1=HNG, uid2=PROF, uid3=GENERAL" -> { uid1: 'HNG', ... }
+function _termbaseCategoryOverrides_() {
+  var raw = String(PropertiesService.getScriptProperties().getProperty('TB_CATEGORY_OVERRIDES') || '');
+  var out = {};
+  raw.split(/[,;\n]/).forEach(function(pair) {
+    var m = pair.split('=');
+    var uid = (m[0] || '').trim(), cat = (m[1] || '').trim().toUpperCase();
+    if (uid && TERMSEARCH_CATEGORY_ORDER.indexOf(cat) !== -1) out[uid] = cat;
+  });
+  return out;
+}
+
+// Ausgeschlossene Termbases (Testdaten usw.); Grund oder null.
+function _termbaseExcludedReason_(tb) {
+  var n = String(tb.name || '').toUpperCase();
+  if (n.indexOf('DO NOT USE') !== -1) return 'DO NOT USE';
+  if (n.indexOf('SANDBOX') !== -1) return 'SANDBOX';
+  if (/\bQC\b/.test(n)) return 'QC';
+  return null;
+}
+
 var TERMSEARCH_CATEGORY_LABELS = {
   HNG:     'Home and Garden',
   PROF:    'Professional',
   GENERAL: 'General'
 };
-var TERMSEARCH_TB_CACHE_KEY = 'TERMSEARCH_TARGET_TERMBASES_V2';
+var TERMSEARCH_TB_CACHE_KEY = 'TERMSEARCH_TARGET_TERMBASES_V3';
 var TERMSEARCH_TB_CACHE_TTL = 21600;
 var TERMSEARCH_ALL_LANGS = ['de','en','fr','es','it','pt','nl','pl','cs','ru','zh','ja','ko','tr','ar'];
 
@@ -359,10 +400,7 @@ function _getTargetTermbases_() {
   if (cached) { try { return JSON.parse(cached); } catch(e) {} }
 
   var all = _listAllTermbases_();
-  var filtered = all.filter(function(tb) {
-    var n = String(tb.name || '').toUpperCase();
-    return n.indexOf('DO NOT USE') === -1 && n.indexOf('SANDBOX') === -1 && n.indexOf('QC') === -1;
-  });
+  var filtered = all.filter(function(tb) { return !_termbaseExcludedReason_(tb); });
   // Optionale Admin-Einstellung "Allowed Termbase UIDs": wenn gesetzt, nur diese
   // Termbases verwenden (wurde bisher gespeichert, aber nirgends ausgewertet).
   var allowed = String(PropertiesService.getScriptProperties().getProperty('ALLOWED_TB_UIDS') || '')
@@ -371,13 +409,11 @@ function _getTargetTermbases_() {
     filtered = filtered.filter(function(tb) { return allowed.indexOf(tb.uid) !== -1; });
   }
 
+  var overrides = _termbaseCategoryOverrides_();
   var result = [];
-  Object.keys(TERMSEARCH_CATEGORY_PATTERNS).forEach(function(cat) {
-    var patterns = TERMSEARCH_CATEGORY_PATTERNS[cat];
-    var matches = filtered.filter(function(tb) {
-      var n = String(tb.name || '').toUpperCase();
-      return patterns.some(function(p) { return n.indexOf(p.toUpperCase()) !== -1; });
-    });
+  TERMSEARCH_CATEGORY_ORDER.forEach(function(cat) {
+    var matches = filtered.filter(function(tb) { return _termbaseCategory_(tb, overrides) === cat; });
+    // Gibt es dieselbe Termbase in zwei Sprachcode-Formaten, die mit ISO-Codes nehmen.
     var isoMatches = matches.filter(function(tb) { return _classifyLangFormat_(tb.langs) === 'iso'; });
     var chosen = isoMatches.length ? isoMatches : matches;
     chosen.forEach(function(tb) {
@@ -387,6 +423,28 @@ function _getTargetTermbases_() {
 
   try { cache.put(TERMSEARCH_TB_CACHE_KEY, JSON.stringify(result), TERMSEARCH_TB_CACHE_TTL); } catch(e) {}
   return result;
+}
+
+/**
+ * Im Skript-Editor ausfuehren (Protokoll ansehen): listet alle Termbases aus
+ * PHRASE mit dem erkannten Bereich bzw. dem Grund, warum sie nicht verwendet
+ * werden. Leert ausserdem den Termbase-Cache.
+ */
+function checkTermbaseCategories() {
+  try { CacheService.getScriptCache().remove(TERMSEARCH_TB_CACHE_KEY); } catch (e) {}
+  var overrides = _termbaseCategoryOverrides_();
+  var used = {};
+  _getTargetTermbases_().forEach(function(tb) { used[tb.uid] = tb.category; });
+  _listAllTermbases_().forEach(function(tb) {
+    var excl = _termbaseExcludedReason_(tb);
+    var cat = _termbaseCategory_(tb, overrides);
+    var status = used[tb.uid] ? 'VERWENDET als ' + used[tb.uid]
+      : excl ? 'ausgeschlossen (' + excl + ')'
+      : cat ? 'nicht verwendet (' + cat + ', andere Fassung mit ISO-Sprachcodes bevorzugt)'
+      : 'kein Bereich erkannt';
+    Logger.log(tb.name + '  [' + tb.uid + ']  langs=' + (tb.langs || []).slice(0, 4).join(',') + '  -> ' + status);
+  });
+  Logger.log('Zuordnung von Hand: Skripteigenschaft TB_CATEGORY_OVERRIDES = "uid1=HNG, uid2=PROF, uid3=GENERAL"');
 }
 
 function apiListBrowseTermbases() {
@@ -774,11 +832,10 @@ function apiAiAssistedSearch(freeText, history, imageData, uiLang) {
 // ============================================================================
 // EXPORT TO GOOGLE SHEETS
 // ============================================================================
+// Frueher Ordner "Terminology" im Hauptverzeichnis; jetzt "Kärcher TermCheck/Reports"
+// (Folders.gs).
 function _getOrCreateExportFolder_() {
-  var root = DriveApp.getRootFolder();
-  var existing = root.getFoldersByName('Terminology');
-  if (existing.hasNext()) return existing.next();
-  return root.createFolder('Terminology');
+  return _tcFolder_('reports');
 }
 // Schutz vor Formel-Injection: Sheets wertet Text, der mit = + - @ beginnt, beim
 // Schreiben per setValues/appendRow als Formel aus (z.B. =IMPORTDATA("https://...")
@@ -796,10 +853,7 @@ function apiExportToSheet(rows) {
   rows = _sheetSafeRows_(rows);
   try {
     var ss = SpreadsheetApp.create('Karcher_TermSearch_Export_' + new Date().toISOString().slice(0,10));
-    var file = DriveApp.getFileById(ss.getId());
-    var folder = _getOrCreateExportFolder_();
-    folder.addFile(file);
-    DriveApp.getRootFolder().removeFile(file);
+    _tcMoveToFolder_(ss.getId(), 'reports');
 
     var sheet = ss.getActiveSheet();
     sheet.setName('TermSearch Export');

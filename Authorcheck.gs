@@ -355,7 +355,7 @@ function apiRunAuthorCheck(sourceLang, checkScope) {
   });
   // Ohne Gesamtdokument-Bericht bricht ein komplett fehlgeschlagener Lauf ab;
   // mit Bericht wird der Bericht trotzdem geliefert.
-  var reports = docReports.length ? _finishDocPromptReports_(docCtx.fileName, docReports) : null;
+  var reports = docReports.length ? _finishDocPromptReports_(docCtx.fileName, docReports, 'reports') : null;
   var promptIssues = _docPromptAllIssues_(docReports);
   if (failedParts === responses.length && !(reports && reports.url) && !promptIssues.length) throw firstError;
   // Befunde der Gesamtdokument-Prompts kommen in dieselbe Liste (Springen, Notiz).
@@ -710,6 +710,7 @@ function apiExportRulesOverview(rules) {
 
   var title = "AuthorCheck_Rules_Overview_" + new Date().toISOString().slice(0, 10);
   var ss = SpreadsheetApp.create(title);
+  _tcMoveToFolder_(ss.getId(), 'reports');
   var sheet = ss.getActiveSheet();
   sheet.setName("Rules Overview");
 
@@ -767,6 +768,7 @@ function apiExportAuditReport(issues) {
 
   var title = "TermCheck_Audit_Report_" + new Date().toISOString().slice(0, 10);
   var ss = SpreadsheetApp.create(title);
+  _tcMoveToFolder_(ss.getId(), 'reports');
   var sheet = ss.getActiveSheet();
   sheet.setName("Audit Report");
 
