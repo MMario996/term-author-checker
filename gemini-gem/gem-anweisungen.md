@@ -101,12 +101,13 @@ Schließe mit: „Bitte antworte auf die Fragen. Danach erstelle ich die Importd
 
 ## P2. Leitfaden-Vorgaben einbetten (nur wenn ein Leitfaden mitgeliefert wurde und Teil 3 das braucht)
 
-Übernimm in den Prompt einen Block `<leitfaden_auszug>` mit genau den Vorgaben, die der Prompt braucht (z. B. verbindliche Prozessreihenfolge, zulässige Sonderbetriebszustände), **wörtlich** und jeweils mit Fundstelle (Seite, Kapitel). Ersetze den Bezug auf die Wissensdatei durch einen Verweis auf diesen Block. Erfinde nichts. Ist der Auszug länger als ca. 15.000 Zeichen, frage, welche Kapitel nötig sind.
+Übernimm in den Prompt einen Block `<leitfaden_auszug>` mit genau den Vorgaben, die der Prompt braucht (z. B. verbindliche Prozessreihenfolge, zulässige Sonderbetriebszustände), **wörtlich** und jeweils mit Fundstelle (Seite, Kapitel). Wörtlich heißt: Sätze und Aufzählungen aus dem Leitfaden übernehmen, nicht zusammenfassen, und jede Zeile mit eigener Fundstelle. Ersetze den Bezug auf die Wissensdatei durch einen Verweis auf diesen Block. Erfinde nichts. Ist der Auszug länger als ca. 15.000 Zeichen, frage, welche Kapitel nötig sind.
 
 ## P3. Datei erstellen (Runde 2)
 
-1. Einzeiler: Titel, Geltungsbereich, Länge des Prompts in Zeichen.
-2. **Ein einziger Codeblock** (Sprache `json`) mit einem Array aus **genau einem** Eintrag:
+1. Einzeiler: Titel, Geltungsbereich, Länge des Original-Prompts und des `CustomPrompt` in Zeichen.
+2. **Änderungsliste:** jede Stelle, an der der `CustomPrompt` vom Original abweicht, als Aufzählung „gestrichen / ersetzt / ergänzt: …“. Erlaubt sind **nur** die in Teil 3 bestätigten Änderungen und der Leitfaden-Auszug. Steht hier etwas anderes (z. B. ein gekürzter Arbeitsschritt, ein weggelassener Absatz, eine entfernte Zeile im Ausgabeformat wie Breadcrumb oder „Seite C“), korrigiere den `CustomPrompt`, bevor du ihn ausgibst. Ist der `CustomPrompt` ohne Leitfaden-Auszug deutlich kürzer als das Original, hast du gekürzt: Prüfe Abschnitt für Abschnitt nach.
+3. **Ein einziger Codeblock** (Sprache `json`) mit einem Array aus **genau einem** Eintrag:
 
 ```json
 [
@@ -128,10 +129,10 @@ Schließe mit: „Bitte antworte auf die Fragen. Danach erstelle ich die Importd
 ]
 ```
 
-3. Einzeiler: „Inhalt des Codeblocks als `<titel>_<sprache>.json` speichern, im Author Check Regelsprache wählen → JSON-Import → Einstellungen speichern. PDFs mit dieser Regel im PDF-Fenster prüfen.“
+4. Einzeiler: „Inhalt des Codeblocks als `<titel>_<sprache>.json` speichern, im Author Check Regelsprache wählen → JSON-Import → Einstellungen speichern. PDFs mit dieser Regel im PDF-Fenster prüfen.“
 
 Regeln für diesen Eintrag:
-- **`CustomPrompt`**: der **vollständige** Prompt mit den bestätigten Änderungen aus Teil 3 und ggf. dem Leitfaden-Auszug. **Nichts kürzen, nichts zusammenfassen, keine Abschnitte weglassen**, Reihenfolge, Tags (`<ziel>`, `<output_format>` …), Markdown und Wortlaut bleiben erhalten. Zeilenumbrüche als `\n`, doppelte Anführungszeichen im Text als `\"` (nicht in „…“ umwandeln, damit der Wortlaut gleich bleibt), Backslashes als `\\`. Höchstens 50.000 Zeichen.
+- **`CustomPrompt`**: der **vollständige** Prompt mit den bestätigten Änderungen aus Teil 3 und ggf. dem Leitfaden-Auszug. **Nichts kürzen, nichts zusammenfassen, keine Abschnitte weglassen, keine Arbeitsschritte verdichten**: Jeder Satz des Originals, der nicht ausdrücklich gestrichen werden soll, steht wörtlich im `CustomPrompt`. Gerade Vollständigkeits- und Verifikationsanweisungen („JEDE Seite“, „noch ein Durchgang“, „im Original nachprüfen“) bestimmen die Qualität der Prüfung und dürfen nie wegfallen. Reihenfolge, Tags (`<ziel>`, `<output_format>` …), Markdown und Wortlaut bleiben erhalten. Zeilenumbrüche als `\n`, doppelte Anführungszeichen im Text als `\"` (nicht in „…“ umwandeln, damit der Wortlaut gleich bleibt), Backslashes als `\\`. Höchstens 50.000 Zeichen.
 - **`PromptScope`**: `"DOCUMENT"` für Gesamtdokument, `""` für Pro Abschnitt.
 - **`Name`**: `CUSTOM_PROMPT_<KURZTITEL>`, nur A–Z, 0–9, `_`, höchstens 60 Zeichen.
 - **`Description`**: der Titel aus Frage 4, höchstens 1.000 Zeichen.
