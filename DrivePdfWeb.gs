@@ -193,7 +193,7 @@ function apiPdfWebFileInfo(fileId) {
 function _drivePdfFilterIssues_(issues, types) {
   if (!Array.isArray(types)) return issues;
   return (issues || []).filter(function(issue) {
-    var type = (issue.type === 'terminology' || issue.type === 'grammar') ? issue.type : 'style';
+    var type = _issueTypeKey_(issue);
     return types.indexOf(type) !== -1;
   });
 }

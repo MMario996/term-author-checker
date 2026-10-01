@@ -133,6 +133,8 @@ button, select, input, textarea{ font-family:inherit; }
 .type-badge.terminology{ background:var(--yellow); color:var(--ink); }
 .type-badge.grammar{ background:var(--gray-200); color:var(--gray-600); }
 .type-badge.style { background:var(--ink); color:var(--yellow); }
+.type-badge.prompt { background:#fff; color:var(--ink); border:1px solid var(--ink); }
+.issue-location { font-size:11px; color:var(--gray-500); margin-left:6px; }
 .issue-dismiss{ margin-left:auto; background:none; border:none; cursor:pointer; color:var(--gray-400); padding:4px; display:flex; }
 .issue-dismiss:hover{ color:var(--red); }
 .issue-dismiss svg{ width:18px; height:18px; }
@@ -646,11 +648,17 @@ function renderIssues(wrap, res){
 }
 
 function renderIssueCard(issue, idx){
-  var label = tl(issue.type === 'terminology' ? 'ac.typeTerminology' : (issue.type === 'style' ? 'ac.typeStyle' : 'ac.typeGrammar'));
+  // Funde eines Gesamtdokument-Prompts tragen den Regelnamen; "Ersetzen" nur,
+  // wenn der Vorschlag ein direkter Ersatztext ist.
+  var isPrompt = issue.type === 'prompt';
+  var label = isPrompt ? esc(issue.rule || t('ac.typePrompt'))
+    : tl(issue.type === 'terminology' ? 'ac.typeTerminology' : (issue.type === 'style' ? 'ac.typeStyle' : 'ac.typeGrammar'));
+  var canReplace = !isPrompt || issue.replaceable;
   var delay = Math.min(idx * 30, 200);
   return '<div class="issue-card" id="'+issue.id+'" style="animation-delay:'+delay+'ms">'+
     '<div class="issue-head">'+
       '<span class="type-badge '+issue.type+'">'+label+'</span>'+
+      (issue.location ? '<span class="issue-location">'+esc(issue.location)+'</span>' : '')+
       '<button class="issue-dismiss"'+tAttrTitle('ac.ignoreTitle')+' onclick="dismissIssue(\''+issue.id+'\')">'+
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>'+
       '</button>'+
@@ -659,7 +667,7 @@ function renderIssueCard(issue, idx){
       '<div class="diff-line"><span class="diff-original">'+esc(issue.original)+'</span><span class="diff-arrow">→</span><span class="diff-suggestion">'+esc(issue.suggestion)+'</span></div>'+
       '<div class="issue-explanation">'+esc(issue.explanation||'')+'</div>'+
       '<div class="issue-actions">'+
-        '<button class="btn-mini primary"'+tAttrTitle('ac.replaceTitle')+' onclick="applyIssue(\''+issue.id+'\')">'+tl('ac.replace')+'</button>'+
+        (canReplace ? '<button class="btn-mini primary"'+tAttrTitle('ac.replaceTitle')+' onclick="applyIssue(\''+issue.id+'\')">'+tl('ac.replace')+'</button>' : '')+
         '<button class="btn-mini ghost"'+tAttrTitle('ac.jumpTitle')+' onclick="jumpToIssue(\''+issue.id+'\')">'+tl('ac.jump')+'</button>'+
         '<button class="btn-mini ghost"'+tAttrTitle('ac.noteTitle')+' onclick="commentIssue(\''+issue.id+'\')">'+tl('ac.note')+'</button>'+
         '<button class="btn-mini ghost"'+tAttrTitle('ac.ignoreTitle')+' onclick="dismissIssue(\''+issue.id+'\')">'+tl('ac.ignore')+'</button>'+
@@ -736,7 +744,8 @@ function dismissIssue(id){
 
 /* ─── BULK ACTIONS ───────────────────────────────────────────────────────── */
 function replaceAll(){
-  var pending = _currentIssues.slice();
+  // Funde eigener Gesamtdokument-Prompts ohne direkten Ersatztext nicht ersetzen.
+  var pending = _currentIssues.filter(function(it){ return it.type !== 'prompt' || it.replaceable; });
   if (!pending.length) return;
   if (!confirm(tn('ac.confirmReplaceAll', pending.length))) return;
   showToast(t('ac.replacingAll'));

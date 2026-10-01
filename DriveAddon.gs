@@ -442,9 +442,20 @@ function _drivePdfWork_(job, parts, started, lim, loadBatch) {
     _drivePdfDocStep_(job, cfg, lim, parts);
   }
   var docResult = job.docReports ? _finishDocPromptReports_(job.fileName, job.docReports) : null;
+  // Befunde der Gesamtdokument-Prompts in die normale Liste: so landen sie auch in
+  // der kommentierten PDF und im Sheet.
+  if (job.docReports && !job.docIssuesMerged) {
+    _docPromptAllIssues_(job.docReports).forEach(function(issue) {
+      var key = issue.original + '\u0000' + issue.suggestion;
+      if (seen[key]) return;
+      seen[key] = true;
+      job.issues.push(issue);
+    });
+    job.docIssuesMerged = true;
+  }
 
   _drivePdfCleanupJob_(job);
-  if (job.failedRanges.length && job.failedRanges.length === parts.length && !(docResult && docResult.url)) {
+  if (job.failedRanges.length && job.failedRanges.length === parts.length && !(docResult && docResult.url) && !job.issues.length) {
     throw new Error('The AI request failed for all pages. Please try again.');
   }
   logAuditEvent_(getUserEmail_(), 'DRIVE_PDF_CHECK_RUN', job.fileName + ' - ' + job.issues.length + ' issue(s), ' + parts.length + ' part(s)' +
@@ -686,8 +697,8 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
   var shown = issues.slice(0, DRIVE_PDF_MAX_CARD_ISSUES);
   shown.forEach(function(issue) {
     var section = CardService.newCardSection();
-    var type = (issue.type === 'terminology' || issue.type === 'grammar') ? issue.type : 'style';
-    var typeLabel = _ct_('type.' + type).toUpperCase();
+    var type = _issueTypeKey_(issue);
+    var typeLabel = (type === 'prompt' && issue.rule ? issue.rule : _ct_('type.' + type)).toUpperCase();
     var locationLabel = issue.location ? ' - ' + issue.location : '';
     section.addWidget(CardService.newTextParagraph()
       .setText('<b>' + _escapeCardHtml_(typeLabel) + '</b>' + _escapeCardHtml_(locationLabel)));
@@ -888,8 +899,8 @@ function _drivePdfComputeAnnotations_(doc, pages, issues) {
 
     var pageIdx = matchedPage !== null ? matchedPage : guessedPage;
 
-    var type = (issue.type === 'terminology' || issue.type === 'grammar') ? issue.type : 'style';
-    var typeLabel = _ct_('type.' + type).toUpperCase();
+    var type = _issueTypeKey_(issue);
+    var typeLabel = (type === 'prompt' && issue.rule ? issue.rule : _ct_('type.' + type)).toUpperCase();
     var contents = '[' + typeLabel + ']\n' + issue.original + '\n\n-> ' + issue.suggestion +
       (issue.explanation ? '\n\n' + issue.explanation : '') +
       (issue.location ? '\n\n(AI-reported location: ' + issue.location + ')' : '');
@@ -1113,7 +1124,7 @@ function _buildDrivePdfReportSheet_(issues, fileName, language) {
   } else {
     issues.forEach(function(issue) {
       rows.push([
-        (issue.type || "style").toUpperCase(),
+        (issue.type === "prompt" && issue.rule ? "PROMPT: " + issue.rule : (issue.type || "style").toUpperCase()),
         issue.location || "",
         issue.original || "",
         issue.suggestion || "",
