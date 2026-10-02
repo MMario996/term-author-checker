@@ -439,8 +439,10 @@ function showResult(res){
   if (doc) {
     notes += '<div class="note"><b>📄 ' + esc(T['d.docTitle']) + '</b>';
     if (doc.url) notes += '<div class="actions"><a class="btn primary" target="_blank" rel="noopener noreferrer" href="' + esc(doc.url) + '">' + esc(T['d.docReport']) + ' ↗</a></div>';
+    (doc.notes || []).forEach(function(n){ notes += '<div class="doc-note">ℹ️ ' + esc(n) + '</div>'; });
     (doc.items || []).forEach(function(it){
-      if (it.error) notes += '<div>⚠️ <b>' + esc(it.title) + ':</b> ' + esc(it.error) + '</div>';
+      if (it.error) notes += '<div class="doc-error">⚠️ <b>' + esc(it.title) + ':</b> ' + esc(it.error) + '</div>';
+      else if (it.note) notes += '<div class="doc-note">ℹ️ <b>' + esc(it.title) + ':</b> ' + esc(it.note) + '</div>';
     });
     if (doc.error) notes += '<div>⚠️ ' + esc(doc.error) + '</div>';
     notes += '</div>';

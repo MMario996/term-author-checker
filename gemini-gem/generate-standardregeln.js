@@ -17,7 +17,10 @@ const variants = [
     'These rules are already built into Author Check. Do not create custom rules that check the same thing – instead mention the standard rule (Name) in the report so it can be enabled in the popup.']
 ];
 
-for (const [lang, title, intro] of variants) {
+// Inhalt der Wissensdatei fuer eine Regelsprache (auch fuer die CI, die prueft,
+// ob die eingecheckten Dateien zu Rules.gs passen).
+function render(lang) {
+  const [, title, intro] = variants.find((v) => v[0] === lang);
   const rules = ctx._getDefaultRulesForLanguage_(lang);
   const bySection = {};
   for (const r of rules) {
@@ -33,6 +36,15 @@ for (const [lang, title, intro] of variants) {
       out += '- `' + r.Name + '` | ' + r.Type + ' | ' + sub + ' | ' + String(r.Description).replace(/\s+/g, ' ').trim() + '\n';
     }
   }
-  fs.writeFileSync(path.join(__dirname, 'standardregeln_' + lang + '.md'), out);
-  console.log('standardregeln_' + lang + '.md: ' + rules.length + ' Regeln');
+  return { text: out, count: rules.length };
+}
+
+module.exports = { render, file: (lang) => path.join(__dirname, 'standardregeln_' + lang + '.md') };
+
+if (require.main === module) {
+  for (const [lang] of variants) {
+    const r = render(lang);
+    fs.writeFileSync(module.exports.file(lang), r.text);
+    console.log('standardregeln_' + lang + '.md: ' + r.count + ' Regeln');
+  }
 }

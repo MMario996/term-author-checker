@@ -619,6 +619,7 @@ function docReportHtml(rep){
   var html = '<div class="check-notice"><b>📄 ' + tl('ac.docReportTitle') + '</b>';
   var url = safeHref(rep.url);
   if (url) html += '<br><a class="btn-mini primary" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + tl('ac.docReportOpen') + ' ↗</a>';
+  (rep.notes || []).forEach(function(n){ html += '<br>ℹ️ ' + esc(n); });
   (rep.items || []).forEach(function(it){
     if (it.error) html += '<br>⚠️ <b>' + esc(it.title) + ':</b> ' + esc(it.error);
   });

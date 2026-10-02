@@ -385,7 +385,12 @@ function _driveReadRanges_(ranges) {
 function _drivePdfWork_(job, parts, started, lim, loadBatch) {
   var cfg = _driveGeminiConfig_();
   var prompt = _drivePdfPrompt_(job);
-  if (job.docPrompts === undefined) job.docPrompts = _docPromptsForLanguage_(job.language);
+  if (job.docPrompts === undefined) {
+    var langRules = _rulesLanguageSupported_(job.language) ? apiGetRulesConfig(job.language) : [];
+    job.docPrompts = _docPromptsFromRules_(langRules.filter(function(r) { return r.IsEnabled; }));
+    try { job.docNotes = _docPromptNotes_(job.language, langRules); }
+    catch (noteErr) { Logger.log('_drivePdfWork_: Hinweise nicht ermittelt: ' + noteErr); job.docNotes = []; }
+  }
   var seen = {};
   job.issues.forEach(function(issue) { seen[issue.original + '\u0000' + issue.suggestion] = true; });
 
@@ -443,9 +448,15 @@ function _drivePdfWork_(job, parts, started, lim, loadBatch) {
       _drivePdfSaveJob_(job);
       return { done: false };
     }
-    _drivePdfDocStep_(job, cfg, lim, parts);
+    _drivePdfDocStep_(job, cfg, lim, parts, started);
+    if (!job.docReports) { // zweiter Versuch mit dem Seitentext im naechsten Aufruf
+      job.docPhase = true;
+      _drivePdfSaveJob_(job);
+      return { done: false };
+    }
   }
-  var docResult = job.docReports ? _finishDocPromptReports_(job.fileName, job.docReports, 'pdfs') : null;
+  var docResult = job.docReports ? _finishDocPromptReports_(job.fileName, job.docReports, 'pdfs', job.docNotes)
+    : (job.docNotes && job.docNotes.length ? { url: '', items: [], notes: job.docNotes } : null);
   // Befunde der Gesamtdokument-Prompts in die normale Liste: so landen sie auch in
   // der kommentierten PDF und im Sheet.
   if (job.docReports && !job.docIssuesMerged) {
@@ -484,7 +495,13 @@ function _drivePdfWork_(job, parts, started, lim, loadBatch) {
 // Fuehrt die Gesamtdokument-Prompts eines Jobs aus und legt job.docReports an.
 // Nur im PDF-Fenster (6 min pro Aufruf) - im Seitenbereich (30 s) reicht die
 // Zeit fuer eine Anfrage ueber das ganze Dokument nicht.
-function _drivePdfDocStep_(job, cfg, lim, parts) {
+// Passt die (verkleinerte) PDF nicht in eine Anfrage (_docPromptPdfMaxBytes_)
+// oder scheitert die Anfrage mit PDF (z. B. 400/413 vom Proxy vor Gemini, der
+// oft weniger als 20 MB annimmt), laeuft der Prompt mit dem Text aller Seiten.
+// Frueher fehlte der Prompt dann im Ergebnis.
+var DRIVE_PDF_DOC_RETRY_BEFORE_MS = 150000; // spaeter im Aufruf: zweiter Versuch erst im naechsten Aufruf (Limit 6 min)
+
+function _drivePdfDocStep_(job, cfg, lim, parts, started) {
   function failAll(msg) {
     job.docReports = job.docPrompts.map(function(dp) { return { title: dp.title, error: msg }; });
   }
@@ -493,18 +510,69 @@ function _drivePdfDocStep_(job, cfg, lim, parts) {
   if (job.docInflight) return failAll('The whole-document check did not finish in time. Try a smaller PDF or a shorter prompt.');
   var whole = job.whole;
   if (!whole || !whole.len) return failAll('The PDF could not be prepared as a whole.');
-  if (whole.len > DRIVE_PDF_MAX_BYTES) {
-    return failAll('The PDF is ' + _driveMb_(whole.len) + ' MB after reduction - too large for one request (limit: ' + _driveMb_(DRIVE_PDF_MAX_BYTES) + ' MB).');
-  }
   job.docInflight = true;
   if (job.stateId) _drivePdfSaveJob_(job);
   var t0 = Date.now();
   var bytes = _driveReadRanges_([{ file: whole.file, start: whole.start || 0, len: whole.len }])[0];
   var pages = parts.length ? parts[parts.length - 1].to : 0;
-  job.docReports = _runDocPrompts_(cfg, job.docPrompts, { fileName: job.fileName, pages: pages, isPdf: true }, bytes);
+  var ctx = { fileName: job.fileName, pages: pages, isPdf: true };
+  var reports;
+  if (job.docRetry) {
+    // Fortsetzung: im letzten Aufruf mit PDF gescheitert, jetzt mit dem Seitentext.
+    reports = job.docPartial;
+    var again = _drivePdfDocTextRun_(job, cfg, job.docRetry.map(function(i) { return job.docPrompts[i]; }), bytes, pages);
+    job.docRetry.forEach(function(i, k) { reports[i] = again[k]; });
+    job.docRetry = null;
+    job.docPartial = null;
+  } else if (whole.len <= _docPromptPdfMaxBytes_()) {
+    try { reports = _runDocPrompts_(cfg, job.docPrompts, ctx, bytes); }
+    catch (fetchErr) {
+      Logger.log('_drivePdfDocStep_: Anfrage mit PDF fehlgeschlagen: ' + (fetchErr.message || fetchErr));
+      reports = job.docPrompts.map(function(dp) { return { title: dp.title, error: String(fetchErr.message || fetchErr), code: -1 }; });
+    }
+    var failed = [];
+    reports.forEach(function(r, i) { if (r.code) failed.push(i); });
+    if (failed.length) {
+      Logger.log('_drivePdfDocStep_: ' + failed.length + ' Prompt(s) mit PDF fehlgeschlagen (' +
+        failed.map(function(i) { return reports[i].code; }).join(', ') + ') - zweiter Versuch mit dem Seitentext');
+      if (Date.now() - started > DRIVE_PDF_DOC_RETRY_BEFORE_MS) {
+        job.docRetry = failed;
+        job.docPartial = reports;
+        job.docInflight = false;
+        _drivePdfTrackTime_(job, 'doc', Date.now() - t0);
+        return;
+      }
+      var retry = _drivePdfDocTextRun_(job, cfg, failed.map(function(i) { return job.docPrompts[i]; }), bytes, pages);
+      failed.forEach(function(i, k) { reports[i] = retry[k]; });
+    }
+  } else {
+    reports = _drivePdfDocTextRun_(job, cfg, job.docPrompts, bytes, pages);
+  }
+  job.docReports = reports;
   job.docInflight = false;
   job.docPhase = false;
   _drivePdfTrackTime_(job, 'doc', Date.now() - t0);
+}
+
+// Gesamtdokument-Prompts mit dem Text aller Seiten statt der PDF.
+function _drivePdfDocTextRun_(job, cfg, docPrompts, bytes, pages) {
+  var texts;
+  try { texts = _pdfExtractPageTexts_(_pdfBytesToBinaryString_(bytes)); }
+  catch (e) {
+    Logger.log('_drivePdfDocTextRun_: Text nicht lesbar: ' + (e.message || e));
+    texts = [];
+  }
+  var total = texts.length || pages;
+  var chars = texts.join('').replace(/\s+/g, '').length;
+  if (chars < 200) {
+    var msg = _ct_('d.docNoText', { mb: _driveMb_(bytes.length) });
+    return docPrompts.map(function(dp) { return { title: dp.title, error: msg }; });
+  }
+  var text = texts.map(function(t, i) { return '=== Page ' + (i + 1) + ' of ' + total + ' ===\n' + t; }).join('\n\n');
+  var note = _ct_('d.docTextMode', { mb: _driveMb_(bytes.length), pages: total });
+  logAuditEvent_(getUserEmail_(), 'DOC_PROMPT_TEXT_MODE', job.fileName + ' - ' + _driveMb_(bytes.length) + ' MB, ' + total + ' pages, ' + text.length + ' chars');
+  return _runDocPrompts_(cfg, docPrompts, { fileName: job.fileName, pages: total, isPdf: false, fromPdf: true, text: text }, null)
+    .map(function(r) { if (!r.error) r.note = note; return r; });
 }
 
 /** Schickt eine Etappe (mehrere Seitenpakete parallel) an Gemini. */
@@ -669,6 +737,12 @@ function _buildDrivePdfResultsCard_(resultId, fileName, issues, info) {
   // Bericht der Gesamtdokument-Prompts (DocPrompts.gs)
   var doc = info.docResult;
   if (doc) {
+    (doc.notes || []).forEach(function(n) {
+      topSection.addWidget(CardService.newTextParagraph().setText('ℹ️ ' + _escapeCardHtml_(n)));
+    });
+    (doc.items || []).forEach(function(it) {
+      if (it.note && !it.error) topSection.addWidget(CardService.newTextParagraph().setText('ℹ️ <b>' + _escapeCardHtml_(it.title) + ':</b> ' + _escapeCardHtml_(it.note)));
+    });
     if (doc.url) {
       topSection.addWidget(_cardButton_(true).setText('📄 ' + _ct_('d.docReport'))
         .setOpenLink(CardService.newOpenLink().setUrl(doc.url)));

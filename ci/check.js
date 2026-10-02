@@ -6,6 +6,7 @@
 // - jede Server-Funktion, die aus einer HTML-Seite (google.script.run), einer Card
 //   (setFunctionName) oder dem Manifest (runFunction) aufgerufen wird, muss
 //   existieren und darf nicht privat sein (Name endet auf "_")
+// - jeder benutzte Text (_ct_ in .gs, T[...]/t(...) in PdfCheck.html) steht in CardI18n.gs
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -68,8 +69,34 @@ for (const [name, where] of Object.entries(called)) {
   else if (name.endsWith('_')) errors.push(`Server-Funktion ${name} ist privat (endet auf "_") und kann nicht aufgerufen werden (${uniq})`);
 }
 
+// Texte der Karten / des PDF-Fensters (CardI18n.gs): jeder benutzte Schluessel
+// muss auf Englisch existieren (Fallback), keine Sprache darf unbekannte haben.
+try {
+  const i18nCtx = {};
+  vm.createContext(i18nCtx);
+  vm.runInContext(fs.readFileSync(path.join(root, 'CardI18n.gs'), 'utf8') + '\nthis.__I18N = CARD_I18N;', i18nCtx, { filename: 'CardI18n.gs' });
+  const dict = i18nCtx.__I18N;
+  const en = dict.en || {};
+  for (const [lang, texts] of Object.entries(dict)) {
+    for (const key of Object.keys(texts)) if (!(key in en)) errors.push(`CardI18n.gs: Schluessel ${key} (${lang}) fehlt in "en"`);
+  }
+  const used = {};
+  for (const file of gsFiles) {
+    const src = fs.readFileSync(path.join(root, file), 'utf8');
+    for (const m of src.matchAll(/_ct_\(\s*['"]([^'"]+)['"]/g)) (used[m[1]] = used[m[1]] || []).push(file);
+  }
+  const page = fs.readFileSync(path.join(root, 'PdfCheck.html'), 'utf8');
+  for (const m of page.matchAll(/\b(?:T\[|t\()\s*['"]([a-z]+\.[A-Za-z0-9.]+)['"]/g)) (used[m[1]] = used[m[1]] || []).push('PdfCheck.html');
+  for (const [key, where] of Object.entries(used)) {
+    if (key.endsWith('.')) continue; // dynamisch zusammengesetzt, z. B. 'type.' + typ
+    if (!(key in en)) errors.push(`Text ${key} wird benutzt (${[...new Set(where)].join(', ')}), fehlt aber in CardI18n.gs (en)`);
+  }
+} catch (err) {
+  errors.push(`CardI18n.gs: ${err.message}`);
+}
+
 if (errors.length) {
   console.error(errors.join('\n\n'));
   process.exit(1);
 }
-console.log(`OK: ${gsFiles.length} .gs-Dateien, ${Object.keys(defined).length} Funktionen, ${Object.keys(called).length} aufgerufene Server-Funktionen gefunden, appsscript.json gültig.`);
+console.log(`OK: ${gsFiles.length} .gs-Dateien, ${Object.keys(defined).length} Funktionen, ${Object.keys(called).length} aufgerufene Server-Funktionen gefunden, appsscript.json gültig, Texte vollständig.`);

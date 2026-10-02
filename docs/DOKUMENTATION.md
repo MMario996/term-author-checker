@@ -15,7 +15,7 @@
 | Datenbank | optional „Custom Rules Log“-Sheet (`CUSTOM_RULES_LOG_SHEET_ID`, Tab `Custom`); Nutzerregeln in User Properties + JSON-Datei in Drive |
 | Erweiterte Dienste | Drive v3, Sheets v4 |
 | Rollen | `ADMIN` (in `ADMIN_EMAILS`), sonst `GUEST`; leere Admin-Liste → niemand ist Admin |
-| CI/CD | `ci.yml` (`node ci/check.js`, UI-Smoke), `deploy.yml` (`main` → `clasp push` + Version; Secrets `CLASPRC_JSON`, `SCRIPT_ID`, `DEPLOYMENT_ID`) |
+| CI/CD | `ci.yml` (statische Prüfung, Gem-Dateien, Gesamtdokument-Prompts End-to-End, UI-Tests im Browser, optional Live-Check mit Gemini; lokal `node ci/run-all.js`), `deploy.yml` (erst `ci.yml`, dann `main` → `clasp push` + Version; Secrets `CLASPRC_JSON`, `SCRIPT_ID`, `DEPLOYMENT_ID`) |
 
 ## 2. Aufbau
 
@@ -74,6 +74,7 @@ flowchart LR
 | `AI_PROMPT` | Prompt der KI-Suche |
 | `AUTHORCHECK_PROMPT` | Prompt des Author Check |
 | `WEBAPP_URL` | PDF-Fenster |
+| `DOC_PROMPT_PDF_MAX_MB` | optional: größte PDF (MB), die einem Gesamtdokument-Prompt direkt beiliegt (Standard 13); größere laufen über den Seitentext |
 | `EXPORT_FOLDER_ID` | Ziel für `exportProjectToTxt` (Quellcode-Export) |
 
 User Properties: `UI_LANG` (15 Sprachen: en, de, fr, es, it, pt, zh, ja, no, sv, fi, tr, hu, hr, el), `AUTHORCHECK_RULES_HELP_SEEN`, `DRIVE_PDF_LAST_LANGUAGE`, Regel-Overrides.

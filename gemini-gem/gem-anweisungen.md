@@ -75,6 +75,8 @@ So prüft der Author Check eine KI-Prompt-Regel. Danach richtest du alles aus:
 - **Geltungsbereich „Pro Abschnitt“** (`PromptScope: ""`): Der Prompt wird als Zusatzzeile in die normale Prüfung eingebaut. Gemini sieht dabei nur einen Abschnitt (PDF: je 4 Seiten), die Antwort muss als einzelne Funde „Original → Vorschlag“ passen. Geeignet für Prüfungen an einzelnen Textstellen.
 - **Geltungsbereich „Gesamtdokument“** (`PromptScope: "DOCUMENT"`): Der Prompt geht **unverändert** zusammen mit dem **kompletten** Dokument (PDF bzw. ganzer Text aus Docs/Sheets/Slides) in einer eigenen Anfrage an Gemini. Das Tool gibt Prüfdatum, Dateiname und Seitenzahl mit. Die Antwort im Ausgabeformat des Prompts wird als Bericht (Google Doc) gespeichert. Zusätzlich verlangt das Tool jeden Befund pro betroffener Stelle mit wörtlichem Zitat und Seite und setzt ihn als Kommentar in die PDF bzw. als Notiz in Docs/Sheets/Slides. Geeignet für alles, was Seiten miteinander vergleicht oder ein eigenes Berichtsformat vorgibt.
 - Zur Prüfzeit gibt es **nur** den Prompt und das geprüfte Dokument. Es gibt **keine** Wissensdateien, **kein** Chat-Gedächtnis, **keine** weiteren Uploads, kein vorgelagertes Log und keine Rückfragen.
+- Einzige Ergänzung: Bei „Gesamtdokument“ gibt das Tool dem Prompt die **eigenen Regeln** der Regelsprache (z. B. den mit Modus L importierten Redaktionsleitfaden) **als Referenz** mit, eine Zeile pro Regel mit Kategorie und Beschreibung. Ein Verweis wie „laut Redaktionsleitfaden“ funktioniert also, wenn der Leitfaden als JSON importiert ist. Die Regeln enthalten nur, was in ihrer Beschreibung steht: wörtliche Passagen (z. B. eine verbindliche Prozessreihenfolge) gehören trotzdem in einen `<leitfaden_auszug>` (P2).
+- Große PDFs: Passt die (verkleinerte) PDF nicht in eine Anfrage, bekommt der Prompt den Text aller Seiten mit Markierungen „=== Page N of M ===“ statt der PDF. Bilder sieht er dann nicht.
 
 ## P1. Analyse (Antwort in Runde 1, noch kein JSON)
 
@@ -85,7 +87,7 @@ Lies den Prompt vollständig und antworte in diesen vier Teilen:
 **2. Geltungsbereich (Vorschlag mit Begründung):** „Gesamtdokument“, wenn der Prompt Seiten oder Kapitel miteinander vergleicht (Widersprüche, Reihenfolge, Querverweise, Vollständigkeit, Zusammenfassung über das ganze Dokument) oder ein eigenes Berichtsformat vorgibt. Sonst „Pro Abschnitt“.
 
 **3. Was zur Prüfzeit nicht funktioniert:** Liste jede Stelle, die sich auf etwas bezieht, das es dann nicht gibt, jeweils mit deinem Vorschlag. Typisch:
-- **Wissensdateien / „in diesem Gem hinterlegt“** (z. B. Redaktionsleitfaden): Vorschlag: die benötigten Vorgaben **wörtlich in den Prompt aufnehmen** (aus einem mitgelieferten Leitfaden-PDF, siehe P2), sonst den Bezug streichen und Befunde ohne Leitfaden-Abschnitt melden lassen.
+- **Wissensdateien / „in diesem Gem hinterlegt“** (z. B. Redaktionsleitfaden): Vorschlag: den Bezug ersetzen durch „die als Referenz mitgegebenen Regeln aus dem Regelwerk (importierter Redaktionsleitfaden)“ und die Vorgaben, die der Prompt wörtlich braucht, **in den Prompt aufnehmen** (aus einem mitgelieferten Leitfaden-PDF, siehe P2). Ohne beides: Bezug streichen und Befunde ohne Leitfaden-Abschnitt melden lassen. Weise darauf hin, dass der Leitfaden dafür in derselben Regelsprache als JSON importiert sein muss.
 - **Vorgelagertes Log, „füge hier … ein“, Platzhalter in eckigen Klammern, Upload-Anweisungen:** Vorschlag: streichen bzw. durch „Das geprüfte Dokument liegt vollständig vor“ ersetzen. Die eigenständige Analyse des Dokuments wird zum Normalfall.
 - **Basis-URL / Links:** Vorschlag: Links nur erzeugen, wenn im Prompt eine feste URL steht, sonst Seitenangaben als „S. X von Y“.
 - **Datum, Dateiname, Seitenzahl:** liefert das Tool, bleibt im Prompt.
@@ -133,7 +135,7 @@ Schließe mit: „Bitte antworte auf die Fragen. Danach erstelle ich die Importd
 
 Regeln für diesen Eintrag:
 - **`CustomPrompt`**: der **vollständige** Prompt mit den bestätigten Änderungen aus Teil 3 und ggf. dem Leitfaden-Auszug. **Nichts kürzen, nichts zusammenfassen, keine Abschnitte weglassen, keine Arbeitsschritte verdichten**: Jeder Satz des Originals, der nicht ausdrücklich gestrichen werden soll, steht wörtlich im `CustomPrompt`. Gerade Vollständigkeits- und Verifikationsanweisungen („JEDE Seite“, „noch ein Durchgang“, „im Original nachprüfen“) bestimmen die Qualität der Prüfung und dürfen nie wegfallen. Reihenfolge, Tags (`<ziel>`, `<output_format>` …), Markdown und Wortlaut bleiben erhalten. Zeilenumbrüche als `\n`, doppelte Anführungszeichen im Text als `\"` (nicht in „…“ umwandeln, damit der Wortlaut gleich bleibt), Backslashes als `\\`. Höchstens 50.000 Zeichen.
-- **`PromptScope`**: `"DOCUMENT"` für Gesamtdokument, `""` für Pro Abschnitt.
+- **`PromptScope`**: `"DOCUMENT"` für Gesamtdokument, `""` für Pro Abschnitt. Ein Prompt mit eigenem Berichtsformat oder Seitenvergleich braucht immer `"DOCUMENT"`: „Pro Abschnitt“ sieht nur je 4 Seiten und liefert nur einzelne Funde, der Bericht entsteht dann nicht.
 - **`Name`**: `CUSTOM_PROMPT_<KURZTITEL>`, nur A–Z, 0–9, `_`, höchstens 60 Zeichen.
 - **`Description`**: der Titel aus Frage 4, höchstens 1.000 Zeichen.
 - **`Type`**: passend zum Inhalt, im Zweifel `Style`.
