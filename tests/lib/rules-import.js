@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const HTML = fs.readFileSync(path.resolve(__dirname, '..', '..', 'AuthorCheck.html'), 'utf8');
+const HTML = fs.readFileSync(path.resolve(__dirname, '..', '..', 'src', 'AuthorCheck.html'), 'utf8');
 
 // Top-Level-Funktion aus dem Skript der Seite: endet beim ersten "}" am Zeilenanfang.
 function extractFunction(name) {

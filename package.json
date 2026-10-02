@@ -1,0 +1,23 @@
+{
+  "name": "term-author-checker",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Kärcher TermCheck – Terminologiesuche und Author Check als Google-Workspace-Add-on (Google Apps Script).",
+  "scripts": {
+    "test": "node tests/run-all.js",
+    "lint": "eslint .",
+    "check": "node tools/check-structure.js && node tools/check-encoding.js",
+    "check:structure": "node tools/check-structure.js",
+    "ci": "npm run lint && npm run check && npm test",
+    "test:ui": "node tests/ui-smoke.js && node tests/ui-pdfcheck.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
+    "playwright": "1.63.0"
+  }
+}

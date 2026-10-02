@@ -8,7 +8,7 @@ const vm = require('vm');
 const root = path.resolve(__dirname, '..');
 const ctx = { console, PropertiesService: {}, CacheService: {}, DriveApp: {}, Utilities: {} };
 vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(root, 'Rules.gs'), 'utf8'), ctx, { filename: 'Rules.gs' });
+vm.runInContext(fs.readFileSync(path.join(root, 'src', 'Rules.gs'), 'utf8'), ctx, { filename: 'Rules.gs' });
 
 const variants = [
   ['de', 'Standardregeln (Regelsprache Deutsch)',

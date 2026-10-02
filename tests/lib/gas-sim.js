@@ -17,7 +17,7 @@ const crypto = require('crypto');
 const os = require('os');
 const { execFileSync } = require('child_process');
 
-const ROOT = path.resolve(__dirname, '..', '..');
+const ROOT = path.resolve(__dirname, '..', '..', 'src'); // Apps-Script-Code liegt unter src/
 const MB = 1024 * 1024;
 
 function createSim(opts) {

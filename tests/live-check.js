@@ -6,7 +6,7 @@
 // Ergebnis landet in ci-output/ (Bericht als Markdown, Befunde als JSON,
 // Zusammenfassung) - in GitHub Actions als Artefakt zum Herunterladen.
 //
-// Standard-PDF: die Test-BTA aus ci/lib/make-pdf.js mit zwei eingebauten Fehlern
+// Standard-PDF: die Test-BTA aus tests/lib/make-pdf.js mit zwei eingebauten Fehlern
 // (Widerspruch Seite 2 <-> 5, Ausschalten vor Inbetriebnahme). Der Check schlaegt
 // fehl, wenn der Gesamtdokument-Prompt nicht laeuft oder keinen der beiden findet.
 //
@@ -14,7 +14,7 @@
 // wie im Code), LIVE_PDF=pfad.pdf (eigene PDF, dann ohne Erwartung an die Funde),
 // LIVE_RULES=a.json,b.json (Standard: gemini-gem/beispiel_*_de.json),
 // LIVE_LANG=de, LIVE_LARGE=1 (26-MB-Test-BTA: Weg ueber den Seitentext).
-// Aufruf: GEMINI_API_KEY=... node ci/live-check.js
+// Aufruf: GEMINI_API_KEY=... node tests/live-check.js
 const fs = require('fs');
 const path = require('path');
 const { createSim, MB } = require('./lib/gas-sim');

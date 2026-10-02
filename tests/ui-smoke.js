@@ -7,7 +7,7 @@
 // nicht mehr zusammenpassen (09/2026: Suche blieb bei "Filtering translations…"
 // haengen, weil die Seite die neue Antwortform nicht verarbeiten konnte).
 //
-// Aufruf: node ci/ui-smoke.js   (braucht das npm-Paket "playwright" + Chromium;
+// Aufruf: node tests/ui-smoke.js   (braucht das npm-Paket "playwright" + Chromium;
 // optional CHROMIUM_PATH=/pfad/zu/chromium)
 const fs = require('fs');
 const path = require('path');
@@ -16,7 +16,8 @@ const crypto = require('crypto');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
-const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
+const SRC = path.join(ROOT, 'src');
+const read = (f) => fs.readFileSync(path.join(SRC, f), 'utf8');
 
 // ─── Server: alle .gs-Dateien mit simulierten Google-Diensten ────────────
 let phraseMode = 'ok'; // 'ok' | 'down'
@@ -56,7 +57,7 @@ const ctx = {
   Session: { getActiveUser: () => ({ getEmail: () => 'ci@example.com' }), getScriptTimeZone: () => 'Europe/Berlin' }
 };
 vm.createContext(ctx);
-for (const f of fs.readdirSync(ROOT).filter((x) => x.endsWith('.gs')).sort()) {
+for (const f of fs.readdirSync(SRC).filter((x) => x.endsWith('.gs')).sort()) {
   vm.runInContext(read(f), ctx, { filename: f });
 }
 ctx._getTargetTermbases_ = () => [

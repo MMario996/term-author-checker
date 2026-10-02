@@ -1,5 +1,5 @@
 // Alle CI-Pruefungen lokal nacheinander (wie in .github/workflows/ci.yml).
-// Aufruf: node ci/run-all.js   - Browser-Tests nur, wenn "playwright" installiert ist;
+// Aufruf: node tests/run-all.js   - Browser-Tests nur, wenn "playwright" installiert ist;
 // Live-Check nur mit GEMINI_API_KEY.
 const { spawnSync } = require('child_process');
 const path = require('path');
@@ -8,6 +8,7 @@ let hasPlaywright = true;
 try { require.resolve('playwright'); } catch (e) { hasPlaywright = false; }
 const steps = [
   ['Statische Prüfung', 'check.js'],
+  ['Standard: Syntax, Manifest, Namensraum', 'gas.syntax.test.js'],
   ['Gem-Dateien', 'gem.test.js'],
   ['Gesamtdokument-Prompts (End-to-End)', 'doc-prompt.test.js'],
   ['UI Terminologiesuche', 'ui-smoke.js', hasPlaywright],

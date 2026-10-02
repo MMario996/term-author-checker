@@ -4,22 +4,22 @@
 🔍 **Terminologiesuche** (Seitenleiste und Web-App) und ✍️ **Author Check**
 (Grammatik-, Terminologie- und Stilprüfung in Docs, Sheets, Slides und für PDFs in Drive).
 
-> 📚 **Dokumentation:** Datenbanken, Script Properties, Abläufe und Diagramme in [`docs/DOKUMENTATION.md`](docs/DOKUMENTATION.md). Gesamtdokumentation aller acht Kärcher-Translation-Repositories (Systemlandkarte, alle Datenbanken, FAQ, Paket für Gemini Gem / NotebookLM): [`kaerchertranslationservices/wissensbasis`](https://github.com/MMario996/kaerchertranslationservices/tree/main/wissensbasis).
+> 📚 **Dokumentation:** Fachliche Doku, Datenbanken, Abläufe in [`docs/DOKUMENTATION.md`](docs/DOKUMENTATION.md) · alle Phrase- und sonstigen Endpunkte in [`docs/ENDPOINTS.md`](docs/ENDPOINTS.md) · CI/CD in [`docs/CI-CD.md`](docs/CI-CD.md) · Gesamtübersicht aller zehn Kärcher-Translation-Repositories mit Systemlandkarte: [`kaerchertranslationservices/docs/gesamt`](https://github.com/MMario996/kaerchertranslationservices/tree/main/docs/gesamt).
 
 ## Oberflächensprachen
 
-Alle Texte gibt es in 15 Sprachen. HTML-Oberflächen: `I18n.html`.
-Karten (Startkarte, Drive-PDF-Check) und vom Server erzeugte Texte: `CardI18n.gs`.
+Alle Texte gibt es in 15 Sprachen. HTML-Oberflächen: `src/I18n.html`.
+Karten (Startkarte, Drive-PDF-Check) und vom Server erzeugte Texte: `src/CardI18n.gs`.
 Neue Texte bitte in beiden Fällen für alle Sprachen ergänzen (Englisch ist Fallback).
 
 ## PDF-Prüfung in Drive (eigenes Fenster)
 
 „PDF prüfen“ im Drive-Seitenbereich öffnet ein eigenes Fenster (Web-App,
-`PdfCheck.html`), das alle Etappen automatisch abarbeitet – ohne Klicks auf
+`src/PdfCheck.html`), das alle Etappen automatisch abarbeitet – ohne Klicks auf
 „Weiter“. Voraussetzungen:
 
 - Web-App-Einstellungen im Manifest: *Ausführen als: Nutzer, der zugreift*,
-  *Zugriff: Domain* (`appsscript.json`). Beim ersten Öffnen bestätigt jede
+  *Zugriff: Domain* (`src/appsscript.json`). Beim ersten Öffnen bestätigt jede
   Person einmal die Berechtigungen.
 - Skripteigenschaft `WEBAPP_URL` = die `…/exec`-URL einer Bereitstellung vom
   Typ **Web-App** (Bereitstellen > Neue Bereitstellung > Typ „Web-App“,
@@ -69,36 +69,36 @@ Welche PHRASE-Termbase zu welchem Bereich gehört, wird am Namen erkannt, zum Be
 ## CI / CD
 
 - **CI** (`.github/workflows/ci.yml`) bei jedem Push und Pull Request:
-  - `node ci/check.js`: Syntax aller `.gs`-Dateien, `appsscript.json`, doppelt
+  - `node tests/check.js`: Syntax aller `.gs`-Dateien, `src/appsscript.json`, doppelt
     definierte Funktionen, jede aus HTML (`google.script.run`), Cards
     (`setFunctionName`) oder dem Manifest (`runFunction`) aufgerufene
-    Server-Funktion existiert, jeder benutzte Text steht in `CardI18n.gs`.
-  - `node ci/gem.test.js`: Die JSON-Dateien in `gemini-gem/` lassen sich mit dem
-    echten Import aus `AuthorCheck.html` übernehmen, KI-Prompt-Regeln enthalten
+    Server-Funktion existiert, jeder benutzte Text steht in `src/CardI18n.gs`.
+  - `node tests/gem.test.js`: Die JSON-Dateien in `gemini-gem/` lassen sich mit dem
+    echten Import aus `src/AuthorCheck.html` übernehmen, KI-Prompt-Regeln enthalten
     nichts, was zur Prüfzeit nicht funktioniert (Platzhalter, Gem-Wissensdateien,
-    Logs, Basis-URLs), und `standardregeln_*.md` passen zu `Rules.gs`. Eine vom
-    Gem erzeugte Datei vor dem Import prüfen: `node ci/gem.test.js meine_regeln_de.json`.
-  - `node ci/doc-prompt.test.js`: End-to-End wie im Fachbereich, mit dem echten
+    Logs, Basis-URLs), und `standardregeln_*.md` passen zu `src/Rules.gs`. Eine vom
+    Gem erzeugte Datei vor dem Import prüfen: `node tests/gem.test.js meine_regeln_de.json`.
+  - `node tests/doc-prompt.test.js`: End-to-End wie im Fachbereich, mit dem echten
     Server-Code (Drive und Gemini simuliert, Gemini mit Größenlimit): Gem-Prompt
     und Leitfaden importieren → PDF im PDF-Fenster prüfen → Bericht, Befunde in
     der Liste, kommentierte PDF. Dazu große PDFs (Bilder entfernt, Prompt über den
     Seitentext), ein Proxy, der die PDF ablehnt (400/413/502), gescannte PDFs,
     falsche Regelsprache, ausgeschaltete Prompts, Docs-Prüfung.
-  - `node ci/ui-smoke.js`, `node ci/ui-pdfcheck.js`: Terminologiesuche und
+  - `node tests/ui-smoke.js`, `node tests/ui-pdfcheck.js`: Terminologiesuche und
     PDF-Fenster in Chromium (Playwright) mit dem echten Server-Code.
-  - **Live-Check** (`node ci/live-check.js`): dieselbe PDF-Prüfung mit dem echten
+  - **Live-Check** (`node tests/live-check.js`): dieselbe PDF-Prüfung mit dem echten
     Gemini, bei Push auf `main` und manuell über „Run workflow“ (dort auch mit
     26-MB-Test-PDF oder einer eigenen PDF aus dem Repository). Braucht das Secret
     `GEMINI_API_KEY` (optional `GEMINI_API_URL`, Variable `AI_MODEL`), sonst wird
     er mit Warnung übersprungen. Bericht und Befunde als Artefakt „live-check“.
-  - Alles lokal: `node ci/run-all.js` (Browser-Tests nur mit installiertem
+  - Alles lokal: `node tests/run-all.js` (Browser-Tests nur mit installiertem
     `playwright`, Live-Check nur mit `GEMINI_API_KEY`).
 - **CD** (`.github/workflows/deploy.yml`): bei jedem Push auf `main` (oder
   manuell über "Run workflow") läuft zuerst die komplette CI (ohne Live-Check);
   nur wenn sie besteht, wird der Code per
   [clasp](https://github.com/google/clasp) ins Apps-Script-Projekt übertragen
   und eine neue Version angelegt. Übertragen werden nur `*.gs`, `*.html` und
-  `appsscript.json` (siehe `.claspignore`).
+  `src/appsscript.json` (siehe `.claspignore`).
 
 ### Einrichtung (einmalig)
 
@@ -115,3 +115,25 @@ Welche PHRASE-Termbase zu welchem Bereich gehört, wird am Namen erkannt, zum Be
 Achtung: `clasp push` ersetzt den kompletten Code im Apps-Script-Projekt. Was
 nur im Online-Editor geändert wurde und nicht in GitHub liegt, geht verloren.
 Fehlen die Secrets, wird der Deploy-Schritt mit einer Warnung übersprungen.
+
+## Repository-Standard
+
+Alle Kärcher-Translation-Repositories sind gleich aufgebaut (Vorbild: Prompt Hub); `tools/check-structure.js` prüft das in der CI.
+
+| Pfad | Inhalt |
+|---|---|
+| `src/` | Apps-Script-Code inkl. `appsscript.json` (clasp `rootDir`) |
+| `tests/` | Node-Tests, Einstieg `tests/run-all.js`; `gas.syntax.test.js` prüft Syntax, Manifest und doppelte Namen |
+| `tools/` | `check-structure.js`, `check-encoding.js`, Build-Skripte |
+| `docs/` | `DOKUMENTATION.md`, `ENDPOINTS.md`, `CI-CD.md` |
+| `.github/` | `ci.yml`, `deploy.yml`, `actions/clasp-deploy`, Dependabot, CODEOWNERS, PR-Vorlage |
+
+```bash
+npm ci
+npm test        # Logik-Tests
+npm run lint    # ESLint
+npm run check   # Struktur, Zeichenkodierung, generierte Dateien
+npm run ci      # alles zusammen
+```
+
+Lokal deployen: `.clasp.json` mit `{"scriptId":"…","rootDir":"src"}`, dann `clasp push`.

@@ -6,10 +6,10 @@
 //   2. Regeln speichern (Drive-JSON + Properties) und wieder laden
 //   3. PDF im PDF-Fenster pruefen (apiPdfWebStart / apiPdfWebContinue)
 //   4. Bericht (Google Doc), Befunde in der Liste, kommentierte PDF
-// Drive und Gemini sind simuliert (ci/lib/gas-sim.js); Gemini lehnt wie die
+// Drive und Gemini sind simuliert (tests/lib/gas-sim.js); Gemini lehnt wie die
 // echte API Anfragen ueber 20 MB ab.
 //
-// Aufruf: node ci/doc-prompt.test.js
+// Aufruf: node tests/doc-prompt.test.js
 const fs = require('fs');
 const path = require('path');
 const { createSim, MB } = require('./lib/gas-sim');

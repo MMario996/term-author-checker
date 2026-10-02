@@ -1,13 +1,13 @@
 // UI-Test fuer das PDF-Fenster (PdfCheck.html) mit dem ECHTEN Server-Code.
 //
 // Die Seite laeuft in Chromium; jeder google.script.run-Aufruf geht an die
-// .gs-Dateien in Node (ci/lib/gas-sim.js: Drive und Gemini simuliert). Geprueft
+// .gs-Dateien in Node (tests/lib/gas-sim.js: Drive und Gemini simuliert). Geprueft
 // wird, was der Fachbereich sieht: Fortschritt bis zum Ende, Hinweis zu
 // entfernten Bildern, Link zum Gesamtdokument-Bericht, Hinweise, wenn der
 // Prompt mit dem Seitentext lief oder gar nicht lief, Befunde des Prompts in
 // der Liste und keine JavaScript-Fehler.
 //
-// Aufruf: node ci/ui-pdfcheck.js   (braucht das npm-Paket "playwright" + Chromium;
+// Aufruf: node tests/ui-pdfcheck.js   (braucht das npm-Paket "playwright" + Chromium;
 // optional CHROMIUM_PATH=/pfad/zu/chromium)
 const fs = require('fs');
 const path = require('path');
@@ -60,7 +60,7 @@ window.google = { script: {
       if (typeof sim.ctx[fn] !== 'function' || /_$/.test(fn)) return { error: 'Unknown server function ' + fn };
       try { return { value: JSON.stringify(sim.ctx[fn](...JSON.parse(args))) }; } catch (e) { return { error: e.message }; }
     });
-    const html = fs.readFileSync(path.join(ROOT, 'PdfCheck.html'), 'utf8')
+    const html = fs.readFileSync(path.join(ROOT, 'src', 'PdfCheck.html'), 'utf8')
       .replace('<?!= JSON.stringify(fileId) ?>', JSON.stringify(fileId))
       .replace('<?!= JSON.stringify(checkLang) ?>', JSON.stringify('de'))
       .replace('<?!= JSON.stringify(checkLangName) ?>', JSON.stringify('Deutsch'))

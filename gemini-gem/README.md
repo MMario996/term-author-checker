@@ -97,7 +97,7 @@ Redaktionsleitfaden. Prompt und Leitfaden deshalb in **derselben Regelsprache**
 importieren. Ist die PDF für eine Anfrage zu groß, läuft der Prompt mit dem Text aller
 Seiten (ohne Bilder); das Ergebnis weist darauf hin.
 
-Vor dem Import prüfen (wie die CI): `node ci/gem.test.js meine_regeln_de.json`. Das
+Vor dem Import prüfen (wie die CI): `node tests/gem.test.js meine_regeln_de.json`. Das
 meldet z. B. Namen ohne `CUSTOM_`, fehlenden Geltungsbereich oder Stellen im Prompt, die
 zur Prüfzeit nicht funktionieren (Platzhalter, Gem-Wissensdatei, Log, Basis-URL).
 

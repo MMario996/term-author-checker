@@ -43,12 +43,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      - name: ESLint und Zeichenkodierung
+        run: npm run lint && node tools/check-encoding.js
       - name: Syntax, Manifest, doppelte Funktionen, Server-Aufrufe, Texte
-        run: node ci/check.js
+        run: node tests/check.js
+      - name: Standard-Prüfung (Syntax, Manifest, Namensraum) und Struktur
+        run: node tests/gas.syntax.test.js && node tools/check-structure.js
       - name: Gem-Dateien (JSON-Import, Prompt-Regeln, Wissensdateien aktuell)
-        run: node ci/gem.test.js
+        run: node tests/gem.test.js
       - name: Gesamtdokument-Prompts End-to-End (Import, PDF-Prüfung, Bericht, kommentierte PDF)
-        run: node ci/doc-prompt.test.js
+        run: node tests/doc-prompt.test.js
 
   ui:
     name: Oberflächen im Browser
@@ -65,9 +72,9 @@ jobs:
           npm install --no-save --no-package-lock playwright@1.63.0
           npx playwright install --with-deps chromium
       - name: UI-Test Terminologiesuche (Server-Code + Oberfläche im Browser)
-        run: node ci/ui-smoke.js
+        run: node tests/ui-smoke.js
       - name: UI-Test PDF-Fenster (Gesamtdokument-Prompt, Hinweise, Befunde)
-        run: node ci/ui-pdfcheck.js
+        run: node tests/ui-pdfcheck.js
 
   live:
     name: Live-Check mit Gemini
@@ -98,7 +105,7 @@ jobs:
           fi
       - name: PDF prüfen (echter Server-Code, echtes Gemini)
         if: steps.cfg.outputs.ready == 'true'
-        run: node ci/live-check.js
+        run: node tests/live-check.js
       - name: Bericht und Befunde hochladen
         if: always() && steps.cfg.outputs.ready == 'true'
         uses: actions/upload-artifact@v4

@@ -7,7 +7,7 @@
 //  - JSON-Beispiele in gem-anweisungen.md sind gueltig
 //  - die Wissensdateien standardregeln_*.md passen zu Rules.gs
 //
-// Aufruf: node ci/gem.test.js [weitere.json ...]
+// Aufruf: node tests/gem.test.js [weitere.json ...]
 const fs = require('fs');
 const path = require('path');
 const { createSim } = require('./lib/gas-sim');

@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const root = path.resolve(__dirname, '..');
+const root = path.resolve(__dirname, '..', 'src'); // Apps-Script-Code liegt unter src/
 const errors = [];
 
 const gsFiles = fs.readdirSync(root).filter((f) => f.endsWith('.gs')).sort();

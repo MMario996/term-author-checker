@@ -1,4 +1,4 @@
-# Nur Code und Manifest nach Apps Script übertragen
+# clasp laeuft mit rootDir "src": nur App-Dateien hochladen.
 **/**
 !*.gs
 !*.html
